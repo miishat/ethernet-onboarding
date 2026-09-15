@@ -18,6 +18,7 @@ interface Props {
 export default function Header({ rate, setRate, dir, setDir, stepping, toggleStep, read, total }: Props) {
   return (
     <header className="header">
+      <div className="header__inner">
       <div className="header__title">
         <h1>
           <span className="header__logo" aria-hidden="true">
@@ -70,6 +71,7 @@ export default function Header({ rate, setRate, dir, setDir, stepping, toggleSte
           <div className="control-label">Theme</div>
           <ThemeToggle />
         </div>
+      </div>
       </div>
     </header>
   );

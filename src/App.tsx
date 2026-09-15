@@ -140,8 +140,10 @@ export default function App() {
       )}
 
       <footer className="footer">
-        400G follows IEEE 802.3 Clause 119 and its PMD clauses; 800G follows 802.3df; 1.6T follows 802.3dj, still in draft at the time
-        of writing, so anything marked draft may have moved.
+        <div className="footer__inner">
+          400G follows IEEE 802.3 Clause 119 and its PMD clauses; 800G follows 802.3df; 1.6T follows 802.3dj, still in draft at the
+          time of writing, so anything marked draft may have moved.
+        </div>
       </footer>
     </div>
   );
