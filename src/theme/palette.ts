@@ -6,7 +6,7 @@ const SANS =
   'Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
 
 /* ===========================================================================
-   PALETTE — ink-blue instrument ground, one amber signal accent.
+   PALETTE - ink-blue instrument ground, one amber signal accent.
    Amber means "active path / moving data" and appears nowhere else.
    Two themes with identical keys, so every SVG that reads a palette value
    simply recolours when the theme changes.
@@ -40,9 +40,9 @@ export const LIGHT: Palette = {
   rule: "#c6c0b1",
   ruleSoft: "#e2ddd0",
   text: "#182430", // ink navy
-  dim: "#4f5d6b",
-  faint: "#84909c",
-  signal: "#b06f00", // deep amber — reads as text on paper, same accent family
+  dim: "#4b5966",
+  faint: "#66727f", // darkened so small mono labels stay legible on paper
+  signal: "#b06f00", // deep amber - reads as text on paper, same accent family
   signalDim: "#d6a24e",
   signalWash: "#fbf0d6",
   good: "#2f8f6b",

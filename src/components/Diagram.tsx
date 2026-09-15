@@ -14,7 +14,7 @@ export function Note({ text }: { text: string }) {
 }
 
 /* ---------------------------------------------------------------------------
-   Figure — title, graphic, caption, and an enlarge affordance. Narrow columns
+   Figure - title, graphic, caption, and an enlarge affordance. Narrow columns
    scale SVG type down with them, so every diagram can be reopened at window
    width where the labels are legible again.
    --------------------------------------------------------------------------- */
@@ -197,7 +197,7 @@ export default function Diagram({ spec, rate, nested, constrain }: DiagramProps)
           stroke={k < used ? (used > 15 ? C.bad : C.signal) : C.rule} strokeWidth="0.9" />);
       }
       g.push(<text key="mtx" x={X0 + 15 * (mw + 3) + 10} y={my + 9} fill={used > 15 ? C.bad : C.good} fontSize="11" fontFamily={C.mono}>
-        {used > 15 ? used + " damaged, 15 correctable — codeword lost" : used + " of 15 spent"}</text>);
+        {used > 15 ? used + " damaged, 15 correctable - codeword lost" : used + " of 15 spent"}</text>);
       H = my + 34;
     } else {
       H = y + bh + 34;
@@ -212,10 +212,12 @@ export default function Diagram({ spec, rate, nested, constrain }: DiagramProps)
     const n = R(spec.n) || 8;
     const fail = (spec.fail as number[]) || [];
     const rh = Math.max(9, Math.min(17, Math.floor(190 / n)));
+    const order = spec.shuffled ? shuffleOrder(n) : null;
+    /* leave room on the right for per-lane annotations so they never spill the viewBox */
+    const hasRightText = !!order || fail.length > 0;
     const top = 30,
       LX = 96,
-      LW = 540;
-    const order = spec.shuffled ? shuffleOrder(n) : null;
+      LW = hasRightText ? 452 : 540;
     for (let i = 0; i < n; i++) {
       const y = top + i * (rh + 3);
       const bad = fail.indexOf(i) >= 0;

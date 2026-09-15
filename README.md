@@ -1,6 +1,6 @@
 # Ethernet Onboarding
 
-An interactive instrument for learning the high-speed Ethernet PHY stack — **400G, 800G
+An interactive instrument for learning the high-speed Ethernet PHY stack - **400G, 800G
 and 1.6T**, one sublayer at a time. Start anywhere, drill down to any depth, watch the
 arithmetic change as you switch rate and direction, and follow a single frame all the
 way from MAC octets to PAM4 symbols on the wire.
@@ -12,13 +12,13 @@ project, with a refined instrument aesthetic and a **light / dark** theme.
 
 - **The stack as a map.** The left column is always a navigable diagram of the PHY data
   path in zone bands; the right column is the content. Click to drill in at every level
-  until a page has nothing left inside — at which point the canvas *becomes* the diagram.
+  until a page has nothing left inside - at which point the canvas *becomes* the diagram.
 - **Rate- and direction-aware.** Every clause number, lane count and parameter is keyed
   by rate (400G / 800G / 1.6T) and by transmit / receive.
 - **Follow a frame.** A nine-stage stepper animates the payload transforming at each
   sublayer, with the arithmetic for the current rate. Arrow keys work; `Esc` closes it.
 - **Custom SVG diagrams.** Round-robin distribution, bit-fields, Reed–Solomon codewords
-  with a live 15-symbol error budget, lane skew, PAM4 eyes, BER waterfalls and more —
+  with a live 15-symbol error budget, lane skew, PAM4 eyes, BER waterfalls and more -
   all theme-aware.
 - **Verified content.** Facts are sourced against [`research-brief.md`](research-brief.md),
   with `draft`, `inferred` and `industry` badges where confidence is qualified.
@@ -50,7 +50,7 @@ src/
     ThemeContext.tsx   provider, useC(), useZones(), useTheme()
   styles/global.css    CSS-variable design tokens, shell styling, motion
   data/
-    stack.ts           DATA — the sublayer content tree (verbatim, verified)
+    stack.ts           DATA - the sublayer content tree (verbatim, verified)
     stepper.ts         LANES + the nine frame stages
     visuals.ts         diagram specifications, keyed by node id
     tree.ts            navigation + rate-keyed accessors

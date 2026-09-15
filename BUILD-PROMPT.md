@@ -1,4 +1,4 @@
-# Build prompt — Ethernet Onboarding, v2
+# Build prompt - Ethernet Onboarding, v2
 
 ## The task
 Turn the single 3087-line `EthernetStack.jsx` into a proper, modern project. Same
@@ -7,7 +7,7 @@ the instruction set I wrote for myself before building; follow it.
 
 ## Non-negotiables (do not break these)
 1. **Preserve every fact.** `DATA`, `VISUALS`, `STAGES`, `LANES`, `RATE_META`,
-   `ZONES` are verified against `research-brief.md`. Copy them **verbatim** — zero
+   `ZONES` are verified against `research-brief.md`. Copy them **verbatim** - zero
    edits to strings, numbers, clause references, draft/inferred flags, or `[[term]]`
    links. These blocks contain **no** palette references, so they extract cleanly.
 2. **Preserve the pedagogy and interaction model.** Start-anywhere drill-down at
@@ -16,11 +16,11 @@ the instruction set I wrote for myself before building; follow it.
    rate switching drive the whole page; quizzes and glossary terms stay.
 3. **Preserve the design soul.** Ink-blue instrument ground, one amber signal accent
    that means "active path / moving data" and appears nowhere else. Desaturated
-   per-zone hues. Refine and elevate — do not reinvent.
+   per-zone hues. Refine and elevate - do not reinvent.
 
 ## Stack
 Vite + React 18 + TypeScript. Bundled fonts (no external CDN requests):
-Inter (sans) + JetBrains Mono (mono) via `@fontsource`. No UI framework — the
+Inter (sans) + JetBrains Mono (mono) via `@fontsource`. No UI framework - the
 design is bespoke. CSS via one global stylesheet driven by CSS custom properties
 (enables theming + transitions + media queries + hover/focus that inline styles
 cannot express). No framer-motion; motion is CSS-only for robustness.
@@ -77,7 +77,7 @@ src/
 - [ ] Drill from stack → block → sub → leaf; leaf shows Diagram as canvas.
 - [ ] Stepper: all 8 stages, art per shape, per-rate counts, progress bar.
 - [ ] Every VISUALS type renders (compare, bitfield, symbols, lanes, fold, skew,
-      states, curve, wave, spans) — spot-check pages that use each.
+      states, curve, wave, spans) - spot-check pages that use each.
 - [ ] Glossary `[[term]]` popovers; quizzes; visited/read tracking + count.
 - [ ] Light and dark both correct; toggle persists; SVG recolors.
 - [ ] `npm run build` clean (tsc + vite); dev server verified in browser.

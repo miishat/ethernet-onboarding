@@ -321,7 +321,7 @@ export const VISUALS: Record<string, DiagramSpec> = {
       { label: "eight per-class durations", w: 16, accent: true },
       { label: "pad", w: 26 }, { label: "FCS", w: 4 },
     ],
-    caption: "Same 64-octet frame, but one bit and one duration per priority — so one class can be stopped while the others keep running.",
+    caption: "Same 64-octet frame, but one bit and one duration per priority - so one class can be stopped while the others keep running.",
   },
 
   "rs-fault": {
@@ -350,7 +350,7 @@ export const VISUALS: Record<string, DiagramSpec> = {
       { label: "secure data", w: 46 },
       { label: "ICV", w: 16, accent: true }, { label: "FCS", w: 4 },
     ],
-    caption: "Widths in octets, drawn with a 16-octet SecTAG and a 16-octet ICV — the usual case, and 32 octets of addition.",
+    caption: "Widths in octets, drawn with a 16-octet SecTAG and a 16-octet ICV - the usual case, and 32 octets of addition.",
   },
 
   "fec-cc-seg": {

@@ -1,5 +1,5 @@
 /* ===========================================================================
-   Ethernet Onboarding — global stylesheet.
+   Ethernet Onboarding - global stylesheet.
    CSS variables mirror the JS palette (theme/palette.ts) so the shell can use
    real CSS (transitions, hover, focus-visible, media queries) while SVGs read
    the same colours from the palette object via useC().
@@ -34,12 +34,12 @@
   --rule: #c6c0b1;
   --rule-soft: #e2ddd0;
   --text: #182430;
-  --dim: #4f5d6b;
-  --faint: #84909c;
+  --dim: #4b5966;
+  --faint: #66727f;
   --signal: #b06f00;
   --signal-dim: #d6a24e;
   --signal-wash: #fbf0d6;
-  --signal-ink: #2a1c00;
+  --signal-ink: #fff7e8; /* light text on the dark-amber signal fill */
   --good: #2f8f6b;
   --bad: #c0503f;
   --shadow: 0 1px 2px rgba(30, 27, 18, 0.08), 0 10px 30px rgba(30, 27, 18, 0.1);

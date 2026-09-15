@@ -39,7 +39,7 @@ export default function Prose({ text, terms }: { text?: string; terms?: Record<s
                 <span style={{ fontFamily: "var(--font-mono)", fontSize: 12.5, color: "var(--signal)", fontWeight: 600 }}>
                   {open}
                 </span>
-                <span>{"  —  " + (terms ? terms[open] : "")}</span>
+                <span>{"  -  " + (terms ? terms[open] : "")}</span>
               </div>
             ) : null}
           </div>

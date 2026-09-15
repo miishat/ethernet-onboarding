@@ -11,8 +11,8 @@ function prand(i: number): number {
 
 export default function StageArt({ stage, rate }: { stage: Stage; rate: Rate }) {
   const C = useC();
-  const W = 620,
-    H = 150;
+  const W = 620;
+  let H = 150;
   const s = stage.shape;
   const cells: React.ReactNode[] = [];
 
@@ -76,17 +76,22 @@ export default function StageArt({ stage, rate }: { stage: Stage; rate: Rate }) 
   if (s === "lanes" || s === "phys") {
     const n = (s === "lanes" ? LANES[rate].pcs : LANES[rate].phys) || LANES[rate].phys;
     const rows = Math.min(n, 16);
-    const rh = Math.max(6, Math.floor(110 / rows) - 2);
+    const top = 28;
+    /* comfortable, legible row height; the canvas grows to fit rather than clipping */
+    const rh = rows > 12 ? 9 : rows > 6 ? 13 : 18;
+    const gap = 3;
     for (let i = 0; i < rows; i++) {
-      const y = 28 + i * (rh + 2);
+      const y = top + i * (rh + gap);
       cells.push(<rect key={"l" + i} x={70} y={y} width={470} height={rh} rx={1}
         fill={i % 2 ? C.ink3 : C.ink2} stroke={C.rule} strokeWidth="0.5" />);
       if (s === "phys")
         cells.push(<rect key={"s" + i} x={70} y={y} width={470} height={rh} rx={1} fill={C.signalWash} stroke={C.signalDim} strokeWidth="0.5" />);
     }
-    cells.push(<text key="t" x={20} y={34} fill={C.faint} fontSize="10" fontFamily={C.mono}>lane 0</text>);
-    cells.push(<text key="t2" x={20} y={28 + (rows - 1) * (rh + 2) + rh} fill={C.faint} fontSize="10" fontFamily={C.mono}>{"lane " + (rows - 1)}</text>);
-    cells.push(<text key="t3" x={548} y={78} fill={s === "phys" ? C.signal : C.dim} fontSize="11" fontFamily={C.mono}>{n}</text>);
+    const lastBottom = top + (rows - 1) * (rh + gap) + rh;
+    cells.push(<text key="t" x={20} y={top + rh - 2} fill={C.faint} fontSize="10" fontFamily={C.mono}>lane 0</text>);
+    cells.push(<text key="t2" x={20} y={lastBottom} fill={C.faint} fontSize="10" fontFamily={C.mono}>{"lane " + (rows - 1)}</text>);
+    cells.push(<text key="t3" x={548} y={(top + lastBottom) / 2 + 4} fill={s === "phys" ? C.signal : C.dim} fontSize="11" fontFamily={C.mono}>{n}</text>);
+    H = Math.max(150, lastBottom + 14);
   }
 
   if (s === "pam4") {

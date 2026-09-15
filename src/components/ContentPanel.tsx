@@ -107,7 +107,7 @@ export default function ContentPanel({ node, rate, dir, isTop, kids, visited, on
 
       {kids.length ? (
         <>
-          <Heading>{isTop ? "Inside — " + (dir === "tx" ? "transmit" : "receive") : "Inside"}</Heading>
+          <Heading>{isTop ? "Inside - " + (dir === "tx" ? "transmit" : "receive") : "Inside"}</Heading>
           <ul className="kid-list">
             {kids.map((s) => (
               <li key={s.id}>
