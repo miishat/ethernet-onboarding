@@ -31,6 +31,23 @@ export function nodeAt(path: string[]): StackNode | null {
   return n || null;
 }
 
+/** Find the full path (list of ids from a top block) to a node by id. */
+export function pathTo(id: string): string[] | null {
+  const search = (node: StackNode, path: string[]): string[] | null => {
+    if (node.id === id) return path;
+    for (const k of rawKids(node)) {
+      const r = search(k, path.concat(k.id));
+      if (r) return r;
+    }
+    return null;
+  };
+  for (const topId of Object.keys(DATA)) {
+    const r = search(DATA[topId], [topId]);
+    if (r) return r;
+  }
+  return null;
+}
+
 export function descendantIds(node: StackNode | null): string[] {
   const out: string[] = [];
   (function walk(n: StackNode | null) {

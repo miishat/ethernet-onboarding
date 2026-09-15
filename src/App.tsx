@@ -106,7 +106,17 @@ export default function App() {
         <main className="main main--step">
           <section className="col-step panel-anim">
             <StepperSidePanel />
-            <Stepper rate={rate} dir={dir} gen={gen} onExit={() => setStepping(false)} />
+            <Stepper
+              rate={rate}
+              dir={dir}
+              gen={gen}
+              onExit={() => setStepping(false)}
+              onNavigate={(p) => {
+                setStepping(false);
+                if (p.length) markRead(p[p.length - 1]);
+                setPath(p);
+              }}
+            />
           </section>
         </main>
       ) : (

@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import type { Rate, Dir, LaneGen } from "../types";
-import { stagesFor } from "../data/stepper";
+import { stagesFor, STAGE_LINKS } from "../data/stepper";
 import { DATA } from "../data/stack";
+import { pathTo, nodeAt } from "../data/tree";
 import StageArt from "./StageArt";
 import StepperMiniStack from "./StepperMiniStack";
 
@@ -10,11 +11,13 @@ export default function Stepper({
   dir,
   gen,
   onExit,
+  onNavigate,
 }: {
   rate: Rate;
   dir: Dir;
   gen: LaneGen;
   onExit: () => void;
+  onNavigate: (path: string[]) => void;
 }) {
   const stages = stagesFor(dir);
   const [i, setI] = useState(0);
@@ -40,6 +43,10 @@ export default function Stepper({
 
   const atEnd = clamped === stages.length - 1;
 
+  const linkId = STAGE_LINKS[st.id];
+  const linkPath = linkId ? pathTo(linkId) : null;
+  const linkName = linkPath ? nodeAt(linkPath)?.name : null;
+
   return (
     <div className="stepper-shell">
       <StepperMiniStack blockId={st.block} dir={dir} />
@@ -59,6 +66,14 @@ export default function Stepper({
 
         <div className="stepper__num">{st.count(rate, gen)}</div>
         <div className="stepper__note">{st.note}</div>
+
+        {linkPath && linkName ? (
+          <div className="stepper__more">
+            <button className="link-arrow" onClick={() => onNavigate(linkPath)}>
+              Read more: {linkName} <span aria-hidden="true">→</span>
+            </button>
+          </div>
+        ) : null}
 
         <div className="stepper__nav">
           <button className="btn" onClick={() => setI(Math.max(0, clamped - 1))} disabled={clamped === 0}>

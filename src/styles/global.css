@@ -431,20 +431,23 @@ svg g[role="button"]:focus-visible rect {
 }
 .col-step {
   width: 100%;
-  max-width: 760px;
+  max-width: 1040px;
   margin: 0 auto;
-  padding: 26px 26px 64px;
+  padding: 28px 26px 64px;
 }
-/* intro fills the column so its right edge lines up with the stepper below */
+/* intro reads as a centred lead above the wide interactive stepper */
 .col-step .prose {
-  max-width: none;
+  max-width: 84ch;
+  margin-left: auto;
+  margin-right: auto;
 }
-/* the diagram and its note fill the stepper card */
+/* the diagram fills the (now large) card so its labels are legible; the note
+   stays at a readable measure */
 .col-step .stepper .svg-canvas {
   max-width: none;
 }
 .col-step .stepper__note {
-  max-width: none;
+  max-width: 90ch;
 }
 
 /* mini-stack rail + stepper card side by side */
@@ -482,9 +485,9 @@ svg g[role="button"]:focus-visible rect {
 .ministack__block {
   position: relative;
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 13px;
   text-align: center;
-  padding: 8px 6px;
+  padding: 9px 6px;
   border: 1px solid var(--rule);
   border-radius: 7px;
   color: var(--dim);
@@ -889,16 +892,16 @@ svg g[role="button"]:focus-visible rect {
   display: flex;
   align-items: baseline;
   gap: 12px;
-  padding: 15px 18px 0;
+  padding: 16px 20px 0;
   flex-wrap: wrap;
 }
 .stepper__count {
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 13px;
   color: var(--signal);
 }
 .stepper__title {
-  font-size: 17px;
+  font-size: 19px;
   font-weight: 600;
 }
 .stepper__meta {
@@ -908,7 +911,7 @@ svg g[role="button"]:focus-visible rect {
   margin-left: auto;
 }
 .stepper__art {
-  padding: 10px 18px 0;
+  padding: 12px 20px 0;
 }
 .stepper__figure {
   animation: stage-in 0.32s var(--ease);
@@ -924,23 +927,47 @@ svg g[role="button"]:focus-visible rect {
   }
 }
 .stepper__num {
-  padding: 6px 18px 0;
+  padding: 8px 20px 0;
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 13px;
   color: var(--signal);
 }
 .stepper__note {
-  padding: 8px 18px 16px;
-  font-size: 14.5px;
+  padding: 8px 20px 14px;
+  font-size: 15.5px;
   color: var(--dim);
   max-width: 70ch;
-  line-height: 1.62;
+  line-height: 1.64;
+}
+.stepper__more {
+  padding: 0 20px 14px;
+}
+.link-arrow {
+  font: inherit;
+  font-size: 13.5px;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  color: var(--signal);
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.15s var(--ease);
+}
+.link-arrow:hover {
+  border-bottom-color: var(--signal);
+}
+.link-arrow span {
+  display: inline-block;
+  transition: transform 0.15s var(--ease);
+}
+.link-arrow:hover span {
+  transform: translateX(3px);
 }
 .stepper__nav {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 0 18px 16px;
+  padding: 0 20px 18px;
   flex-wrap: wrap;
 }
 .stepper__ticks {

@@ -158,3 +158,25 @@ export const RX_STAGES: Stage[] = [
 export function stagesFor(dir: Dir): Stage[] {
   return dir === "rx" ? RX_STAGES : STAGES;
 }
+
+/** Which reference page each stage opens ("read more"), keyed by stage id. */
+export const STAGE_LINKS: Record<string, string> = {
+  frame: "mac-frame",
+  encode: "pcs-6466",
+  transcode: "pcs-257",
+  scramble: "pcs-scramble",
+  am: "pcs-am",
+  fec: "fec-cw",
+  stripe: "fec-interleave",
+  serialise: "pma",
+  pam4: "pmd",
+  "rx-pam4": "pmd",
+  "rx-serialise": "pma",
+  "rx-align": "pcs-lock",
+  "rx-fec": "fec-decode",
+  "rx-am": "pcs-am",
+  "rx-descramble": "pcs-scramble",
+  "rx-transcode": "pcs-257",
+  "rx-decode": "pcs-6466",
+  "rx-frame": "mac-frame",
+};
