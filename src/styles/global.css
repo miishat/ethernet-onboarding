@@ -163,7 +163,42 @@ svg g[role="button"]:focus-visible rect {
   margin: 3px 0 0;
   font-size: 13px;
   color: var(--dim);
-  max-width: 60ch;
+  max-width: 72ch;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.wip-tag {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+  color: var(--signal);
+  background: var(--signal-wash);
+  border: 1px solid var(--signal-dim);
+  border-radius: 999px;
+  padding: 2px 9px 2px 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.wip-tag::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--signal);
+  animation: wip-pulse 2s var(--ease) infinite;
+}
+@keyframes wip-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
 }
 .header__controls {
   display: flex;

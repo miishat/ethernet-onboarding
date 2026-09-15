@@ -28,7 +28,10 @@ export default function Header({ rate, setRate, dir, setDir, stepping, toggleSte
           </span>
           Ethernet Onboarding
         </h1>
-        <p className="header__sub">by Mishat · 400G, 800G and 1.6T, one sublayer at a time</p>
+        <p className="header__sub">
+          by Mishat · 400G, 800G and 1.6T, one sublayer at a time
+          <span className="wip-tag">content review in progress</span>
+        </p>
       </div>
 
       <div className="header__controls">
