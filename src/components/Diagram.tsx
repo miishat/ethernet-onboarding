@@ -263,7 +263,7 @@ export default function Diagram({ spec, rate, nested, constrain }: DiagramProps)
               fill={C.signal} fontSize="10" fontFamily={C.mono}>{unit}</text>);
         }
       }
-      const label = order ? "phys " + i : "lane " + i;
+      const label = order ? "phy lane " + i : "lane " + i;
       g.push(<text key={"t" + i} x={LX - 8} y={y + rh - 2} textAnchor="end" fill={bad ? C.bad : C.faint} fontSize="10" fontFamily={C.mono}>{label}</text>);
       if (order)
         g.push(<text key={"o" + i} x={LX + LW + 8} y={y + rh - 2} fill={C.signal} fontSize="10" fontFamily={C.mono}>{"carries logical " + order[i]}</text>);
@@ -292,7 +292,7 @@ export default function Diagram({ spec, rate, nested, constrain }: DiagramProps)
     for (let j = 0; j < ph; j++) {
       const y = top + j * (phh + 3);
       g.push(<rect key={"p" + j} x={PX} y={y} width={PW} height={phh} rx={2} fill={C.signalWash} stroke={C.signal} strokeWidth="0.9" />);
-      g.push(<text key={"pt" + j} x={PX + PW + 8} y={y + phh / 2 + 3} fill={C.signal} fontSize="10" fontFamily={C.mono}>{"phys " + j}</text>);
+      g.push(<text key={"pt" + j} x={PX + PW + 8} y={y + phh / 2 + 3} fill={C.signal} fontSize="10" fontFamily={C.mono}>{"phy lane " + j}</text>);
       for (let k = 0; k < per; k++) {
         const li = j * per + k;
         const ly = top + li * (rh + 3) + rh / 2;
