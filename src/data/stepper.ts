@@ -1,6 +1,6 @@
 // Auto-extracted verbatim from the original EthernetStack.jsx (LANES/STAGES).
 /* eslint-disable */
-import type { Rate, LaneInfo, Stage } from "../types";
+import type { Rate, Dir, LaneInfo, Stage } from "../types";
 
 export const LANES: Record<Rate, LaneInfo> = {
   "400G": { pcs: 16, phys: 4, laneRate: "106.25 Gb/s", baud: "53.125 GBd" },
@@ -62,7 +62,77 @@ export const STAGES: Stage[] = [
   {
     id: "pam4", block: "pmd", title: "Sent as PAM4 symbols",
     shape: "pam4",
-    note: "Two bits per symbol, four amplitude levels. Half the baud rate of NRZ for the same throughput, at the cost of roughly a third of the eye opening per level.",
+    note: "Two bits per symbol, four amplitude levels. Half the baud rate of NRZ for the same throughput, at the cost of roughly a third of the eye opening per level. Switch to RX to watch the receiver undo every step and repair the errors the channel adds.",
     count: (r: Rate) => LANES[r].baud + " per lane",
   },
 ];
+
+/* ===========================================================================
+   RX — the receive path, in reverse. This is where FEC actually earns its
+   parity: errors born in the channel are corrected here.
+   =========================================================================== */
+export const RX_STAGES: Stage[] = [
+  {
+    id: "rx-pam4", block: "pmd", title: "PAM4 symbols arrive",
+    shape: "pam4",
+    note: "The slicer decides which of four levels each symbol is and recovers two bits from each. Channel loss and noise have closed the eye, so this is where raw bit errors are born.",
+    count: (r: Rate) => LANES[r].baud + " per lane",
+  },
+  {
+    id: "rx-serialise", block: "pma", title: "Physical lanes recovered",
+    shape: "phys",
+    note: "Clock and data recovery locks to each physical lane and hands the logical lanes back up. The PMA undoes the fold it made on transmit.",
+    count: (r: Rate) => LANES[r].phys + " physical lanes at " + LANES[r].laneRate,
+  },
+  {
+    id: "rx-align", block: "pcs", title: "Lanes deskewed and reordered",
+    shape: "lanes",
+    note: "Each lane locks to its alignment markers, announces its identity, and is delayed into alignment with the others. Skew and reordering the medium introduced are undone here, before any decoding.",
+    count: (r: Rate) => (r === "1.6T"
+      ? "symbol demultiplexed in the PMA (Clause 176)"
+      : (LANES[r].pcs ? LANES[r].pcs + " PCS lanes realigned" : "lanes realigned")),
+  },
+  {
+    id: "rx-fec", block: "fec", title: "Errors corrected",
+    shape: "correct",
+    note: "The payoff. The Reed-Solomon decoder repairs up to fifteen damaged symbols per codeword. Beyond fifteen the codeword is uncorrectable, and both interleaved codewords are marked as errors for the layers above.",
+    count: (r: Rate) => (r === "1.6T"
+      ? "inner Hamming, then RS(544,514) outer"
+      : "RS(544,514), up to 15 symbols repaired"),
+  },
+  {
+    id: "rx-am", block: "pcs", title: "Alignment markers removed",
+    shape: "marker",
+    note: "With deskew and correction done, the markers have served their purpose and are stripped out, restoring the original block stream.",
+    count: (_r: Rate) => "one marker per lane removed",
+  },
+  {
+    id: "rx-descramble", block: "pcs", title: "Descrambled",
+    shape: "scrambled",
+    note: "The same self-synchronous shift register, run in reverse, recovers the original bits. A single line error smears into a few bits here, which is why the error-marking rules account for it.",
+    count: (_r: Rate) => "x^58 + x^39 + 1, reversed",
+  },
+  {
+    id: "rx-transcode", block: "pcs", title: "One block becomes four",
+    shape: "block257",
+    note: "The 257-bit block is expanded back into four 66-bit blocks. A single flag bit says whether all four were data blocks, which is the common case.",
+    count: (_r: Rate) => "257 bits in, 264 out",
+  },
+  {
+    id: "rx-decode", block: "pcs", title: "Blocks decoded",
+    shape: "block66",
+    note: "Each block's two-bit sync header is checked and the sixty-four bits of payload are read out. Persistent illegal headers cost block lock rather than being accepted.",
+    count: (_r: Rate) => "64 bits of payload per block",
+  },
+  {
+    id: "rx-frame", block: "mac", title: "Frame delivered to the MAC",
+    shape: "octets",
+    note: "The octets are reassembled and the frame check sequence is verified. A frame whose FCS fails is dropped, never delivered corrupted - which is the whole point of everything below it.",
+    count: (_r: Rate) => "FCS checked, corrupted frames dropped",
+  },
+];
+
+/** The stage list for a direction: TX descends the stack, RX climbs it. */
+export function stagesFor(dir: Dir): Stage[] {
+  return dir === "rx" ? RX_STAGES : STAGES;
+}

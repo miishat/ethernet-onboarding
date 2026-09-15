@@ -73,6 +73,31 @@ export default function StageArt({ stage, rate }: { stage: Stage; rate: Rate }) 
     cells.push(<text key="st" x={20} y={46} fill={C.faint} fontSize="10" fontFamily={C.mono}>one symbol = 10 bits; damage is counted in symbols</text>);
   }
 
+  if (s === "correct") {
+    const n = 34;
+    const dam = [3, 7, 8, 19, 26, 30];
+    const cw = 580 / n;
+    const y = 30, bh = 34;
+    for (let i = 0; i < n; i++) {
+      const isDam = dam.indexOf(i) >= 0;
+      const isPar = i >= n - 4;
+      cells.push(<rect key={"c" + i} x={20 + i * cw} y={y} width={cw - 2} height={bh} rx={1.5}
+        fill={isDam ? C.badWash : isPar ? C.signalWash : C.ink3}
+        stroke={isDam ? C.bad : isPar ? C.signal : C.rule} strokeWidth={isDam ? 1.3 : 0.8} />);
+      if (isDam)
+        cells.push(<text key={"x" + i} x={20 + i * cw + (cw - 2) / 2} y={y + bh / 2 + 4} textAnchor="middle" fill={C.bad} fontSize="11" fontFamily={C.mono}>{"×"}</text>);
+    }
+    cells.push(<text key="rl" x={20} y={y - 6} fill={C.faint} fontSize="10" fontFamily={C.mono}>received codeword — {dam.length} symbols damaged in the channel</text>);
+    /* the fifteen-symbol correction budget */
+    const my = y + bh + 20, mw = 13;
+    for (let k = 0; k < 15; k++)
+      cells.push(<rect key={"m" + k} x={20 + k * (mw + 4)} y={my} width={mw} height={12} rx={2}
+        fill={k < dam.length ? C.signal : "none"} stroke={k < dam.length ? C.signal : C.rule} strokeWidth="0.9" />);
+    cells.push(<text key="mt" x={20 + 15 * (mw + 4) + 12} y={my + 10} fill={C.good} fontSize="11" fontFamily={C.mono}>
+      {dam.length + " of 15 spent — codeword recovered"}</text>);
+    cells.push(<text key="bt" x={20} y={my + 34} fill={C.faint} fontSize="10" fontFamily={C.mono}>every damaged symbol repaired; the frame above never sees the errors</text>);
+  }
+
   if (s === "lanes" || s === "phys") {
     const n = (s === "lanes" ? LANES[rate].pcs : LANES[rate].phys) || LANES[rate].phys;
     const rows = Math.min(n, 16);

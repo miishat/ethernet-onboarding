@@ -103,7 +103,7 @@ export default function App() {
         <main className="main main--step">
           <section className="col-step panel-anim">
             <StepperSidePanel />
-            <Stepper rate={rate} onExit={() => setStepping(false)} />
+            <Stepper rate={rate} dir={dir} onExit={() => setStepping(false)} />
           </section>
         </main>
       ) : (
@@ -165,6 +165,10 @@ function StepperSidePanel() {
           Each step shows the payload in the shape it takes at that sublayer, with the arithmetic for the current rate. Use the
           <strong> Next</strong> and <strong>Back</strong> controls, the progress ticks, or the <strong>← →</strong> arrow keys.
           Switch the rate in the header to see the lane counts and baud change under the same block structure.
+        </p>
+        <p>
+          Switch <strong>direction</strong> to <strong>RX</strong> to run it the other way - the receiver undoing each stage and, at
+          the FEC step, repairing the errors the channel introduced. That correction is the reason the parity was added on the way down.
         </p>
       </div>
     </div>
