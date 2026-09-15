@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import type { Rate, DiagramSpec } from "../types";
 import { useC, useZones } from "../theme/ThemeContext";
-import { estWidth, fitProps } from "./fit";
+import { estWidth } from "./fit";
 
 /* a fixed, non-identity arrival order, so the reorder diagram is stable */
 function shuffleOrder(n: number): number[] {
@@ -144,15 +144,32 @@ export default function Diagram({ spec, rate, nested, constrain }: DiagramProps)
       g.push(<text key="rend" x={X0 + SPAN} y={y - 19} textAnchor="end" fill={C.dim} fontSize="10.5" fontFamily={C.mono}>{total + " bits"}</text>);
     }
 
-    let belowUsed = false;
+    /* Below-label packer: labels that do not fit inside their field are placed on
+       leader lines below, packed into as many rows as needed so they never
+       overlap or clip the edges (handles dense clusters of narrow fields). */
+    const belowY0 = y + bh + 16;
+    const rowH = 14;
+    const rowFreeX: number[] = [];
+    const placeBelow = (cx: number, text: string, accent?: boolean) => {
+      const wLbl = estWidth(text, 10, true);
+      const left = Math.min(Math.max(X0, cx - wLbl / 2), X0 + SPAN - wLbl);
+      let row = 0;
+      while (row < rowFreeX.length && rowFreeX[row] > left - 4) row++;
+      if (row === rowFreeX.length) rowFreeX.push(0);
+      rowFreeX[row] = left + wLbl + 10;
+      const rowY = belowY0 + row * rowH;
+      const lblCx = left + wLbl / 2;
+      g.push(<line key={"ll" + belowY0 + text} x1={cx} y1={y + bh + 2} x2={lblCx} y2={rowY - 8} stroke={C.rule} strokeWidth="0.7" />);
+      g.push(<text key={"lt" + belowY0 + text} x={lblCx} y={rowY} textAnchor="middle" fill={accent ? C.signal : C.faint} fontSize="10" fontFamily={C.mono}>{text}</text>);
+    };
+
     fields.forEach((f, i) => {
       const w = (f.w / total) * SPAN;
       const fill = f.accent ? C.signalWash : f.alt ? C.altFill : C.ink3;
       const stroke = f.accent ? C.signal : f.alt ? C.altStroke : C.rule;
       g.push(<rect key={"r" + i} x={x} y={y} width={Math.max(w - 1.5, 1)} height={bh} rx={2} fill={fill} stroke={stroke} strokeWidth="1" />);
       const cx = x + w / 2;
-      /* a label sits inside only if it genuinely fits; otherwise it drops below on
-         a leader rather than being squashed to fit a narrow field */
+      /* a label sits inside only if it genuinely fits; otherwise it drops below */
       const labelInside = w > 44 && estWidth(f.label, 11, true) <= w - 8;
       if (labelInside) {
         const noteW = f.note ? estWidth(f.note, 10, true) : 0;
@@ -163,28 +180,16 @@ export default function Diagram({ spec, rate, nested, constrain }: DiagramProps)
           if (noteInside) {
             g.push(<text key={"n" + i} x={cx} y={y + bh / 2 + 15} textAnchor="middle" fill={C.faint} fontSize="10" fontFamily={C.mono}>{f.note}</text>);
           } else {
-            belowUsed = true;
-            const nx = Math.min(Math.max(X0, x), X0 + SPAN - noteW);
-            const ny = y + bh + 26;
-            g.push(<line key={"nl" + i} x1={cx} y1={y + bh + 2} x2={cx} y2={ny - 9} stroke={C.rule} strokeWidth="0.7" />);
-            g.push(<line key={"nl2" + i} x1={cx} y1={ny - 9} x2={nx + 3} y2={ny - 9} stroke={C.rule} strokeWidth="0.7" />);
-            g.push(<text key={"n" + i} x={nx} y={ny} fill={C.faint} fontSize="10" fontFamily={C.mono}>{f.note}</text>);
+            placeBelow(cx, f.note, f.accent);
           }
         }
       } else {
-        belowUsed = true;
-        const ly = i % 2 === 0 ? y + bh + 18 : y + bh + 34;
-        g.push(<line key={"l" + i} x1={cx} y1={y + bh + 2} x2={cx} y2={ly - 9} stroke={C.rule} strokeWidth="0.7" />);
-        g.push(<text key={"t" + i} x={cx} y={ly} textAnchor="middle"
-          fill={f.accent ? C.signal : C.faint} fontSize="10.5" fontFamily={C.mono}
-          {...fitProps(f.label, 10.5, SPAN, true)}>{f.label}</text>);
-        if (f.note && !compact) {
-          g.push(<text key={"n" + i} x={cx} y={ly + 13} textAnchor="middle" fill={C.faint} fontSize="9.5" fontFamily={C.mono}>{f.note}</text>);
-        }
+        const text = f.note && !compact ? f.label + " - " + f.note : f.label;
+        placeBelow(cx, text, f.accent);
       }
       x += w;
     });
-    H = (spec.ruler ? 46 : 26) + (compact ? 34 : 48) + (belowUsed ? 52 : 18);
+    H = (spec.ruler ? 46 : 26) + (compact ? 34 : 48) + (rowFreeX.length ? rowFreeX.length * rowH + 14 : 16);
   }
 
   /* -------------------------------------------------------------- symbols */
