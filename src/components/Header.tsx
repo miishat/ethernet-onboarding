@@ -1,4 +1,4 @@
-import type { Rate, Dir } from "../types";
+import type { Rate, Dir, LaneGen } from "../types";
 import { RATES } from "../data/stack";
 import Segmented from "./Segmented";
 import ThemeToggle from "./ThemeToggle";
@@ -9,13 +9,15 @@ interface Props {
   setRate: (r: Rate) => void;
   dir: Dir;
   setDir: (d: Dir) => void;
+  gen: LaneGen;
+  setGen: (g: LaneGen) => void;
   stepping: boolean;
   toggleStep: () => void;
   read: number;
   total: number;
 }
 
-export default function Header({ rate, setRate, dir, setDir, stepping, toggleStep, read, total }: Props) {
+export default function Header({ rate, setRate, dir, setDir, gen, setGen, stepping, toggleStep, read, total }: Props) {
   return (
     <header className="header">
       <div className="header__inner">
@@ -55,6 +57,18 @@ export default function Header({ rate, setRate, dir, setDir, stepping, toggleSte
             value={dir}
             onPick={setDir}
             ariaLabel="Direction"
+          />
+        </div>
+        <div>
+          <div className="control-label">Per lane</div>
+          <Segmented<LaneGen>
+            options={[
+              { label: "100G", value: "100" },
+              { label: "200G", value: "200" },
+            ]}
+            value={gen}
+            onPick={setGen}
+            ariaLabel="Per-lane signalling rate"
           />
         </div>
         <div>

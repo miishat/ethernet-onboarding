@@ -1,6 +1,6 @@
 import React from "react";
-import type { Rate, Stage } from "../types";
-import { LANES } from "../data/stepper";
+import type { Rate, LaneGen, Stage } from "../types";
+import { laneInfo, PCS_LANES } from "../data/stepper";
 import { useC } from "../theme/ThemeContext";
 
 /* deterministic pseudo-random for the scrambled look, so it does not flicker */
@@ -9,7 +9,7 @@ function prand(i: number): number {
   return x - Math.floor(x);
 }
 
-export default function StageArt({ stage, rate }: { stage: Stage; rate: Rate }) {
+export default function StageArt({ stage, rate, gen }: { stage: Stage; rate: Rate; gen: LaneGen }) {
   const C = useC();
   const W = 620;
   let H = 150;
@@ -99,7 +99,7 @@ export default function StageArt({ stage, rate }: { stage: Stage; rate: Rate }) 
   }
 
   if (s === "lanes" || s === "phys") {
-    const n = (s === "lanes" ? LANES[rate].pcs : LANES[rate].phys) || LANES[rate].phys;
+    const n = (s === "lanes" ? PCS_LANES[rate] : laneInfo(rate, gen).phys) || laneInfo(rate, gen).phys;
     const rows = Math.min(n, 16);
     const top = 28;
     /* comfortable, legible row height; the canvas grows to fit rather than clipping */

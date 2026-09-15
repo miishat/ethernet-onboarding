@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import type { Rate, Dir } from "./types";
+import type { Rate, Dir, LaneGen } from "./types";
 import { DATA } from "./data/stack";
 import { nodeAt, kidsOf, descendantIds, TRACKABLE } from "./data/tree";
 import Header from "./components/Header";
@@ -12,6 +12,7 @@ import Stepper from "./components/Stepper";
 export default function App() {
   const [rate, setRate] = useState<Rate>("400G");
   const [dir, setDir] = useState<Dir>("tx");
+  const [gen, setGen] = useState<LaneGen>("100");
   const [path, setPath] = useState<string[]>([]);
   const [visited, setVisited] = useState<Set<string>>(() => new Set());
   const [stepping, setStepping] = useState(false);
@@ -93,6 +94,8 @@ export default function App() {
         setRate={setRate}
         dir={dir}
         setDir={changeDir}
+        gen={gen}
+        setGen={setGen}
         stepping={stepping}
         toggleStep={() => setStepping((s) => !s)}
         read={visited.size}
@@ -103,7 +106,7 @@ export default function App() {
         <main className="main main--step">
           <section className="col-step panel-anim">
             <StepperSidePanel />
-            <Stepper rate={rate} dir={dir} onExit={() => setStepping(false)} />
+            <Stepper rate={rate} dir={dir} gen={gen} onExit={() => setStepping(false)} />
           </section>
         </main>
       ) : (
@@ -126,7 +129,7 @@ export default function App() {
                   litId={litId}
                 />
               ) : (
-                <StackCanvas rate={rate} dir={dir} onOpen={openTop} complete={complete} />
+                <StackCanvas rate={rate} dir={dir} gen={gen} onOpen={openTop} complete={complete} />
               )}
             </div>
           </section>

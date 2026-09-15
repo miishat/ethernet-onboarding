@@ -3,6 +3,8 @@
 export type Rate = "400G" | "800G" | "1.6T";
 export type Dir = "tx" | "rx" | "both";
 export type ThemeName = "dark" | "light";
+/** Per-lane signalling generation: 100 = 100G/lane (53.125 GBd), 200 = 200G/lane (106.25 GBd). */
+export type LaneGen = "100" | "200";
 
 /** A value that may be given per rate, or as `all` for a rate-independent value. */
 export type RateMap<T> = Partial<Record<Rate, T>> & { all?: T };
@@ -50,7 +52,14 @@ export interface Stage {
   title: string;
   shape: string;
   note: string;
-  count: (r: Rate) => string;
+  count: (r: Rate, gen: LaneGen) => string;
+}
+
+/** Physical-lane facts for one rate at one per-lane generation. */
+export interface LanePhys {
+  phys: number;
+  laneRate: string;
+  baud: string;
 }
 
 export interface LaneInfo {

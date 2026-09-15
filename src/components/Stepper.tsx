@@ -1,11 +1,21 @@
 import { useEffect, useState } from "react";
-import type { Rate, Dir } from "../types";
+import type { Rate, Dir, LaneGen } from "../types";
 import { stagesFor } from "../data/stepper";
 import { DATA } from "../data/stack";
 import StageArt from "./StageArt";
 import StepperMiniStack from "./StepperMiniStack";
 
-export default function Stepper({ rate, dir, onExit }: { rate: Rate; dir: Dir; onExit: () => void }) {
+export default function Stepper({
+  rate,
+  dir,
+  gen,
+  onExit,
+}: {
+  rate: Rate;
+  dir: Dir;
+  gen: LaneGen;
+  onExit: () => void;
+}) {
   const stages = stagesFor(dir);
   const [i, setI] = useState(0);
 
@@ -43,11 +53,11 @@ export default function Stepper({ rate, dir, onExit }: { rate: Rate; dir: Dir; o
 
         <div className="stepper__art">
           <div className="stepper__figure" key={st.id}>
-            <StageArt stage={st} rate={rate} />
+            <StageArt stage={st} rate={rate} gen={gen} />
           </div>
         </div>
 
-        <div className="stepper__num">{st.count(rate)}</div>
+        <div className="stepper__num">{st.count(rate, gen)}</div>
         <div className="stepper__note">{st.note}</div>
 
         <div className="stepper__nav">

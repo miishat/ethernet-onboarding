@@ -1,28 +1,27 @@
 import React from "react";
-import type { Rate, Dir } from "../types";
+import type { Rate, Dir, LaneGen } from "../types";
 import { DATA, CORE, IFACE, ASIDE } from "../data/stack";
-import { LANES } from "../data/stepper";
+import { laneInfo, PCS_LANES } from "../data/stepper";
 import { pick } from "../data/tree";
 import { useC, useZones } from "../theme/ThemeContext";
 import { estWidth, fitProps } from "./fit";
 
 /* lane count annotated on the connectors between sublayers */
-function laneLabel(id: string, rate: Rate): string | null {
-  const L = LANES[rate];
-  if (!L) return null;
-  if (id === "pcs" || id === "fec") return L.pcs ? L.pcs + " PCS lanes" : null;
-  if (id === "pma" || id === "pmd") return L.phys + " physical lanes";
+function laneLabel(id: string, rate: Rate, gen: LaneGen): string | null {
+  if (id === "pcs" || id === "fec") return PCS_LANES[rate] ? PCS_LANES[rate] + " PCS lanes" : null;
+  if (id === "pma" || id === "pmd") return laneInfo(rate, gen).phys + " physical lanes";
   return null;
 }
 
 interface Props {
   rate: Rate;
   dir: Dir;
+  gen: LaneGen;
   onOpen: (id: string) => void;
   complete: (id: string) => boolean;
 }
 
-export default function StackCanvas({ rate, dir, onOpen, complete }: Props) {
+export default function StackCanvas({ rate, dir, gen, onOpen, complete }: Props) {
   const C = useC();
   const ZONES = useZones();
   const order = dir === "tx" ? CORE : CORE.slice().reverse();
@@ -86,7 +85,7 @@ export default function StackCanvas({ rate, dir, onOpen, complete }: Props) {
       {order.slice(0, -1).map((id, i) => {
         const y = yOf[id] + BH;
         const x = BX + BW / 2;
-        const ll = laneLabel(order[i + 1], rate);
+        const ll = laneLabel(order[i + 1], rate, gen);
         return (
           <g key={"c" + id}>
             <line x1={x} y1={y} x2={x} y2={y + GAP - 7} stroke={C.rule} strokeWidth="1" />
