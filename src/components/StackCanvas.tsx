@@ -72,14 +72,14 @@ export default function StackCanvas({ rate, dir, onOpen, complete }: Props) {
         <g key={b.z}>
           <rect x={BAND_X} y={b.top} width={BAND_W} height={b.bot - b.top} rx={6}
             fill={ZONES[b.z].fill} stroke={ZONES[b.z].hue} strokeWidth="1" />
-          <text x={GUTTER_X} y={(b.top + b.bot) / 2} fill={C.faint} fontSize="10" fontFamily={C.mono}
+          <text x={GUTTER_X} y={(b.top + b.bot) / 2} fill={C.faint} fontSize="11" fontFamily={C.mono}
             textAnchor="middle" transform={"rotate(-90 " + GUTTER_X + " " + (b.top + b.bot) / 2 + ")"}>
             {ZONES[b.z].label}
           </text>
         </g>
       ))}
 
-      <text x={BX} y={30} fill={C.faint} fontSize="11" fontFamily={C.mono}>
+      <text x={BX} y={30} fill={C.faint} fontSize="12" fontFamily={C.mono}>
         {dir === "tx" ? "transmit - MAC to medium" : "receive - medium to MAC"}
       </text>
 
@@ -94,7 +94,7 @@ export default function StackCanvas({ rate, dir, onOpen, complete }: Props) {
             {ll ? (
               <g>
                 <line x1={x + 4} y1={y + GAP / 2} x2={x + 14} y2={y + GAP / 2} stroke={C.ruleSoft} strokeWidth="0.8" />
-                <text x={x + 19} y={y + GAP / 2 + 4} fill={C.dim} fontSize="10.5" fontFamily={C.mono}>{ll}</text>
+                <text x={x + 19} y={y + GAP / 2 + 4} fill={C.dim} fontSize="11.5" fontFamily={C.mono}>{ll}</text>
               </g>
             ) : null}
           </g>
@@ -107,48 +107,48 @@ export default function StackCanvas({ rate, dir, onOpen, complete }: Props) {
         const face = pick(n.face, rate);
         const cl = pick(n.clause, rate) || "";
         const isDraft = /draft/i.test(cl);
-        const faceW = face ? estWidth(face, 11.5, true) : 0;
+        const faceW = face ? estWidth(face, 12.5, true) : 0;
         const nameMax = BW - 28 - (faceW ? faceW + 12 : 0);
-        const clauseMax = BW - 28 - (complete(id) ? 40 : 4);
+        const clauseMax = BW - 28 - (complete(id) ? 42 : 4);
         return (
           <g key={id} className="node-block" onClick={() => onOpen(id)} tabIndex={0} role="button"
             aria-label={n.name} onKeyDown={(e) => openKey(e, id)}>
             <rect x={BX} y={y} width={BW} height={BH} rx={6} fill={C.ink3} stroke={ZONES[n.zone!].hue} strokeWidth="1.2" />
-            <text className="nb-title" x={BX + 14} y={y + 25} fill={C.text} fontSize="15" fontWeight="600"
-              {...fitProps(n.name, 15, nameMax, false)}>{n.name}</text>
-            <text x={BX + 14} y={y + 44} fill={C.faint} fontSize="10" fontFamily={C.mono}
-              {...fitProps(cl, 10, clauseMax, true)}>{cl}</text>
+            <text className="nb-title" x={BX + 14} y={y + 25} fill={C.text} fontSize="15.5" fontWeight="600"
+              {...fitProps(n.name, 15.5, nameMax, false)}>{n.name}</text>
+            <text x={BX + 14} y={y + 45} fill={C.faint} fontSize="11.5" fontFamily={C.mono}
+              {...fitProps(cl, 11.5, clauseMax, true)}>{cl}</text>
             {face ? (
-              <text x={BX + BW - 14} y={y + 25} textAnchor="end" fill={isDraft ? C.signal : C.dim} fontSize="11.5" fontFamily={C.mono}
-                {...fitProps(face, 11.5, BW / 2, true)}>{face}</text>
+              <text x={BX + BW - 14} y={y + 25} textAnchor="end" fill={isDraft ? C.signal : C.dim} fontSize="12.5" fontFamily={C.mono}
+                {...fitProps(face, 12.5, BW / 2, true)}>{face}</text>
             ) : null}
             {complete(id) ? (
-              <text x={BX + BW - 14} y={y + 44} textAnchor="end" fill={C.good} fontSize="10" fontFamily={C.mono}>read</text>
+              <text x={BX + BW - 14} y={y + 45} textAnchor="end" fill={C.good} fontSize="11" fontFamily={C.mono}>read</text>
             ) : null}
           </g>
         );
       })}
 
-      <text x={ASIDE_X} y={TOP + 2} fill={C.faint} fontSize="10" fontFamily={C.mono}>adjacent + cross-cutting</text>
+      <text x={ASIDE_X} y={TOP + 2} fill={C.faint} fontSize="11" fontFamily={C.mono}>adjacent + cross-cutting</text>
       {ASIDE.map((id, i) => {
         const y = asideTop + i * 42;
         return (
           <g key={id} className="node-block" onClick={() => onOpen(id)} tabIndex={0} role="button"
             aria-label={DATA[id].name} onKeyDown={(e) => openKey(e, id)}>
             <rect x={ASIDE_X} y={y} width={ASIDE_W} height={34} rx={6} fill={C.ink2} stroke={C.rule} strokeDasharray="3 3" />
-            <text x={ASIDE_X + 11} y={y + 22} fill={C.dim} fontSize="12.5">{DATA[id].name}</text>
+            <text x={ASIDE_X + 11} y={y + 22} fill={C.dim} fontSize="13.5">{DATA[id].name}</text>
           </g>
         );
       })}
 
-      <text x={IFACE_X} y={ifaceTop - 12} fill={C.faint} fontSize="10" fontFamily={C.mono}>electrical + modules</text>
+      <text x={IFACE_X} y={ifaceTop - 12} fill={C.faint} fontSize="11" fontFamily={C.mono}>electrical + modules</text>
       {IFACE.map((id, i) => {
         const y = ifaceTop + i * 42;
         return (
           <g key={id} className="node-block" onClick={() => onOpen(id)} tabIndex={0} role="button"
             aria-label={DATA[id].name} onKeyDown={(e) => openKey(e, id)}>
             <rect x={IFACE_X} y={y} width={IFACE_W} height={34} rx={6} fill={C.ink2} stroke={C.rule} strokeDasharray="3 3" />
-            <text x={IFACE_X + 11} y={y + 22} fill={C.dim} fontSize="12.5">{DATA[id].name}</text>
+            <text x={IFACE_X + 11} y={y + 22} fill={C.dim} fontSize="13.5">{DATA[id].name}</text>
           </g>
         );
       })}

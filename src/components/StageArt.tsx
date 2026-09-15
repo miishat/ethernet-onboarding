@@ -28,7 +28,7 @@ export default function StageArt({ stage, rate }: { stage: Stage; rate: Rate }) 
     for (let i = 0; i < 8; i++)
       cells.push(<rect key={i} x={82 + i * 66} y={55} width={60} height={40} rx={2} fill={C.ink3} stroke={C.rule} />);
     cells.push(<text key="l1" x={20} y={46} fill={C.signal} fontSize="11" fontFamily={C.mono}>sync header</text>);
-    cells.push(<text key="l2" x={82} y={46} fill={C.faint} fontSize="11" fontFamily={C.mono}>64 bits of payload</text>);
+    cells.push(<text key="l2" x={343} y={46} textAnchor="middle" fill={C.faint} fontSize="11" fontFamily={C.mono}>64 bits of payload</text>);
   }
 
   if (s === "block257") {
@@ -56,12 +56,12 @@ export default function StageArt({ stage, rate }: { stage: Stage; rate: Rate }) 
   if (s === "marker") {
     cells.push(<rect key="am" x={20} y={55} width={120} height={40} rx={2} fill={C.signalWash} stroke={C.signal} />);
     cells.push(<text key="amt" x={30} y={80} fill={C.signal} fontSize="11" fontFamily={C.mono}>AM</text>);
-    cells.push(<rect key="cm" x={62} y={61} width={34} height={28} rx={2} fill="none" stroke={C.signalDim} strokeDasharray="2 2" />);
-    cells.push(<rect key="um" x={100} y={61} width={34} height={28} rx={2} fill="none" stroke={C.signalDim} strokeDasharray="2 2" />);
+    cells.push(<rect key="cm" x={58} y={61} width={38} height={28} rx={2} fill="none" stroke={C.signalDim} strokeDasharray="2 2" />);
+    cells.push(<rect key="um" x={100} y={61} width={38} height={28} rx={2} fill="none" stroke={C.signalDim} strokeDasharray="2 2" />);
     for (let i = 0; i < 7; i++)
       cells.push(<rect key={i} x={150 + i * 66} y={55} width={60} height={40} rx={2} fill={C.ink3} stroke={C.rule} />);
-    cells.push(<text key="l1" x={62} y={110} fill={C.faint} fontSize="10" fontFamily={C.mono}>common</text>);
-    cells.push(<text key="l2" x={100} y={124} fill={C.faint} fontSize="10" fontFamily={C.mono}>unique</text>);
+    cells.push(<text key="l1" x={77} y={110} textAnchor="middle" fill={C.faint} fontSize="10" fontFamily={C.mono}>common</text>);
+    cells.push(<text key="l2" x={119} y={110} textAnchor="middle" fill={C.faint} fontSize="10" fontFamily={C.mono}>unique</text>);
   }
 
   if (s === "codeword") {

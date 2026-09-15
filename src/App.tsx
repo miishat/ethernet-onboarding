@@ -99,46 +99,43 @@ export default function App() {
         total={TRACKABLE}
       />
 
-      <main className="main">
-        <section className="col-map">
-          {stepping ? (
+      {stepping ? (
+        <main className="main main--step">
+          <section className="col-step panel-anim">
+            <StepperSidePanel />
             <Stepper rate={rate} onExit={() => setStepping(false)} />
-          ) : (
-            <>
-              <Breadcrumbs crumbs={crumbs} />
-              {node && canvasNode ? (
-                <DrillCanvas
-                  node={canvasNode}
-                  kids={canvasKids}
-                  rate={rate}
-                  dir={dir}
-                  visited={visited}
-                  onPick={(id) => {
-                    markRead(id);
-                    setPath(path.slice(0, atLeaf ? -1 : path.length).concat(id));
-                  }}
-                  zone={zone}
-                  litId={litId}
-                />
-              ) : (
-                <StackCanvas rate={rate} dir={dir} onOpen={openTop} complete={complete} />
-              )}
-            </>
-          )}
-        </section>
+          </section>
+        </main>
+      ) : (
+        <main className="main">
+          <section className="col-map">
+            <Breadcrumbs crumbs={crumbs} />
+            {node && canvasNode ? (
+              <DrillCanvas
+                node={canvasNode}
+                kids={canvasKids}
+                rate={rate}
+                dir={dir}
+                visited={visited}
+                onPick={(id) => {
+                  markRead(id);
+                  setPath(path.slice(0, atLeaf ? -1 : path.length).concat(id));
+                }}
+                zone={zone}
+                litId={litId}
+              />
+            ) : (
+              <StackCanvas rate={rate} dir={dir} onOpen={openTop} complete={complete} />
+            )}
+          </section>
 
-        <section className="col-panel">
-          {!stepping ? (
+          <section className="col-panel">
             <div className="panel-anim" key={panelKey}>
               <ContentPanel node={node} rate={rate} dir={dir} isTop={isTop} kids={kids} visited={visited} onPush={push} />
             </div>
-          ) : (
-            <div className="panel-anim" key="step-panel">
-              <StepperSidePanel />
-            </div>
-          )}
-        </section>
-      </main>
+          </section>
+        </main>
+      )}
 
       <footer className="footer">
         400G follows IEEE 802.3 Clause 119 and its PMD clauses; 800G follows 802.3df; 1.6T follows 802.3dj, still in draft at the time

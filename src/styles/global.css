@@ -348,6 +348,23 @@ svg g[role="button"]:focus-visible rect {
   padding: 22px 30px 72px;
 }
 
+/* Follow-a-frame: one centred column so the stepper uses the full width. */
+.main--step {
+  justify-content: center;
+}
+.col-step {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 26px 26px 64px;
+}
+.col-step .prose {
+  max-width: 74ch;
+}
+.col-step .stepper {
+  margin-top: 20px;
+}
+
 @media (max-width: 900px) {
   .col-map {
     position: static;
@@ -879,11 +896,17 @@ h2.panel-title {
   border: 1px solid var(--rule);
   border-radius: 14px;
   box-shadow: var(--shadow);
-  padding: 20px;
-  max-width: 1100px;
+  padding: 24px;
+  max-width: 900px;
   width: 100%;
   max-height: 90vh;
   overflow: auto;
+}
+/* keep the diagram and its caption on one shared width, centred in the card,
+   so the caption can't stop mid-card and leave a lopsided gap */
+.modal-content {
+  max-width: 760px;
+  margin: 0 auto;
 }
 
 @media (prefers-reduced-motion: reduce) {
