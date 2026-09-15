@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="An interactive instrument for learning the 400G, 800G and 1.6T Ethernet PHY stack, one sublayer at a time."
+    />
+    <title>Ethernet Onboarding</title>
+    <script>
+      // Set the theme before first paint to avoid a flash of the wrong ground.
+      (function () {
+        try {
+          var saved = localStorage.getItem("eos-theme");
+          var t =
+            saved === "light" || saved === "dark"
+              ? saved
+              : window.matchMedia &&
+                  window.matchMedia("(prefers-color-scheme: light)").matches
+                ? "light"
+                : "dark";
+          document.documentElement.setAttribute("data-theme", t);
+        } catch (e) {
+          document.documentElement.setAttribute("data-theme", "dark");
+        }
+      })();
+    </script>
+    <script type="module" crossorigin src="/ethernet-onboarding/assets/index-Dm_eD2te.js"></script>
+    <link rel="stylesheet" crossorigin href="/ethernet-onboarding/assets/index-CMD3Pgtc.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
