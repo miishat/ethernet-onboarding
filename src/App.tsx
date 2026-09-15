@@ -109,24 +109,26 @@ export default function App() {
       ) : (
         <main className="main">
           <section className="col-map">
-            <Breadcrumbs crumbs={crumbs} />
-            {node && canvasNode ? (
-              <DrillCanvas
-                node={canvasNode}
-                kids={canvasKids}
-                rate={rate}
-                dir={dir}
-                visited={visited}
-                onPick={(id) => {
-                  markRead(id);
-                  setPath(path.slice(0, atLeaf ? -1 : path.length).concat(id));
-                }}
-                zone={zone}
-                litId={litId}
-              />
-            ) : (
-              <StackCanvas rate={rate} dir={dir} onOpen={openTop} complete={complete} />
-            )}
+            <div className="map-sticky">
+              <Breadcrumbs crumbs={crumbs} />
+              {node && canvasNode ? (
+                <DrillCanvas
+                  node={canvasNode}
+                  kids={canvasKids}
+                  rate={rate}
+                  dir={dir}
+                  visited={visited}
+                  onPick={(id) => {
+                    markRead(id);
+                    setPath(path.slice(0, atLeaf ? -1 : path.length).concat(id));
+                  }}
+                  zone={zone}
+                  litId={litId}
+                />
+              ) : (
+                <StackCanvas rate={rate} dir={dir} onOpen={openTop} complete={complete} />
+              )}
+            </div>
           </section>
 
           <section className="col-panel">
@@ -139,8 +141,7 @@ export default function App() {
 
       <footer className="footer">
         400G follows IEEE 802.3 Clause 119 and its PMD clauses; 800G follows 802.3df; 1.6T follows 802.3dj, still in draft at the time
-        of writing, so anything marked draft may have moved. Content lives in <code>src/data/stack.ts</code> and diagrams in{" "}
-        <code>src/data/visuals.ts</code>.
+        of writing, so anything marked draft may have moved.
       </footer>
     </div>
   );

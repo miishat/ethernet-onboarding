@@ -187,6 +187,11 @@ svg g[role="button"]:focus-visible rect {
 .header__controls > div {
   display: flex;
   flex-direction: column;
+  align-items: center;
+}
+/* the label sits centred over its own control */
+.header__controls .control-label {
+  text-align: center;
 }
 .header__controls .seg,
 .header__controls .btn,
@@ -351,7 +356,7 @@ svg g[role="button"]:focus-visible rect {
    =========================================================================== */
 .main {
   display: flex;
-  align-items: flex-start;
+  align-items: stretch;
   flex-wrap: wrap;
   flex: 1;
 }
@@ -361,9 +366,12 @@ svg g[role="button"]:focus-visible rect {
   max-width: 760px;
   padding: 22px 26px 40px;
   border-right: 1px solid var(--rule);
+}
+/* the map is a pinned panel inside a full-height sidebar, so the space beside a
+   long article reads as sidebar, not a void */
+.map-sticky {
   position: sticky;
-  top: 66px;
-  align-self: flex-start;
+  top: 97px;
 }
 .col-panel {
   flex: 1 1 480px;
@@ -399,11 +407,13 @@ svg g[role="button"]:focus-visible rect {
 
 @media (max-width: 900px) {
   .col-map {
-    position: static;
     border-right: 0;
     border-bottom: 1px solid var(--rule);
     max-width: none;
     width: 100%;
+  }
+  .map-sticky {
+    position: static;
   }
   .col-panel {
     max-width: none;
