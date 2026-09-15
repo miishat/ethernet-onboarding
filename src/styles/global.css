@@ -435,11 +435,14 @@ svg g[role="button"]:focus-visible rect {
   margin: 0 auto;
   padding: 28px 26px 64px;
 }
-/* intro is a left-aligned lead, sharing the stepper's left edge, with clear
-   separation before the interactive card */
+/* intro spans the full section width (same as the stepper below it) so the top
+   doesn't read as empty, with clear separation before the interactive card */
 .col-step .prose {
-  max-width: 82ch;
-  margin: 0 0 30px;
+  max-width: none;
+  margin: 0 0 40px;
+}
+.col-step .prose p {
+  max-width: none;
 }
 /* the diagram fills the (now large) card so its labels are legible; the note
    stays at a readable measure */
