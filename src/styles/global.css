@@ -632,6 +632,19 @@ svg g[role="button"]:focus-visible rect {
   max-width: 68ch;
   line-height: 1.68;
 }
+.prose strong {
+  font-weight: 600;
+  color: var(--text);
+}
+.inline-code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  background: color-mix(in srgb, var(--signal) 10%, transparent);
+  border: 1px solid var(--rule-soft);
+  border-radius: 4px;
+  padding: 0.5px 5px;
+  color: var(--text);
+}
 .term {
   font: inherit;
   background: none;
