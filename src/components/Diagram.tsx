@@ -144,41 +144,47 @@ export default function Diagram({ spec, rate, nested, constrain }: DiagramProps)
       g.push(<text key="rend" x={X0 + SPAN} y={y - 19} textAnchor="end" fill={C.dim} fontSize="10.5" fontFamily={C.mono}>{total + " bits"}</text>);
     }
 
-    let noteBelow = false;
+    let belowUsed = false;
     fields.forEach((f, i) => {
       const w = (f.w / total) * SPAN;
       const fill = f.accent ? C.signalWash : f.alt ? C.altFill : C.ink3;
       const stroke = f.accent ? C.signal : f.alt ? C.altStroke : C.rule;
       g.push(<rect key={"r" + i} x={x} y={y} width={Math.max(w - 1.5, 1)} height={bh} rx={2} fill={fill} stroke={stroke} strokeWidth="1" />);
-      if (w > 44) {
+      const cx = x + w / 2;
+      /* a label sits inside only if it genuinely fits; otherwise it drops below on
+         a leader rather than being squashed to fit a narrow field */
+      const labelInside = w > 44 && estWidth(f.label, 11, true) <= w - 8;
+      if (labelInside) {
         const noteW = f.note ? estWidth(f.note, 10, true) : 0;
         const noteInside = !!f.note && !compact && noteW <= w - 8;
-        g.push(<text key={"t" + i} x={x + w / 2} y={y + (noteInside ? bh / 2 : bh / 2 + 4)} textAnchor="middle"
-          fill={f.accent ? C.signal : C.dim} fontSize="11" fontFamily={C.mono}
-          {...fitProps(f.label, 11, w - 8, true)}>{f.label}</text>);
+        g.push(<text key={"t" + i} x={cx} y={y + (noteInside ? bh / 2 : bh / 2 + 4)} textAnchor="middle"
+          fill={f.accent ? C.signal : C.dim} fontSize="11" fontFamily={C.mono}>{f.label}</text>);
         if (f.note && !compact) {
           if (noteInside) {
-            g.push(<text key={"n" + i} x={x + w / 2} y={y + bh / 2 + 15} textAnchor="middle" fill={C.faint} fontSize="10" fontFamily={C.mono}>{f.note}</text>);
+            g.push(<text key={"n" + i} x={cx} y={y + bh / 2 + 15} textAnchor="middle" fill={C.faint} fontSize="10" fontFamily={C.mono}>{f.note}</text>);
           } else {
-            /* too wide to sit inside: drop below with a leader, left-aligned, clamped in-bounds */
-            noteBelow = true;
+            belowUsed = true;
             const nx = Math.min(Math.max(X0, x), X0 + SPAN - noteW);
             const ny = y + bh + 26;
-            g.push(<line key={"nl" + i} x1={x + w / 2} y1={y + bh + 2} x2={x + w / 2} y2={ny - 9} stroke={C.rule} strokeWidth="0.7" />);
-            g.push(<line key={"nl2" + i} x1={x + w / 2} y1={ny - 9} x2={nx + 3} y2={ny - 9} stroke={C.rule} strokeWidth="0.7" />);
+            g.push(<line key={"nl" + i} x1={cx} y1={y + bh + 2} x2={cx} y2={ny - 9} stroke={C.rule} strokeWidth="0.7" />);
+            g.push(<line key={"nl2" + i} x1={cx} y1={ny - 9} x2={nx + 3} y2={ny - 9} stroke={C.rule} strokeWidth="0.7" />);
             g.push(<text key={"n" + i} x={nx} y={ny} fill={C.faint} fontSize="10" fontFamily={C.mono}>{f.note}</text>);
           }
         }
       } else {
-        const ly = i % 2 === 0 ? y + bh + 17 : y + bh + 32;
-        g.push(<line key={"l" + i} x1={x + w / 2} y1={y + bh + 2} x2={x + w / 2} y2={ly - 9} stroke={C.rule} strokeWidth="0.7" />);
-        g.push(<text key={"t" + i} x={x + w / 2} y={ly} textAnchor="middle"
+        belowUsed = true;
+        const ly = i % 2 === 0 ? y + bh + 18 : y + bh + 34;
+        g.push(<line key={"l" + i} x1={cx} y1={y + bh + 2} x2={cx} y2={ly - 9} stroke={C.rule} strokeWidth="0.7" />);
+        g.push(<text key={"t" + i} x={cx} y={ly} textAnchor="middle"
           fill={f.accent ? C.signal : C.faint} fontSize="10.5" fontFamily={C.mono}
-          {...fitProps(f.label, 10.5, Math.max(w + 40, 60), true)}>{f.label}</text>);
+          {...fitProps(f.label, 10.5, SPAN, true)}>{f.label}</text>);
+        if (f.note && !compact) {
+          g.push(<text key={"n" + i} x={cx} y={ly + 13} textAnchor="middle" fill={C.faint} fontSize="9.5" fontFamily={C.mono}>{f.note}</text>);
+        }
       }
       x += w;
     });
-    H = (spec.ruler ? 46 : 26) + (compact ? 34 : 48) + (noteBelow ? 48 : 44);
+    H = (spec.ruler ? 46 : 26) + (compact ? 34 : 48) + (belowUsed ? 52 : 18);
   }
 
   /* -------------------------------------------------------------- symbols */

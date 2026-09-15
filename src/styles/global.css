@@ -431,12 +431,13 @@ svg g[role="button"]:focus-visible rect {
 }
 .col-step {
   width: 100%;
-  max-width: 860px;
+  max-width: 760px;
   margin: 0 auto;
   padding: 26px 26px 64px;
 }
+/* intro fills the column so its right edge lines up with the stepper below */
 .col-step .prose {
-  max-width: 82ch;
+  max-width: none;
 }
 /* the diagram and its note fill the stepper card */
 .col-step .stepper .svg-canvas {

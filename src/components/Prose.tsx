@@ -1,6 +1,26 @@
 import React, { useState } from "react";
 
-/* Split a run of text into React nodes, honouring [[term]] links, **bold** and `code`. */
+const SUP: Record<string, string> = {
+  "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4",
+  "⁵": "5", "⁶": "6", "⁷": "7", "⁸": "8", "⁹": "9",
+  "⁻": "-",
+};
+
+/* Turn runs of Unicode superscript characters into real <sup> so they render
+   cleanly in any font (e.g. x⁵⁸ -> x<sup>58</sup>, 10⁻¹⁶ -> 10<sup>-16</sup>). */
+function withSuperscripts(text: string, keyPrefix: string): React.ReactNode[] {
+  const parts = text.split(/([⁰¹²³⁴-⁹⁻]+)/g);
+  return parts.map((b, i) => {
+    if (b && /^[⁰¹²³⁴-⁹⁻]+$/.test(b)) {
+      const norm = b.split("").map((c) => SUP[c] || c).join("");
+      return <sup key={keyPrefix + "s" + i}>{norm}</sup>;
+    }
+    return <React.Fragment key={keyPrefix + "t" + i}>{b}</React.Fragment>;
+  });
+}
+
+/* Split a run of text into React nodes, honouring [[term]] links, **bold**, `code`
+   and superscripts. */
 function inlineNodes(
   text: string,
   terms: Record<string, string> | undefined,
@@ -23,13 +43,13 @@ function inlineNodes(
       }
       return <span key={key}>{t}</span>;
     }
-    if ((m = b.match(/^\*\*([^*]+)\*\*$/))) return <strong key={key}>{m[1]}</strong>;
+    if ((m = b.match(/^\*\*([^*]+)\*\*$/))) return <strong key={key}>{withSuperscripts(m[1], key)}</strong>;
     if ((m = b.match(/^`([^`]+)`$/))) return (
       <code key={key} className="inline-code">
         {m[1]}
       </code>
     );
-    return <span key={key}>{b}</span>;
+    return <span key={key}>{withSuperscripts(b, key)}</span>;
   });
 }
 
