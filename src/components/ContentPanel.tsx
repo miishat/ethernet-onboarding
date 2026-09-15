@@ -57,8 +57,9 @@ function StartHere({ rate, dir }: { rate: Rate; dir: Dir }) {
       </table>
       <Heading>Written so far</Heading>
       <p className="prose" style={{ color: "var(--dim)", maxWidth: "68ch", lineHeight: 1.65 }}>
-        PCS and RS-FEC are complete to three levels, across all rates and both directions, with diagrams and self-checks. Every
-        other block is navigable but its pages are outlines.
+        Every block is written and navigable, across all rates and both directions. PCS and RS-FEC go deepest - three levels,
+        with diagrams and self-checks. A few sub-pages are still outlines: clock and data recovery, the copper and multimode
+        PMDs, the three medium pages, co-packaged optics, and Clause 73 autonegotiation.
       </p>
     </div>
   );
