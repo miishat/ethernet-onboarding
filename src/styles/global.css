@@ -179,6 +179,30 @@ svg g[role="button"]:focus-visible rect {
   color: var(--faint);
   margin-bottom: 6px;
   font-family: var(--font-mono);
+  line-height: 1.3;
+  white-space: nowrap;
+}
+/* every header control is one row of the same height, so the labels above them
+   line up and the controls line up */
+.header__controls > div {
+  display: flex;
+  flex-direction: column;
+}
+.header__controls .seg,
+.header__controls .btn,
+.header__controls .icon-btn,
+.header__controls .progress {
+  min-height: 36px;
+  height: 36px;
+  box-sizing: border-box;
+}
+.header__controls .progress {
+  align-items: center;
+}
+.header__controls .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* --- Segmented control --- */
@@ -354,15 +378,23 @@ svg g[role="button"]:focus-visible rect {
 }
 .col-step {
   width: 100%;
-  max-width: 900px;
+  max-width: 780px;
   margin: 0 auto;
   padding: 26px 26px 64px;
 }
+/* inside the stepper column everything spans the same width, so the diagram
+   fills the card and the note does not stop mid-card */
 .col-step .prose {
-  max-width: 74ch;
+  max-width: none;
 }
 .col-step .stepper {
   margin-top: 20px;
+}
+.col-step .stepper .svg-canvas {
+  max-width: none;
+}
+.col-step .stepper__note {
+  max-width: none;
 }
 
 @media (max-width: 900px) {

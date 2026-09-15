@@ -155,7 +155,7 @@ function StepperSidePanel() {
       </h2>
       <div className="prose" style={{ marginTop: 12 }}>
         <p>
-          Watch one frame's payload transform as it descends the stack - from MAC octets, through coding and forward error
+          Watch one frame's payload transform as it descends the stack - from MAC octets, through encoding and forward error
           correction, out onto physical lanes and finally into PAM4 symbols on the wire.
         </p>
         <p>
