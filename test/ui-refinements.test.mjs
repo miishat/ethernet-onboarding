@@ -14,9 +14,11 @@ test("alignment-marker diagram separates common and unique regions", async () =>
 test("header uses the Ethernet Stack subtitle and a title byline", async () => {
   const header = await source("src/components/Header.tsx");
   const app = await source("src/App.tsx");
+  const css = await source("src/styles/global.css");
 
   assert.match(header, /Explore the Ethernet Stack/);
   assert.match(header, /className="header__byline">by Mishat/);
+  assert.match(css, /\.header__byline\s*\{[^}]*font-style:\s*italic;/s);
   assert.doesNotMatch(header, /one sublayer at a time/);
   assert.doesNotMatch(app, /Made by Mishat/);
 });
@@ -65,7 +67,7 @@ test("walkthrough footer shares the centered content alignment", async () => {
 test("stack canvas gives lane labels breathing room and a consistent side-label scale", async () => {
   const canvas = await source("src/components/StackCanvas.tsx");
 
-  assert.match(canvas, /BH = 62,\s*GAP = 42/);
+  assert.match(canvas, /BH = 70,\s*GAP = 42/);
   assert.match(canvas, /x=\{ASIDE_X \+ 11\} y=\{y \+ 22\} fill=\{C.dim\} fontSize="12"/);
   assert.match(canvas, /x=\{IFACE_X \+ 11\} y=\{y \+ 22\} fill=\{C.dim\} fontSize="12"/);
 });
@@ -79,4 +81,100 @@ test("side labels use title case and the opening copy distinguishes electrical f
   assert.match(stack, /name: "Retimed or Linear"/);
   assert.match(stack, /name: "Form Factors"/);
   assert.match(panel, /electrical backplane and copper links, not optical PMDs/);
+});
+
+test("stack labels use concise, rate-specific FEC and Medium clauses", async () => {
+  const stack = await source("src/data/stack.ts");
+
+  assert.match(stack, /id: "fec"[\s\S]*?"400G": "Clause 119", "800G": "Clause 172"/);
+  assert.match(stack, /id: "medium"[\s\S]*?"400G": "Clause 121-124", "800G": "Clause 124; 802\.3df", "1\.6T": "Clauses 180-183 \(draft\)"/);
+});
+
+test("stack cards use compact references while retaining their draft marker", async () => {
+  const canvas = await source("src/components/StackCanvas.tsx");
+
+  assert.match(canvas, /function compactReference/);
+  assert.match(canvas, /"Clause " \+ refs\.join\(" \+ "\) : reference/);
+  assert.match(canvas, /\(draft\)/);
+  assert.match(canvas, /y=\{y \+ 25\} textAnchor="end" fill=\{isDraft \? C\.signal : C\.dim\}/);
+  assert.match(canvas, /y=\{y \+ 52\} fill=\{C\.diagram\}/);
+});
+
+test("stack card references preserve semicolon-separated IEEE standards", async () => {
+  const canvas = await source("src/components/StackCanvas.tsx");
+
+  assert.match(canvas, /split\(";"\)/);
+  assert.match(canvas, /if \(!\/\^clauses\?\\b\/i\.test\(reference\)\) return reference;/);
+  assert.match(canvas, /join\("; "\)/);
+});
+
+test("PMA card follows the selected per-lane speed for both clause and lane count", async () => {
+  const canvas = await source("src/components/StackCanvas.tsx");
+
+  assert.match(canvas, /function pmaCardValues\(rate: Rate, gen: LaneGen\)/);
+  assert.match(canvas, /"800G".*gen === "100" \? "Clause 173" : "Clause 176"/s);
+  assert.match(canvas, /laneInfo\(rate, gen\)\.phys \+ " lanes"/);
+});
+
+test("content references and inline definitions advertise their purpose", async () => {
+  const panel = await source("src/components/ContentPanel.tsx");
+  const prose = await source("src/components/Prose.tsx");
+
+  assert.match(panel, /className="badge__label">Reference/);
+  assert.match(prose, /aria-label=\{"Show definition of " \+ t\}/);
+});
+
+test("goodput copy uses frame occupancy", async () => {
+  const header = await source("src/components/Header.tsx");
+  const visuals = await source("src/data/visuals.ts");
+  const stack = await source("src/data/stack.ts");
+
+  assert.match(header, /"Step Through"/);
+  assert.match(visuals, /title: "Minimum-frame occupancy"/);
+  assert.match(visuals, /caption: "84 octets on the wire carry 46 octets of payload/);
+  assert.match(stack, /\["Payload fraction", "46 \/ 84, about 55 percent"\]/);
+  assert.match(stack, /\["Payload fraction", "about 97\.5 percent"\]/);
+});
+
+test("figure captions span their panel and compact labels use straight leaders", async () => {
+  const css = await source("src/styles/global.css");
+  const diagram = await source("src/components/Diagram.tsx");
+
+  assert.match(css, /\.figure__caption\s*\{[^}]*max-width:\s*none;/s);
+  assert.match(diagram, /x1=\{lblCx\} y1=\{y \+ bh \+ 2\} x2=\{lblCx\}/);
+});
+
+test("diagrams use a distinct cool accent and the prose scale stays compact", async () => {
+  const palette = await source("src/theme/palette.ts");
+  const diagram = await source("src/components/Diagram.tsx");
+  const css = await source("src/styles/global.css");
+
+  assert.match(palette, /diagram: "#78a9d5"/);
+  assert.match(diagram, /C\.diagramWash/);
+  assert.match(css, /\.prose p\s*\{[^}]*font-size:\s*14px;/s);
+});
+
+test("transcode illustrations label leading and control bits without a cramped ruler", async () => {
+  const visuals = await source("src/data/visuals.ts");
+  const diagram = await source("src/components/Diagram.tsx");
+
+  assert.match(visuals, /"pcs-257-lead"[\s\S]*?ruler: false/);
+  assert.match(visuals, /"pcs-257-control"[\s\S]*?type: "transcode"/);
+  assert.match(diagram, /spec\.type === "transcode"/);
+});
+
+test("quizzes open on demand and replace the lesson with a return control", async () => {
+  const panel = await source("src/components/ContentPanel.tsx");
+
+  assert.match(panel, /const \[showQuiz, setShowQuiz\] = useState\(false\)/);
+  assert.match(panel, /if \(showQuiz && node\.quiz\)/);
+  assert.match(panel, /Back to lesson/);
+  assert.match(panel, />\s*Check Yourself\s*</);
+  assert.match(panel, /onClick=\{\(\) => setShowQuiz\(true\)\}/);
+});
+
+test("scrambling art avoids a redundant transition-pattern caption", async () => {
+  const art = await source("src/components/StageArt.tsx");
+
+  assert.doesNotMatch(art, /same data positions, a more transition-rich line pattern/);
 });

@@ -66,8 +66,8 @@ export const DATA: Record<string, StackNode> = {
         clause: { all: "Clause 4" },
         summary: "What fraction of 400 Gb/s carries payload.",
         intro:
-          "The headline rate is the MAC data rate, and payload is strictly less than that. Each frame carries 8 octets of preamble and SFD ahead of it and at least 12 octets of gap after it, so a 64-octet frame occupies 84 octets of wire time. That is 76 percent efficiency before you count the 18 octets of header and FCS inside the frame itself - of the 84 octets, only 46 are payload, about 55 percent.\n\nAt the other extreme, a 1500-octet payload occupies 1538 octets, which is about 97.5 percent. This is why benchmark numbers are always quoted with a frame size, and why small-frame line-rate performance is a much harder engineering claim than large-frame line-rate performance.\n\nNote that none of this counts PHY-layer overhead. The coding and FEC below have their own costs, but they are absorbed by running the line faster rather than by stealing MAC bandwidth - which is exactly why lane rates are odd numbers like 106.25 Gb/s rather than round ones.",
-        params: { all: [["64-octet frame occupies", "84 octets of wire time"], ["Payload fraction", "46 / 84, about 55 percent"], ["1500-octet frame occupies", "1538 octets"], ["Payload fraction", "about 97.5 percent"], ["PHY overhead", "absorbed by a faster line rate, not by MAC bandwidth"]] },
+          "The headline rate is the MAC data rate, and payload is strictly less than that. Each frame carries 8 octets of preamble and SFD ahead of it and at least 12 octets of gap after it, so a 64-octet frame occupies 84 octets on the wire. That is 76 percent efficiency before you count the 18 octets of header and FCS inside the frame itself - of the 84 octets, only 46 are payload, about 55 percent.\n\nAt the other extreme, a 1500-octet payload occupies 1538 octets, which is about 97.5 percent. This is why benchmark numbers are always quoted with a frame size, and why small-frame line-rate performance is a much harder engineering claim than large-frame line-rate performance.\n\nNote that none of this counts PHY-layer overhead. The coding and FEC below have their own costs, but they are absorbed by running the line faster rather than by stealing MAC bandwidth - which is exactly why lane rates are odd numbers like 106.25 Gb/s rather than round ones.",
+        params: { all: [["64-octet frame occupies", "84 octets on the wire"], ["Payload fraction", "46 / 84, about 55 percent"], ["1500-octet frame occupies", "1538 octets"], ["Payload fraction", "about 97.5 percent"], ["PHY overhead", "absorbed by a faster line rate, not by MAC bandwidth"]] },
         quiz: [
           {
             q: "Why does a 400G link never deliver 400 Gb/s of payload?",
@@ -608,7 +608,7 @@ export const DATA: Record<string, StackNode> = {
   /* ------------------------------------------------------------------ FEC */
   fec: {
     id: "fec", name: "RS-FEC", alias: "commonly called KP4; plus an Inner FEC at 200G per lane", zone: "coding", written: true,
-    clause: { "400G": "Clause 119 (within the PCS)", "800G": "Clause 172", "1.6T": "Clause 175, plus Clause 177 Inner FEC (draft)" },
+    clause: { "400G": "Clause 119", "800G": "Clause 172", "1.6T": "Clause 175, plus Clause 177 Inner FEC (draft)" },
     face: { "400G": "RS(544,514)", "800G": "RS(544,514)", "1.6T": "outer + inner" },
     summary: "Mandatory error correction. The reason these links work.",
     intro:
@@ -1128,7 +1128,7 @@ export const DATA: Record<string, StackNode> = {
   /* --------------------------------------------------------------- medium */
   medium: {
     id: "medium", name: "Medium", alias: "fibre, copper, backplane", zone: "signal", written: true,
-    clause: { all: "specified within each PMD clause" },
+    clause: { "400G": "Clause 121-124", "800G": "Clause 124; 802.3df", "1.6T": "Clauses 180-183 (draft)" },
     face: { all: "SMF, MMF, twinax" },
     summary: "The physical channel every other decision reacts to.",
     intro:

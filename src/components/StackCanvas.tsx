@@ -4,13 +4,39 @@ import { DATA, CORE, IFACE, ASIDE } from "../data/stack";
 import { laneInfo, PCS_LANES } from "../data/stepper";
 import { pick } from "../data/tree";
 import { useC, useZones } from "../theme/ThemeContext";
-import { estWidth, fitProps } from "./fit";
+import { fitProps } from "./fit";
 
 /* lane count annotated on the connectors between sublayers */
 function laneLabel(id: string, rate: Rate, gen: LaneGen): string | null {
   if (id === "pcs" || id === "fec") return PCS_LANES[rate] ? PCS_LANES[rate] + " PCS lanes" : null;
   if (id === "pma" || id === "pmd") return laneInfo(rate, gen).phys + " physical lanes";
   return null;
+}
+
+/* The map needs a scannable reference, while the detail panel keeps the full clause wording. */
+function compactReference(clause: string): string {
+  const draft = /draft/i.test(clause) ? " (draft)" : "";
+  const references = clause
+    .replace(/\(draft\)/gi, "")
+    .split(";")
+    .map((part) => {
+      const reference = part.trim();
+      if (!/^clauses?\b/i.test(reference)) return reference;
+      const refs = reference.match(/\d+(?:-\d+)?/g);
+      return refs && refs.length ? "Clause " + refs.join(" + ") : reference;
+    })
+    .filter(Boolean)
+    .join("; ");
+  return references + draft;
+}
+
+function pmaCardValues(rate: Rate, gen: LaneGen) {
+  const clause = rate === "400G"
+    ? (gen === "100" ? "Clause 120" : "Clause 176")
+    : rate === "800G"
+      ? (gen === "100" ? "Clause 173" : "Clause 176")
+      : "Clause 176 (draft)";
+  return { clause, face: laneInfo(rate, gen).phys + " lanes" };
 }
 
 interface Props {
@@ -31,9 +57,9 @@ export default function StackCanvas({ rate, dir, gen, onOpen, complete }: Props)
   const GUTTER_X = 190;
   const BAND_X = 204,
     BAND_W = 282;
-  const BX = 218,
-    BW = 254,
-    BH = 62,
+  const BX = 204,
+    BW = 282,
+    BH = 70,
     GAP = 42;
   const IFACE_X = 506,
     IFACE_W = 180;
@@ -100,29 +126,30 @@ export default function StackCanvas({ rate, dir, gen, onOpen, complete }: Props)
         );
       })}
 
-      {order.map((id) => {
-        const n = DATA[id];
-        const y = yOf[id];
-        const face = pick(n.face, rate);
-        const cl = pick(n.clause, rate) || "";
+          {order.map((id) => {
+            const n = DATA[id];
+            const y = yOf[id];
+            const pmaValues = id === "pma" ? pmaCardValues(rate, gen) : null;
+            const face = pmaValues ? pmaValues.face : pick(n.face, rate);
+            const cl = pmaValues ? pmaValues.clause : pick(n.clause, rate) || "";
+        const ref = compactReference(cl);
         const isDraft = /draft/i.test(cl);
-        const faceW = face ? estWidth(face, 12.5, true) : 0;
         const nameMax = BW - 28;
-        const clauseMax = BW - 28 - (faceW ? faceW + 12 : complete(id) ? 42 : 4);
+        const referenceMax = BW - 28;
         return (
           <g key={id} className="node-block" onClick={() => onOpen(id)} tabIndex={0} role="button"
             aria-label={n.name} onKeyDown={(e) => openKey(e, id)}>
             <rect x={BX} y={y} width={BW} height={BH} rx={6} fill={C.ink3} stroke={ZONES[n.zone!].hue} strokeWidth="1.2" />
             <text className="nb-title" x={BX + 14} y={y + 25} fill={C.text} fontSize="15.5" fontWeight="600"
               {...fitProps(n.name, 15.5, nameMax, false)}>{n.name}</text>
-            <text x={BX + 14} y={y + 45} fill={C.faint} fontSize="11.5" fontFamily={C.mono}
-              {...fitProps(cl, 11.5, clauseMax, true)}>{cl}</text>
+            <text x={BX + 14} y={y + 52} fill={C.diagram} fontSize="11.5" fontWeight="600" fontFamily={C.mono}
+              {...fitProps(ref, 11.5, referenceMax, true)}>{ref}</text>
             {face ? (
-              <text x={BX + BW - 14} y={y + 45} textAnchor="end" fill={isDraft ? C.signal : C.dim} fontSize="12.5" fontFamily={C.mono}
+              <text x={BX + BW - 14} y={y + 25} textAnchor="end" fill={isDraft ? C.signal : C.dim} fontSize="12.5" fontFamily={C.mono}
                 {...fitProps(face, 12.5, BW / 2, true)}>{face}</text>
             ) : null}
             {complete(id) && !face ? (
-              <text x={BX + BW - 14} y={y + 45} textAnchor="end" fill={C.good} fontSize="11" fontFamily={C.mono}>read</text>
+              <text x={BX + BW - 14} y={y + 52} textAnchor="end" fill={C.good} fontSize="11" fontFamily={C.mono}>read</text>
             ) : null}
           </g>
         );

@@ -36,7 +36,7 @@ function inlineNodes(
       const t = m[1];
       if (terms && terms[t]) {
         return (
-          <button key={key} className="term" data-open={open === t} onClick={() => setOpen(open === t ? null : t)}>
+          <button key={key} className="term" data-open={open === t} aria-label={"Show definition of " + t} onClick={() => setOpen(open === t ? null : t)}>
             {t}
           </button>
         );

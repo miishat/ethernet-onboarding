@@ -72,7 +72,7 @@ export const VISUALS: Record<string, DiagramSpec> = {
   },
 
   "pcs-257-lead": {
-    type: "bitfield", ruler: true,
+    type: "bitfield", ruler: false,
     title: "The all-data case",
     fields: [
       { label: "1", w: 1, accent: true, note: "all four were data" },
@@ -82,13 +82,13 @@ export const VISUALS: Record<string, DiagramSpec> = {
   },
 
   "pcs-257-control": {
-    type: "bitfield", ruler: true,
+    type: "transcode",
     title: "With control blocks present",
-    fields: [
-      { label: "0", w: 1, accent: true, note: "flag clear" },
-      { label: "positions", w: 4, alt: true, note: "which were control" },
-      { label: "relocated type fields", w: 8, alt: true },
-      { label: "remaining payload", w: 244 },
+    items: [
+      { label: "leading flag", bits: "1 bit", note: "0: one or more control blocks" },
+      { label: "control-position map", bits: "4 bits", note: "which of the four were control" },
+      { label: "relocated type fields", bits: "8 bits", note: "their block types" },
+      { label: "remaining payload", bits: "244 bits", note: "all other source data" },
     ],
     caption: "Type information moves into the space the sync headers vacated, so all four blocks can be rebuilt exactly.",
   },
@@ -231,13 +231,13 @@ export const VISUALS: Record<string, DiagramSpec> = {
 
   "mac-rate": {
     type: "bitfield", ruler: false,
-    title: "Wire time for a minimum-size frame",
+    title: "Minimum-frame occupancy",
     fields: [
       { label: "preamble + SFD", w: 8, alt: true },
       { label: "header", w: 14 }, { label: "payload", w: 46, accent: true },
       { label: "FCS", w: 4 }, { label: "gap", w: 12, alt: true },
     ],
-    caption: "84 octets of wire time carry 46 octets of payload. The same 26 octets of overhead barely register against a 1500-octet payload.",
+    caption: "84 octets on the wire carry 46 octets of payload. This includes the preamble, frame, and required inter-frame gap; the same 26 octets of overhead barely register against a 1500-octet payload.",
   },
 
   "rs-adapt": {

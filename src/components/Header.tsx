@@ -75,7 +75,7 @@ export default function Header({ rate, setRate, dir, setDir, gen, setGen, steppi
         <div>
           <div className="control-label">Follow a frame</div>
           <button className="btn btn--ghost-signal" data-on={stepping} onClick={toggleStep}>
-            {stepping ? "Close" : "Step through"}
+            {stepping ? "Close" : "Step Through"}
           </button>
         </div>
         <div>

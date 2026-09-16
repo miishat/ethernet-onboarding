@@ -60,9 +60,6 @@ export default function StageArt({ stage, rate, gen }: { stage: Stage; rate: Rat
       cells.push(<rect key={"out-" + i} x={135 + i * 48} y={91} width={40} height={20} rx={1.5}
         fill={bit ? C.signalWash : C.ink3} stroke={bit ? C.signalDim : C.rule} strokeWidth="0.7" />);
     });
-    cells.push(<text key="caption" x={20} y={143} fill={C.faint} fontSize="10" fontFamily={C.mono}>
-      {descrambling ? "same feedback restores the data sequence" : "same data positions, a more transition-rich line pattern"}
-    </text>);
   }
 
   if (s === "marker") {

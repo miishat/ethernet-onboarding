@@ -108,7 +108,7 @@ export default function Diagram({ spec, rate, nested, constrain }: DiagramProps)
       <div>
         <div style={{ fontFamily: C.mono, fontSize: 11, color: C.dim, margin: "0 0 4px" }}>{s.labels[0]}</div>
         <Diagram spec={s.a} rate={rate} nested constrain={con} />
-        <div style={{ fontFamily: C.mono, fontSize: 11, color: C.signal, margin: "14px 0 4px" }}>{s.labels[1]}</div>
+        <div style={{ fontFamily: C.mono, fontSize: 11, color: C.diagram, margin: "14px 0 4px" }}>{s.labels[1]}</div>
         <Diagram spec={s.b} rate={rate} nested constrain={con} />
       </div>
     );
@@ -159,14 +159,14 @@ export default function Diagram({ spec, rate, nested, constrain }: DiagramProps)
       rowFreeX[row] = left + wLbl + 10;
       const rowY = belowY0 + row * rowH;
       const lblCx = left + wLbl / 2;
-      g.push(<line key={"ll" + belowY0 + text} x1={cx} y1={y + bh + 2} x2={lblCx} y2={rowY - 8} stroke={C.rule} strokeWidth="0.7" />);
-      g.push(<text key={"lt" + belowY0 + text} x={lblCx} y={rowY} textAnchor="middle" fill={accent ? C.signal : C.faint} fontSize="10" fontFamily={C.mono}>{text}</text>);
+      g.push(<line key={"ll" + belowY0 + text} x1={lblCx} y1={y + bh + 2} x2={lblCx} y2={rowY - 8} stroke={C.rule} strokeWidth="0.7" />);
+      g.push(<text key={"lt" + belowY0 + text} x={lblCx} y={rowY} textAnchor="middle" fill={accent ? C.diagram : C.faint} fontSize="10" fontFamily={C.mono}>{text}</text>);
     };
 
     fields.forEach((f, i) => {
       const w = (f.w / total) * SPAN;
-      const fill = f.accent ? C.signalWash : f.alt ? C.altFill : C.ink3;
-      const stroke = f.accent ? C.signal : f.alt ? C.altStroke : C.rule;
+      const fill = f.accent ? C.diagramWash : f.alt ? C.altFill : C.ink3;
+      const stroke = f.accent ? C.diagram : f.alt ? C.altStroke : C.rule;
       g.push(<rect key={"r" + i} x={x} y={y} width={Math.max(w - 1.5, 1)} height={bh} rx={2} fill={fill} stroke={stroke} strokeWidth="1" />);
       const cx = x + w / 2;
       /* a label sits inside only if it genuinely fits; otherwise it drops below */
@@ -175,7 +175,7 @@ export default function Diagram({ spec, rate, nested, constrain }: DiagramProps)
         const noteW = f.note ? estWidth(f.note, 10, true) : 0;
         const noteInside = !!f.note && !compact && noteW <= w - 8;
         g.push(<text key={"t" + i} x={cx} y={y + (noteInside ? bh / 2 : bh / 2 + 4)} textAnchor="middle"
-          fill={f.accent ? C.signal : C.dim} fontSize="11" fontFamily={C.mono}>{f.label}</text>);
+          fill={f.accent ? C.diagram : C.dim} fontSize="11" fontFamily={C.mono}>{f.label}</text>);
         if (f.note && !compact) {
           if (noteInside) {
             g.push(<text key={"n" + i} x={cx} y={y + bh / 2 + 15} textAnchor="middle" fill={C.faint} fontSize="10" fontFamily={C.mono}>{f.note}</text>);
@@ -192,6 +192,26 @@ export default function Diagram({ spec, rate, nested, constrain }: DiagramProps)
     H = (spec.ruler ? 46 : 26) + (compact ? 34 : 48) + (rowFreeX.length ? rowFreeX.length * rowH + 14 : 16);
   }
 
+  /* ----------------------------------------------------------- transcode */
+  if (spec.type === "transcode") {
+    const items = spec.items as Array<{ label: string; bits: string; note: string }>;
+    const top = 24;
+    const rowH = 30;
+    const labelW = 198;
+    const bitsW = 90;
+    items.forEach((item, i) => {
+      const y = top + i * (rowH + 8);
+      const primary = i === 0;
+      g.push(<rect key={"tr" + i} x={X0} y={y} width={SPAN} height={rowH} rx={3}
+        fill={primary ? C.diagramWash : C.ink3} stroke={primary ? C.diagram : C.rule} strokeWidth="1" />);
+      g.push(<text key={"tl" + i} x={X0 + 12} y={y + 19} fill={primary ? C.diagram : C.text} fontSize="11" fontFamily={C.mono}>{item.label}</text>);
+      g.push(<rect key={"tb" + i} x={X0 + labelW} y={y + 5} width={bitsW} height={20} rx={2} fill={C.altFill} stroke={C.altStroke} strokeWidth="0.8" />);
+      g.push(<text key={"tt" + i} x={X0 + labelW + bitsW / 2} y={y + 19} textAnchor="middle" fill={C.dim} fontSize="10" fontFamily={C.mono}>{item.bits}</text>);
+      g.push(<text key={"tn" + i} x={X0 + labelW + bitsW + 16} y={y + 19} fill={C.faint} fontSize="10" fontFamily={C.mono}>{item.note}</text>);
+    });
+    H = top + items.length * (rowH + 8) - 8 + 16;
+  }
+
   /* -------------------------------------------------------------- symbols */
   if (spec.type === "symbols") {
     const n = R(spec.n) || 24;
@@ -204,15 +224,15 @@ export default function Diagram({ spec, rate, nested, constrain }: DiagramProps)
       const isDam = dam.indexOf(i) >= 0;
       const isPar = parityFrom !== undefined && i >= parityFrom;
       g.push(<rect key={i} x={X0 + i * cw} y={y} width={cw - 2} height={bh} rx={1.5}
-        fill={isDam ? C.badWash : isPar ? C.signalWash : C.ink3}
-        stroke={isDam ? C.bad : isPar ? C.signal : C.rule} strokeWidth={isDam ? 1.3 : 0.9} />);
+        fill={isDam ? C.badWash : isPar ? C.diagramWash : C.ink3}
+        stroke={isDam ? C.bad : isPar ? C.diagram : C.rule} strokeWidth={isDam ? 1.3 : 0.9} />);
       if (isDam) g.push(<text key={"x" + i} x={X0 + i * cw + (cw - 2) / 2} y={y + bh / 2 + 4}
         textAnchor="middle" fill={C.bad} fontSize="11" fontFamily={C.mono}>{"×"}</text>);
       if (i % 4 === 0) g.push(<text key={"i" + i} x={X0 + i * cw + 2} y={y - 6} fill={C.faint} fontSize="10" fontFamily={C.mono}>{i}</text>);
     }
     if (parityFrom !== undefined) {
-      g.push(<line key="pd" x1={X0 + parityFrom * cw - 1} y1={y - 2} x2={X0 + parityFrom * cw - 1} y2={y + bh + 2} stroke={C.signal} strokeWidth="1.2" />);
-      g.push(<text key="pt" x={X0 + parityFrom * cw + 4} y={y + bh + 16} fill={C.signal} fontSize="10" fontFamily={C.mono}>30 parity</text>);
+      g.push(<line key="pd" x1={X0 + parityFrom * cw - 1} y1={y - 2} x2={X0 + parityFrom * cw - 1} y2={y + bh + 2} stroke={C.diagram} strokeWidth="1.2" />);
+      g.push(<text key="pt" x={X0 + parityFrom * cw + 4} y={y + bh + 16} fill={C.diagram} fontSize="10" fontFamily={C.mono}>30 parity</text>);
       g.push(<text key="mt" x={X0} y={y + bh + 16} fill={C.dim} fontSize="10" fontFamily={C.mono}>514 message</text>);
     }
     if (spec.unit)
@@ -225,8 +245,8 @@ export default function Diagram({ spec, rate, nested, constrain }: DiagramProps)
         used = dam.length;
       for (let k = 0; k < 15; k++) {
         g.push(<rect key={"m" + k} x={X0 + k * (mw + 3)} y={my} width={mw} height={10} rx={1.5}
-          fill={k < used ? (used > 15 ? C.bad : C.signal) : "transparent"}
-          stroke={k < used ? (used > 15 ? C.bad : C.signal) : C.rule} strokeWidth="0.9" />);
+          fill={k < used ? (used > 15 ? C.bad : C.diagram) : "transparent"}
+          stroke={k < used ? (used > 15 ? C.bad : C.diagram) : C.rule} strokeWidth="0.9" />);
       }
       g.push(<text key="mtx" x={X0 + 15 * (mw + 3) + 10} y={my + 9} fill={used > 15 ? C.bad : C.good} fontSize="11" fontFamily={C.mono}>
         {used > 15 ? used + " damaged, 15 correctable - codeword lost" : used + " of 15 spent"}</text>);
@@ -262,16 +282,16 @@ export default function Diagram({ spec, rate, nested, constrain }: DiagramProps)
           const unit = i + k * n;
           const cx = LX + 6 + k * 88;
           g.push(<rect key={"u" + i + "_" + k} x={cx} y={y + 1.5} width={46} height={rh - 3} rx={1.5}
-            fill={C.signalWash} stroke={C.signalDim} strokeWidth="0.7" />);
+            fill={C.diagramWash} stroke={C.diagramDim} strokeWidth="0.7" />);
           if (rh >= 12)
             g.push(<text key={"ut" + i + "_" + k} x={cx + 23} y={y + rh - 4} textAnchor="middle"
-              fill={C.signal} fontSize="10" fontFamily={C.mono}>{unit}</text>);
+              fill={C.diagram} fontSize="10" fontFamily={C.mono}>{unit}</text>);
         }
       }
       const label = order ? "phy lane " + i : "lane " + i;
       g.push(<text key={"t" + i} x={LX - 8} y={y + rh - 2} textAnchor="end" fill={bad ? C.bad : C.faint} fontSize="10" fontFamily={C.mono}>{label}</text>);
       if (order)
-        g.push(<text key={"o" + i} x={LX + LW + 8} y={y + rh - 2} fill={C.signal} fontSize="10" fontFamily={C.mono}>{"carries logical " + order[i]}</text>);
+        g.push(<text key={"o" + i} x={LX + LW + 8} y={y + rh - 2} fill={C.diagram} fontSize="10" fontFamily={C.mono}>{"carries logical " + order[i]}</text>);
       if (bad)
         g.push(<text key={"f" + i} x={LX + LW + 8} y={y + rh - 2} fill={C.bad} fontSize="10" fontFamily={C.mono}>no lock</text>);
     }
@@ -296,17 +316,17 @@ export default function Diagram({ spec, rate, nested, constrain }: DiagramProps)
     const phh = (lg * (rh + 3)) / ph - 3;
     for (let j = 0; j < ph; j++) {
       const y = top + j * (phh + 3);
-      g.push(<rect key={"p" + j} x={PX} y={y} width={PW} height={phh} rx={2} fill={C.signalWash} stroke={C.signal} strokeWidth="0.9" />);
-      g.push(<text key={"pt" + j} x={PX + PW + 8} y={y + phh / 2 + 3} fill={C.signal} fontSize="10" fontFamily={C.mono}>{"phy lane " + j}</text>);
+      g.push(<rect key={"p" + j} x={PX} y={y} width={PW} height={phh} rx={2} fill={C.diagramWash} stroke={C.diagram} strokeWidth="0.9" />);
+      g.push(<text key={"pt" + j} x={PX + PW + 8} y={y + phh / 2 + 3} fill={C.diagram} fontSize="10" fontFamily={C.mono}>{"phy lane " + j}</text>);
       for (let k = 0; k < per; k++) {
         const li = j * per + k;
         const ly = top + li * (rh + 3) + rh / 2;
         g.push(<line key={"c" + j + "_" + k} x1={LX + LW + 2} y1={ly} x2={PX - 2} y2={y + phh / 2}
-          stroke={C.signalDim} strokeWidth="0.7" />);
+          stroke={C.diagramDim} strokeWidth="0.7" />);
       }
     }
     g.push(<text key="ll" x={LX} y={top - 10} fill={C.dim} fontSize="10" fontFamily={C.mono}>{lg + " logical lanes"}</text>);
-    g.push(<text key="pl" x={PX} y={top - 10} fill={C.signal} fontSize="10" fontFamily={C.mono}>{ph + " physical lanes"}</text>);
+    g.push(<text key="pl" x={PX} y={top - 10} fill={C.diagram} fontSize="10" fontFamily={C.mono}>{ph + " physical lanes"}</text>);
     g.push(<text key="rl" x={LX} y={top + lg * (rh + 3) + 16} fill={C.faint} fontSize="10.5" fontFamily={C.mono}>{lg + " / " + ph + " = " + lg / ph + " logical lanes per physical lane"}</text>);
     H = top + lg * (rh + 3) + 30;
   }
@@ -321,16 +341,16 @@ export default function Diagram({ spec, rate, nested, constrain }: DiagramProps)
     for (let i = 0; i < n; i++) {
       const y = top + i * (rh + 9);
       g.push(<rect key={"b" + i} x={BASE + off[i]} y={y} width={400} height={rh} rx={2} fill={C.ink3} stroke={C.rule} strokeWidth="0.8" />);
-      g.push(<rect key={"m" + i} x={BASE + off[i]} y={y} width={26} height={rh} rx={2} fill={C.signalWash} stroke={C.signal} strokeWidth="1" />);
+      g.push(<rect key={"m" + i} x={BASE + off[i]} y={y} width={26} height={rh} rx={2} fill={C.diagramWash} stroke={C.diagram} strokeWidth="1" />);
       g.push(<text key={"t" + i} x={BASE - 46} y={y + rh - 3} textAnchor="end" fill={C.faint} fontSize="10.5" fontFamily={C.mono}>{"lane " + i}</text>);
-      g.push(<text key={"o" + i} x={BASE - 8} y={y + rh - 3} textAnchor="end" fill={off[i] ? C.signal : C.good} fontSize="10.5" fontFamily={C.mono}>
+      g.push(<text key={"o" + i} x={BASE - 8} y={y + rh - 3} textAnchor="end" fill={off[i] ? C.diagram : C.good} fontSize="10.5" fontFamily={C.mono}>
         {off[i] ? "+" + off[i] : "ref"}</text>);
       if (spec.showBuffer && off[i] > 0) {
-        g.push(<line key={"d" + i} x1={BASE} y1={y + rh / 2} x2={BASE + off[i]} y2={y + rh / 2} stroke={C.signalDim} strokeWidth="1" strokeDasharray="2 3" />);
+        g.push(<line key={"d" + i} x1={BASE} y1={y + rh / 2} x2={BASE + off[i]} y2={y + rh / 2} stroke={C.diagramDim} strokeWidth="1" strokeDasharray="2 3" />);
       }
     }
-    g.push(<line key="ref" x1={BASE} y1={top - 10} x2={BASE} y2={top + n * (rh + 9)} stroke={C.signal} strokeWidth="1" strokeDasharray="3 3" />);
-    g.push(<text key="rt" x={BASE + 4} y={top - 16} fill={C.signal} fontSize="10" fontFamily={C.mono}>markers should be simultaneous here</text>);
+    g.push(<line key="ref" x1={BASE} y1={top - 10} x2={BASE} y2={top + n * (rh + 9)} stroke={C.diagram} strokeWidth="1" strokeDasharray="3 3" />);
+    g.push(<text key="rt" x={BASE + 4} y={top - 16} fill={C.diagram} fontSize="10" fontFamily={C.mono}>markers should be simultaneous here</text>);
     g.push(<text key="ax" x={BASE - 8} y={top - 16} textAnchor="end" fill={C.faint} fontSize="10" fontFamily={C.mono}>offset</text>);
     if (spec.showBuffer)
       g.push(<text key="bt" x={BASE} y={top + n * (rh + 9) + 18} fill={C.faint} fontSize="10.5" fontFamily={C.mono}>dashed span is the delay each lane must be held by</text>);
@@ -348,13 +368,13 @@ export default function Diagram({ spec, rate, nested, constrain }: DiagramProps)
       const x = X0 + i * (bw + gapx);
       const last = i === nodes.length - 1;
       g.push(<rect key={"r" + i} x={x} y={y} width={bw} height={bh} rx={4}
-        fill={last ? C.signalWash : C.ink3} stroke={last ? C.signal : C.rule} strokeWidth="1" />);
+        fill={last ? C.diagramWash : C.ink3} stroke={last ? C.diagram : C.rule} strokeWidth="1" />);
       const words = s.split(" ");
       const mid = Math.ceil(words.length / 2);
       const l1 = words.length > 2 ? words.slice(0, mid).join(" ") : s;
       const l2 = words.length > 2 ? words.slice(mid).join(" ") : "";
-      g.push(<text key={"t" + i} x={x + bw / 2} y={y + (l2 ? 20 : 27)} textAnchor="middle" fill={last ? C.signal : C.text} fontSize="11">{l1}</text>);
-      if (l2) g.push(<text key={"t2" + i} x={x + bw / 2} y={y + 34} textAnchor="middle" fill={last ? C.signal : C.text} fontSize="11">{l2}</text>);
+      g.push(<text key={"t" + i} x={x + bw / 2} y={y + (l2 ? 20 : 27)} textAnchor="middle" fill={last ? C.diagram : C.text} fontSize="11">{l1}</text>);
+      if (l2) g.push(<text key={"t2" + i} x={x + bw / 2} y={y + 34} textAnchor="middle" fill={last ? C.diagram : C.text} fontSize="11">{l2}</text>);
       if (!last) {
         g.push(<line key={"l" + i} x1={x + bw + 3} y1={y + bh / 2} x2={x + bw + gapx - 7} y2={y + bh / 2} stroke={C.rule} strokeWidth="1" />);
         g.push(<polygon key={"a" + i} points={x + bw + gapx - 7 + "," + (y + bh / 2 - 4) + " " + (x + bw + gapx - 7) + "," + (y + bh / 2 + 4) + " " + (x + bw + gapx - 1) + "," + (y + bh / 2)} fill={C.rule} />);
@@ -391,7 +411,7 @@ export default function Diagram({ spec, rate, nested, constrain }: DiagramProps)
       const cy = (top + bot) / 2,
         ry = (bot - top) / 2 - 5;
       g.push(<ellipse key={"e" + i} cx={(L + Rt) / 2} cy={cy} rx={(Rt - L) / 2} ry={ry}
-        fill="none" stroke={C.signal} strokeWidth="1.5" />);
+        fill="none" stroke={C.diagram} strokeWidth="1.5" />);
     }
     g.push(<line key="ul" x1={L} y1={34} x2={L} y2={176} stroke={C.rule} strokeWidth="0.8" />);
     g.push(<line key="ur" x1={Rt} y1={34} x2={Rt} y2={176} stroke={C.rule} strokeWidth="0.8" />);
@@ -431,7 +451,7 @@ export default function Diagram({ spec, rate, nested, constrain }: DiagramProps)
       const yy = T + 6 + (1 - k) * (B - T - 14);
       d += (i === 0 ? "M " : " L ") + x.toFixed(1) + " " + yy.toFixed(1);
     }
-    g.push(<path key="c" d={d} stroke={C.signal} strokeWidth="1.9" fill="none" />);
+    g.push(<path key="c" d={d} stroke={C.diagram} strokeWidth="1.9" fill="none" />);
 
     const cliffX = L + 0.66 * (Rt - L);
     const opX = L + 0.42 * (Rt - L);
@@ -478,7 +498,7 @@ export default function Diagram({ spec, rate, nested, constrain }: DiagramProps)
     });
     g.push(<line key="h" x1={X0} y1={hi} x2={X0 + SPAN} y2={hi} stroke={C.ruleSoft} strokeWidth="0.7" strokeDasharray="2 5" />);
     g.push(<line key="l" x1={X0} y1={lo} x2={X0 + SPAN} y2={lo} stroke={C.ruleSoft} strokeWidth="0.7" strokeDasharray="2 5" />);
-    g.push(<path key="w" d={d} stroke={spec.pattern === "runs" ? C.dim : C.signal} strokeWidth="1.7" fill="none" />);
+    g.push(<path key="w" d={d} stroke={spec.pattern === "runs" ? C.dim : C.diagram} strokeWidth="1.7" fill="none" />);
     g.push(<text key="t" x={X0} y={112} fill={spec.pattern === "runs" ? C.bad : C.good} fontSize="10" fontFamily={C.mono}>
       {trans + " transitions in " + bits.length + " bit periods"}</text>);
     H = 126;
@@ -509,16 +529,16 @@ export default function Diagram({ spec, rate, nested, constrain }: DiagramProps)
     if (spec.mode === "concatenated") {
       const ox = (segs[0].w / total) * SPAN;
       const ow = (segs[1].w / total) * SPAN;
-      g.push(<rect key="in" x={X0 + ox} y={iy} width={ow - 3} height={14} rx={3} fill={C.signalWash} stroke={C.signal} strokeWidth="1" />);
-      g.push(<text key="int" x={X0 + ox + ow / 2} y={iy + 11} textAnchor="middle" fill={C.signal} fontSize="10.5" fontFamily={C.mono}>inner code</text>);
+      g.push(<rect key="in" x={X0 + ox} y={iy} width={ow - 3} height={14} rx={3} fill={C.diagramWash} stroke={C.diagram} strokeWidth="1" />);
+      g.push(<text key="int" x={X0 + ox + ow / 2} y={iy + 11} textAnchor="middle" fill={C.diagram} fontSize="10.5" fontFamily={C.mono}>inner code</text>);
       g.push(<rect key="out" x={X0} y={oy} width={SPAN - 3} height={14} rx={3} fill={C.altFill} stroke={C.altStroke} strokeWidth="1" />);
       g.push(<text key="outt" x={X0 + SPAN / 2} y={oy + 11} textAnchor="middle" fill={C.dim} fontSize="10.5" fontFamily={C.mono}>outer Reed-Solomon, end to end</text>);
     } else {
       let sx = X0;
       segs.forEach((s, i) => {
         const w = (s.w / total) * SPAN;
-        g.push(<rect key={"sg" + i} x={sx} y={iy} width={w - 3} height={14} rx={3} fill={C.signalWash} stroke={C.signal} strokeWidth="1" />);
-        g.push(<text key={"sgt" + i} x={sx + w / 2} y={iy + 11} textAnchor="middle" fill={C.signal} fontSize="10.5" fontFamily={C.mono}>corrected here</text>);
+        g.push(<rect key={"sg" + i} x={sx} y={iy} width={w - 3} height={14} rx={3} fill={C.diagramWash} stroke={C.diagram} strokeWidth="1" />);
+        g.push(<text key={"sgt" + i} x={sx + w / 2} y={iy + 11} textAnchor="middle" fill={C.diagram} fontSize="10.5" fontFamily={C.mono}>corrected here</text>);
         if (i < segs.length - 1)
           g.push(<text key={"re" + i} x={sx + w - 3} y={oy + 11} textAnchor="middle" fill={C.bad} fontSize="10.5" fontFamily={C.mono}>re-encoded</text>);
         sx += w;

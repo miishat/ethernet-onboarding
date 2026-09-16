@@ -94,6 +94,10 @@ export interface Palette {
   signal: string;
   signalDim: string;
   signalWash: string;
+  /** Cool accent reserved for explanatory graphics, separate from the UI signal. */
+  diagram: string;
+  diagramDim: string;
+  diagramWash: string;
   good: string;
   bad: string;
   /** secondary neutral field (distinct from ink3) used in some diagrams */

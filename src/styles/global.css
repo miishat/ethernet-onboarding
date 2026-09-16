@@ -171,9 +171,12 @@ svg g[role="button"]:focus-visible rect {
   font-family: var(--font-mono);
   font-size: 10.5px;
   font-weight: 400;
+  font-style: italic;
   letter-spacing: 0.04em;
   margin-left: 2px;
   opacity: 0.9;
+  position: relative;
+  top: 2px;
 }
 .header__sub {
   margin: 3px 0 0;
@@ -647,6 +650,7 @@ svg g[role="button"]:focus-visible rect {
 .prose p {
   margin: 0 0 14px;
   max-width: 68ch;
+  font-size: 14px;
   line-height: 1.68;
 }
 .prose strong {
@@ -671,6 +675,12 @@ svg g[role="button"]:focus-visible rect {
   color: var(--text);
   border-bottom: 1px dashed var(--signal-dim);
   transition: color 0.15s var(--ease);
+}
+.term::after {
+  content: " ⓘ";
+  color: var(--signal);
+  font-family: var(--font-mono);
+  font-size: 0.8em;
 }
 .term:hover,
 .term[data-open="true"] {
@@ -722,8 +732,20 @@ svg g[role="button"]:focus-visible rect {
   color: var(--faint);
   border: 1px solid var(--rule);
   border-radius: 4px;
-  padding: 2px 8px;
-  display: inline-block;
+  padding: 3px 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--signal-wash);
+  border-color: var(--signal-dim);
+  color: var(--text);
+}
+.badge__label {
+  color: var(--signal);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 .badge--draft {
   color: var(--signal);
@@ -784,6 +806,42 @@ svg g[role="button"]:focus-visible rect {
 }
 
 /* --- Quiz --- */
+.quiz-launch,
+.quiz-back {
+  font: inherit;
+  border: 1px solid var(--signal-dim);
+  border-radius: 6px;
+  background: var(--signal-wash);
+  color: var(--signal);
+  cursor: pointer;
+}
+.quiz-launch {
+  display: block;
+  margin-top: 24px;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.quiz-launch:hover,
+.quiz-back:hover {
+  border-color: var(--signal);
+  background: color-mix(in srgb, var(--signal) 14%, var(--ink2));
+}
+.quiz-view__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.quiz-view__head .panel-title {
+  margin: 0;
+}
+.quiz-back {
+  padding: 7px 10px;
+  font-size: 13px;
+  white-space: nowrap;
+}
 .quiz-item {
   border: 1px solid var(--rule);
   border-radius: 8px;
@@ -890,7 +948,7 @@ svg g[role="button"]:focus-visible rect {
   color: var(--faint);
   margin: 9px 2px 0;
   line-height: 1.55;
-  max-width: 70ch;
+  max-width: none;
 }
 
 /* --- Stepper --- */

@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import type { Rate, Dir, StackNode } from "../types";
 import { RATE_META } from "../data/stack";
 import { pick, rawKids } from "../data/tree";
@@ -66,10 +67,28 @@ function StartHere({ rate, dir }: { rate: Rate; dir: Dir }) {
 }
 
 export default function ContentPanel({ node, rate, dir, isTop, kids, visited, onPush }: Props) {
+  const [showQuiz, setShowQuiz] = useState(false);
+
+  useEffect(() => {
+    setShowQuiz(false);
+  }, [node?.id]);
+
   if (!node) return <StartHere rate={rate} dir={dir} />;
 
   const cl = pick(node.clause, rate);
   const draft = cl ? /draft/i.test(cl) : false;
+
+  if (showQuiz && node.quiz) {
+    return (
+      <div className="quiz-view">
+        <div className="quiz-view__head">
+          <h2 className="panel-title" style={{ fontSize: isTop ? 24 : 21 }}>Check yourself</h2>
+          <button className="quiz-back" onClick={() => setShowQuiz(false)}>← Back to lesson</button>
+        </div>
+        <Quiz items={node.quiz} />
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -77,7 +96,12 @@ export default function ContentPanel({ node, rate, dir, isTop, kids, visited, on
         {node.name}
       </h2>
       {node.alias ? <p className="panel-alias">{node.alias}</p> : null}
-      {cl ? <span className={"badge" + (draft ? " badge--draft" : "")}>{cl}</span> : null}
+      {cl ? (
+        <span className={"badge" + (draft ? " badge--draft" : "")}>
+          <span className="badge__label">Reference</span>
+          {cl}
+        </span>
+      ) : null}
 
       {node.written === false ? (
         <div className="outline-card" style={{ marginTop: 16 }}>
@@ -129,10 +153,9 @@ export default function ContentPanel({ node, rate, dir, isTop, kids, visited, on
       ) : null}
 
       {node.quiz ? (
-        <>
-          <Heading>Check yourself</Heading>
-          <Quiz items={node.quiz} />
-        </>
+        <button className="quiz-launch" onClick={() => setShowQuiz(true)}>
+          Check Yourself
+        </button>
       ) : null}
     </div>
   );
