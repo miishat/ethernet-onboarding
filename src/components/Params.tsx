@@ -1,5 +1,6 @@
 import type { Rate, StackNode, Flag } from "../types";
 import { pick } from "../data/tree";
+import MathText from "./MathText";
 
 export default function Params({ node, rate }: { node: StackNode; rate: Rate }) {
   const rows = pick(node.params, rate);
@@ -13,7 +14,7 @@ export default function Params({ node, rate }: { node: StackNode; rate: Rate }) 
             <tr key={i}>
               <td className="k">{r[0] as string}</td>
               <td className="v">
-                {r[1] as string}
+                <MathText text={r[1] as string} />
                 {flag?.draft ? <span className="tag tag--draft">draft</span> : null}
                 {flag?.industry ? (
                   <span className="tag" title="Industry or MSA source, not IEEE 802.3">

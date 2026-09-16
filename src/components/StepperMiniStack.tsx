@@ -16,7 +16,7 @@ export default function StepperMiniStack({ blockId, dir }: { blockId: string; di
   const order = dir === "rx" ? CORE.slice().reverse() : CORE;
   return (
     <nav className="ministack" aria-label="Position in the stack">
-      <div className="ministack__cap">{dir === "rx" ? "medium → MAC" : "MAC → medium"}</div>
+      <div className="ministack__cap">{dir === "rx" ? "Medium → MAC" : "MAC → Medium"}</div>
       <ol className="ministack__list">
         {order.map((id) => {
           const current = id === blockId;

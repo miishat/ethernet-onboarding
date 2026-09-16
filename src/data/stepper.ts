@@ -52,7 +52,7 @@ export const STAGES: Stage[] = [
   {
     id: "scramble", block: "pcs", title: "Scrambled",
     shape: "scrambled",
-    note: "Combined with a self-synchronous shift register so the line has transitions and no DC imbalance. The data is unchanged in content and unrecognisable in appearance.",
+    note: "The upper row shows a source pattern with long identical runs. The feedback polynomial XORs a changing mask into it, producing the lower row with frequent transitions and no sustained DC imbalance. The receiver can reverse that transformation.",
     count: (_r: Rate, _gen: LaneGen) => "x^58 + x^39 + 1",
   },
   {

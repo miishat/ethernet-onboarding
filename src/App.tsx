@@ -16,6 +16,7 @@ export default function App() {
   const [path, setPath] = useState<string[]>([]);
   const [visited, setVisited] = useState<Set<string>>(() => new Set());
   const [stepping, setStepping] = useState(false);
+  const [stepIndex, setStepIndex] = useState(0);
 
   const node = useMemo(() => nodeAt(path), [path]);
   const kids = useMemo(() => (node ? kidsOf(node, dir) : []), [node, dir]);
@@ -53,6 +54,7 @@ export default function App() {
   /* a node selected in one direction may not exist in the other */
   const changeDir = (d: Dir) => {
     setDir(d);
+    setStepIndex(0);
     let p = path.slice();
     while (p.length > 1) {
       const n = nodeAt(p);
@@ -107,9 +109,11 @@ export default function App() {
           <section className="col-step panel-anim">
             <StepperSidePanel />
             <Stepper
-              rate={rate}
-              dir={dir}
-              gen={gen}
+                rate={rate}
+                dir={dir}
+                gen={gen}
+                index={stepIndex}
+                onIndexChange={setStepIndex}
               onExit={() => setStepping(false)}
               onNavigate={(p) => {
                 setStepping(false);
@@ -152,7 +156,7 @@ export default function App() {
         </main>
       )}
 
-      <footer className="footer">
+      <footer className={"footer" + (stepping ? " footer--step" : "")}>
         <div className="footer__inner">
           400G follows IEEE 802.3 Clause 119 and its PMD clauses; 800G follows 802.3df; 1.6T follows 802.3dj, still in draft at the
           time of writing, so anything marked draft may have moved.

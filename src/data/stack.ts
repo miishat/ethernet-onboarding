@@ -1223,7 +1223,7 @@ export const DATA: Record<string, StackNode> = {
     ],
   },
   retimer: {
-    id: "retimer", name: "Retimed or linear", alias: "module DSP versus linear drive", zone: "signal", written: true, group: "iface",
+    id: "retimer", name: "Retimed or Linear", alias: "module DSP versus linear drive", zone: "signal", written: true, group: "iface",
     clause: { all: "industry practice; not an IEEE distinction" },
     face: { all: "DSP, LPO or LRO" },
     summary: "Whether the module re-clocks the signal or just amplifies it.",
@@ -1265,7 +1265,7 @@ export const DATA: Record<string, StackNode> = {
     ],
   },
   form: {
-    id: "form", name: "Form factors", alias: "QSFP-DD, OSFP, OSFP-XD", zone: "signal", written: true, group: "iface",
+    id: "form", name: "Form Factors", alias: "QSFP-DD, OSFP, OSFP-XD", zone: "signal", written: true, group: "iface",
     clause: { all: "MSA, not IEEE 802.3" },
     face: { "400G": "QSFP-DD, OSFP", "800G": "QSFP-DD, OSFP", "1.6T": "OSFP-XD, OSFP1600" },
     summary: "Mechanical and thermal envelopes, defined outside IEEE.",
@@ -1344,7 +1344,7 @@ export const DATA: Record<string, StackNode> = {
     ],
   },
   ptp: {
-    id: "ptp", name: "Time synchronisation", alias: "Clause 90 TimeSync, cross-cutting", zone: "framing", written: true, group: "aside",
+    id: "ptp", name: "Time Synchronization", alias: "Clause 90 TimeSync, cross-cutting", zone: "framing", written: true, group: "aside",
     clause: { "400G": "Clause 90", "800G": "Clause 90", "1.6T": "Clause 90, with 175.6 and 177.7 (draft)" },
     face: { all: "a reference point" },
     summary: "Not a block. A timestamping reference point inside the PHY.",
@@ -1380,7 +1380,7 @@ export const DATA: Record<string, StackNode> = {
     ],
   },
   autoneg: {
-    id: "autoneg", name: "Autoneg and link training", alias: "copper and backplane, not optics", zone: "signal", written: true, group: "aside",
+    id: "autoneg", name: "Autoneg and Link Training", alias: "copper and backplane, not optics", zone: "signal", written: true, group: "aside",
     clause: { "400G": "Clause 73", "800G": "Clause 73", "1.6T": "Clause 73; Annex 176A (draft)" },
     face: { all: "copper and backplane" },
     summary: "Mostly a copper concern. Optical links do not negotiate.",

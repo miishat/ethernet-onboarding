@@ -35,7 +35,7 @@ function StartHere({ rate, dir }: { rate: Rate; dir: Dir }) {
         </p>
         <p>
           The banded column is the PHY data path in order. The group on the left is not part of that path: MACsec sits above the MAC,
-          time sync is a reference point rather than a stage, and autonegotiation barely applies to optical links. They are drawn
+          time sync is a reference point rather than a stage, and autonegotiation and link training apply to electrical backplane and copper links, not optical PMDs. They are drawn
           aside so the layering stays honest.
         </p>
         <p>Clicking drills in, at every level, until there is nothing left inside. At that point the canvas becomes the diagram.</p>

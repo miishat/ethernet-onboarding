@@ -30,9 +30,10 @@ export default function Header({ rate, setRate, dir, setDir, gen, setGen, steppi
             </svg>
           </span>
           Ethernet Onboarding
+          <span className="header__byline">by Mishat</span>
         </h1>
         <p className="header__sub">
-          by Mishat · 400G, 800G and 1.6T, one sublayer at a time
+          Explore the Ethernet Stack
           <span className="wip-tag">content review in progress</span>
         </p>
       </div>

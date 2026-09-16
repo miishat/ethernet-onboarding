@@ -3,12 +3,6 @@ import type { Rate, LaneGen, Stage } from "../types";
 import { laneInfo, PCS_LANES } from "../data/stepper";
 import { useC } from "../theme/ThemeContext";
 
-/* deterministic pseudo-random for the scrambled look, so it does not flicker */
-function prand(i: number): number {
-  const x = Math.sin(i * 12.9898) * 43758.5453;
-  return x - Math.floor(x);
-}
-
 export default function StageArt({ stage, rate, gen }: { stage: Stage; rate: Rate; gen: LaneGen }) {
   const C = useC();
   const W = 620;
@@ -45,23 +39,41 @@ export default function StageArt({ stage, rate, gen }: { stage: Stage; rate: Rat
   }
 
   if (s === "scrambled") {
-    for (let i = 0; i < 40; i++) {
-      const v = prand(i);
-      cells.push(<rect key={i} x={20 + i * 15} y={55} width={12} height={40} rx={1}
-        fill={v > 0.5 ? C.ink3 : C.rule} stroke={C.rule} strokeWidth="0.6" />);
-    }
-    cells.push(<text key="l" x={20} y={124} fill={C.faint} fontSize="11" fontFamily={C.mono}>same content, no recognisable pattern</text>);
+    const descrambling = stage.id === "rx-descramble";
+    const dataBits = [0, 0, 0, 0, 1, 1, 1, 1];
+    const lineBits = [0, 1, 1, 0, 1, 0, 0, 1];
+    const input = descrambling ? lineBits : dataBits;
+    const output = descrambling ? dataBits : lineBits;
+    const inputLabel = descrambling ? "received line: 01101001" : "data: 00001111";
+    const outputLabel = descrambling ? "recovered data: 00001111" : "line: 01101001";
+
+    cells.push(<text key="in-label" x={20} y={42} fill={C.faint} fontSize="10" fontFamily={C.mono}>{inputLabel}</text>);
+    input.forEach((bit, i) => {
+      cells.push(<rect key={"in-" + i} x={135 + i * 48} y={28} width={40} height={20} rx={1.5}
+        fill={bit ? C.dim : C.ink3} stroke={C.rule} strokeWidth="0.7" />);
+    });
+    cells.push(<line key="flow" x1={327} y1={58} x2={327} y2={78} stroke={C.signal} strokeWidth="1.2" />);
+    cells.push(<polygon key="flow-head" points="323,74 331,74 327,80" fill={C.signal} />);
+    cells.push(<text key="flow-label" x={340} y={72} fill={C.signal} fontSize="10" fontFamily={C.mono}>{descrambling ? "inverse feedback" : "feedback XOR"}</text>);
+    cells.push(<text key="out-label" x={20} y={105} fill={C.faint} fontSize="10" fontFamily={C.mono}>{outputLabel}</text>);
+    output.forEach((bit, i) => {
+      cells.push(<rect key={"out-" + i} x={135 + i * 48} y={91} width={40} height={20} rx={1.5}
+        fill={bit ? C.signalWash : C.ink3} stroke={bit ? C.signalDim : C.rule} strokeWidth="0.7" />);
+    });
+    cells.push(<text key="caption" x={20} y={143} fill={C.faint} fontSize="10" fontFamily={C.mono}>
+      {descrambling ? "same feedback restores the data sequence" : "same data positions, a more transition-rich line pattern"}
+    </text>);
   }
 
   if (s === "marker") {
     cells.push(<rect key="am" x={20} y={55} width={120} height={40} rx={2} fill={C.signalWash} stroke={C.signal} />);
     cells.push(<text key="amt" x={30} y={80} fill={C.signal} fontSize="11" fontFamily={C.mono}>AM</text>);
-    cells.push(<rect key="cm" x={58} y={61} width={38} height={28} rx={2} fill="none" stroke={C.signalDim} strokeDasharray="2 2" />);
-    cells.push(<rect key="um" x={100} y={61} width={38} height={28} rx={2} fill="none" stroke={C.signalDim} strokeDasharray="2 2" />);
+    cells.push(<rect key="cm" x={56} y={61} width={36} height={28} rx={2} fill="none" stroke={C.signalDim} strokeDasharray="2 2" />);
+    cells.push(<rect key="um" x={102} y={61} width={32} height={28} rx={2} fill="none" stroke={C.signalDim} strokeDasharray="2 2" />);
     for (let i = 0; i < 7; i++)
       cells.push(<rect key={i} x={150 + i * 66} y={55} width={60} height={40} rx={2} fill={C.ink3} stroke={C.rule} />);
-    cells.push(<text key="l1" x={77} y={110} textAnchor="middle" fill={C.faint} fontSize="10" fontFamily={C.mono}>common</text>);
-    cells.push(<text key="l2" x={119} y={110} textAnchor="middle" fill={C.faint} fontSize="10" fontFamily={C.mono}>unique</text>);
+    cells.push(<text key="l1" x={74} y={110} textAnchor="middle" fill={C.faint} fontSize="10" fontFamily={C.mono}>common</text>);
+    cells.push(<text key="l2" x={118} y={110} textAnchor="middle" fill={C.faint} fontSize="10" fontFamily={C.mono}>unique</text>);
   }
 
   if (s === "codeword") {

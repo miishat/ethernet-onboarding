@@ -34,7 +34,7 @@ export default function StackCanvas({ rate, dir, gen, onOpen, complete }: Props)
   const BX = 218,
     BW = 254,
     BH = 62,
-    GAP = 30;
+    GAP = 42;
   const IFACE_X = 506,
     IFACE_W = 180;
   const W = 700,
@@ -107,8 +107,8 @@ export default function StackCanvas({ rate, dir, gen, onOpen, complete }: Props)
         const cl = pick(n.clause, rate) || "";
         const isDraft = /draft/i.test(cl);
         const faceW = face ? estWidth(face, 12.5, true) : 0;
-        const nameMax = BW - 28 - (faceW ? faceW + 12 : 0);
-        const clauseMax = BW - 28 - (complete(id) ? 42 : 4);
+        const nameMax = BW - 28;
+        const clauseMax = BW - 28 - (faceW ? faceW + 12 : complete(id) ? 42 : 4);
         return (
           <g key={id} className="node-block" onClick={() => onOpen(id)} tabIndex={0} role="button"
             aria-label={n.name} onKeyDown={(e) => openKey(e, id)}>
@@ -118,10 +118,10 @@ export default function StackCanvas({ rate, dir, gen, onOpen, complete }: Props)
             <text x={BX + 14} y={y + 45} fill={C.faint} fontSize="11.5" fontFamily={C.mono}
               {...fitProps(cl, 11.5, clauseMax, true)}>{cl}</text>
             {face ? (
-              <text x={BX + BW - 14} y={y + 25} textAnchor="end" fill={isDraft ? C.signal : C.dim} fontSize="12.5" fontFamily={C.mono}
+              <text x={BX + BW - 14} y={y + 45} textAnchor="end" fill={isDraft ? C.signal : C.dim} fontSize="12.5" fontFamily={C.mono}
                 {...fitProps(face, 12.5, BW / 2, true)}>{face}</text>
             ) : null}
-            {complete(id) ? (
+            {complete(id) && !face ? (
               <text x={BX + BW - 14} y={y + 45} textAnchor="end" fill={C.good} fontSize="11" fontFamily={C.mono}>read</text>
             ) : null}
           </g>
@@ -135,8 +135,8 @@ export default function StackCanvas({ rate, dir, gen, onOpen, complete }: Props)
           <g key={id} className="node-block" onClick={() => onOpen(id)} tabIndex={0} role="button"
             aria-label={DATA[id].name} onKeyDown={(e) => openKey(e, id)}>
             <rect x={ASIDE_X} y={y} width={ASIDE_W} height={34} rx={6} fill={C.ink2} stroke={C.rule} strokeDasharray="3 3" />
-            <text x={ASIDE_X + 11} y={y + 22} fill={C.dim} fontSize="13.5"
-              {...fitProps(DATA[id].name, 13.5, ASIDE_W - 22, false)}>{DATA[id].name}</text>
+            <text x={ASIDE_X + 11} y={y + 22} fill={C.dim} fontSize="12"
+              {...fitProps(DATA[id].name, 12, ASIDE_W - 22, false)}>{DATA[id].name}</text>
           </g>
         );
       })}
@@ -148,8 +148,8 @@ export default function StackCanvas({ rate, dir, gen, onOpen, complete }: Props)
           <g key={id} className="node-block" onClick={() => onOpen(id)} tabIndex={0} role="button"
             aria-label={DATA[id].name} onKeyDown={(e) => openKey(e, id)}>
             <rect x={IFACE_X} y={y} width={IFACE_W} height={34} rx={6} fill={C.ink2} stroke={C.rule} strokeDasharray="3 3" />
-            <text x={IFACE_X + 11} y={y + 22} fill={C.dim} fontSize="13.5"
-              {...fitProps(DATA[id].name, 13.5, IFACE_W - 22, false)}>{DATA[id].name}</text>
+            <text x={IFACE_X + 11} y={y + 22} fill={C.dim} fontSize="12"
+              {...fitProps(DATA[id].name, 12, IFACE_W - 22, false)}>{DATA[id].name}</text>
           </g>
         );
       })}
