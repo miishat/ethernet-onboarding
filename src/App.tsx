@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import type { Rate, Dir, LaneGen } from "./types";
+import type { Dir } from "./types";
 import { DATA } from "./data/stack";
-import { nodeAt, kidsOf, descendantIds, TRACKABLE } from "./data/tree";
+import { nodeAt, kidsOf, pathTo, descendantIds, TRACKABLE } from "./data/tree";
+import { useUrlNavigation } from "./navigation/useUrlNavigation";
 import Header from "./components/Header";
 import Breadcrumbs, { type Crumb } from "./components/Breadcrumbs";
 import StackCanvas from "./components/StackCanvas";
@@ -10,13 +11,9 @@ import ContentPanel from "./components/ContentPanel";
 import Stepper from "./components/Stepper";
 
 export default function App() {
-  const [rate, setRate] = useState<Rate>("400G");
-  const [dir, setDir] = useState<Dir>("tx");
-  const [gen, setGen] = useState<LaneGen>("100");
-  const [path, setPath] = useState<string[]>([]);
+  const [navigation, navigate] = useUrlNavigation();
+  const { rate, dir, gen, path, stepping, stepIndex } = navigation;
   const [visited, setVisited] = useState<Set<string>>(() => new Set());
-  const [stepping, setStepping] = useState(false);
-  const [stepIndex, setStepIndex] = useState(0);
 
   const node = useMemo(() => nodeAt(path), [path]);
   const kids = useMemo(() => (node ? kidsOf(node, dir) : []), [node, dir]);
@@ -42,26 +39,18 @@ export default function App() {
     });
 
   const openTop = (id: string) => {
-    setPath([id]);
-    setStepping(false);
+    navigate({ path: [id], stepping: false }, "push");
   };
   const push = (id: string) => {
     markRead(id);
-    setPath((p) => p.concat(id));
+    navigate({ path: pathTo(id) || path.concat(id), stepping: false }, "push");
   };
-  const upTo = (i: number) => setPath((p) => p.slice(0, i));
+  const upTo = (i: number) => navigate({ path: path.slice(0, i), stepping: false }, "push");
 
   /* a node selected in one direction may not exist in the other */
   const changeDir = (d: Dir) => {
-    setDir(d);
-    setStepIndex(0);
-    let p = path.slice();
-    while (p.length > 1) {
-      const n = nodeAt(p);
-      if (n && n.dir && n.dir !== "both" && n.dir !== d) p = p.slice(0, -1);
-      else break;
-    }
-    if (p.length !== path.length) setPath(p);
+    if (d === "both") return;
+    navigate({ dir: d }, "replace");
   };
 
   /* Escape climbs one level (or leaves the stepper). */
@@ -69,17 +58,17 @@ export default function App() {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
       if (stepping) {
-        setStepping(false);
+        navigate({ stepping: false }, "push");
       } else if (path.length) {
-        setPath((p) => p.slice(0, -1));
+        navigate((current) => ({ path: current.path.slice(0, -1), stepping: false }), "push");
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [stepping, path.length]);
+  }, [stepping, path.length, navigate]);
 
   /* ---------------------------------------------------------- breadcrumbs */
-  const crumbs: Crumb[] = [{ label: "the stack", go: path.length ? () => setPath([]) : null }];
+  const crumbs: Crumb[] = [{ label: "the stack", go: path.length ? () => upTo(0) : null }];
   path.forEach((id, i) => {
     const n = nodeAt(path.slice(0, i + 1));
     const last = i === path.length - 1;
@@ -93,13 +82,13 @@ export default function App() {
     <div className="app">
       <Header
         rate={rate}
-        setRate={setRate}
+        setRate={(r) => navigate({ rate: r }, "replace")}
         dir={dir}
         setDir={changeDir}
         gen={gen}
-        setGen={setGen}
+        setGen={(g) => navigate({ gen: g }, "replace")}
         stepping={stepping}
-        toggleStep={() => setStepping((s) => !s)}
+        toggleStep={() => navigate({ stepping: !stepping }, "push")}
         read={visited.size}
         total={TRACKABLE}
       />
@@ -109,16 +98,15 @@ export default function App() {
           <section className="col-step panel-anim">
             <StepperSidePanel />
             <Stepper
-                rate={rate}
-                dir={dir}
-                gen={gen}
-                index={stepIndex}
-                onIndexChange={setStepIndex}
-              onExit={() => setStepping(false)}
+              rate={rate}
+              dir={dir}
+              gen={gen}
+              index={stepIndex}
+              onIndexChange={(index) => navigate({ stepIndex: index }, "replace")}
+              onExit={() => navigate({ stepping: false }, "push")}
               onNavigate={(p) => {
-                setStepping(false);
                 if (p.length) markRead(p[p.length - 1]);
-                setPath(p);
+                navigate({ path: p, stepping: false }, "push");
               }}
             />
           </section>
@@ -137,7 +125,10 @@ export default function App() {
                   visited={visited}
                   onPick={(id) => {
                     markRead(id);
-                    setPath(path.slice(0, atLeaf ? -1 : path.length).concat(id));
+                    navigate({
+                      path: pathTo(id) || path.slice(0, atLeaf ? -1 : path.length).concat(id),
+                      stepping: false,
+                    }, "push");
                   }}
                   zone={zone}
                   litId={litId}
