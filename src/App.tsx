@@ -3,6 +3,7 @@ import type { Dir } from "./types";
 import { DATA } from "./data/stack";
 import { nodeAt, kidsOf, pathTo, descendantIds, TRACKABLE } from "./data/tree";
 import { useUrlNavigation } from "./navigation/useUrlNavigation";
+import { documentTitle } from "./navigation/documentTitle";
 import Header from "./components/Header";
 import Breadcrumbs, { type Crumb } from "./components/Breadcrumbs";
 import StackCanvas from "./components/StackCanvas";
@@ -14,6 +15,10 @@ export default function App() {
   const [navigation, navigate] = useUrlNavigation();
   const { rate, dir, gen, path, stepping, stepIndex } = navigation;
   const [visited, setVisited] = useState<Set<string>>(() => new Set());
+
+  useEffect(() => {
+    document.title = documentTitle(navigation);
+  }, [navigation]);
 
   const node = useMemo(() => nodeAt(path), [path]);
   const kids = useMemo(() => (node ? kidsOf(node, dir) : []), [node, dir]);
