@@ -3,6 +3,8 @@ import { RATES } from "../data/stack";
 import Segmented from "./Segmented";
 import ThemeToggle from "./ThemeToggle";
 import ProgressMeter from "./ProgressMeter";
+import TopicExplorer from "./TopicExplorer";
+import type { TopicEntry } from "../search/topicCatalog";
 
 interface Props {
   rate: Rate;
@@ -15,9 +17,12 @@ interface Props {
   toggleStep: () => void;
   read: number;
   total: number;
+  catalog: TopicEntry[];
+  recent: string[][];
+  onSelectTopic: (path: string[]) => void;
 }
 
-export default function Header({ rate, setRate, dir, setDir, gen, setGen, stepping, toggleStep, read, total }: Props) {
+export default function Header({ rate, setRate, dir, setDir, gen, setGen, stepping, toggleStep, read, total, catalog, recent, onSelectTopic }: Props) {
   return (
     <header className="header">
       <div className="header__inner">
@@ -39,6 +44,7 @@ export default function Header({ rate, setRate, dir, setDir, gen, setGen, steppi
       </div>
 
       <div className="header__controls">
+        <TopicExplorer catalog={catalog} dir={dir} recent={recent} onSelect={onSelectTopic} />
         <div>
           <div className="control-label">MAC data rate</div>
           <Segmented<Rate>

@@ -4,6 +4,8 @@ import { DATA } from "./data/stack";
 import { nodeAt, kidsOf, pathTo, descendantIds, TRACKABLE } from "./data/tree";
 import { useUrlNavigation } from "./navigation/useUrlNavigation";
 import { documentTitle } from "./navigation/documentTitle";
+import { buildTopicCatalog } from "./search/topicCatalog";
+import { parseRecentTopics, recordRecentTopic, RECENT_TOPICS_KEY } from "./search/recentTopics";
 import Header from "./components/Header";
 import Breadcrumbs, { type Crumb } from "./components/Breadcrumbs";
 import StackCanvas from "./components/StackCanvas";
@@ -15,6 +17,27 @@ export default function App() {
   const [navigation, navigate] = useUrlNavigation();
   const { rate, dir, gen, path, stepping, stepIndex } = navigation;
   const [visited, setVisited] = useState<Set<string>>(() => new Set());
+  const catalog = useMemo(() => buildTopicCatalog(), []);
+  const [recent, setRecent] = useState<string[][]>(() => {
+    try {
+      return parseRecentTopics(localStorage.getItem(RECENT_TOPICS_KEY), catalog);
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    if (stepping || !path.length || !catalog.some((entry) => entry.path.join("/") === path.join("/"))) return;
+    setRecent((previous) => previous[0]?.join("/") === path.join("/") ? previous : recordRecentTopic(previous, path));
+  }, [catalog, path, stepping]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(RECENT_TOPICS_KEY, JSON.stringify(recent));
+    } catch {
+      // Recents are a local convenience; discovery also works without storage.
+    }
+  }, [recent]);
 
   useEffect(() => {
     document.title = documentTitle(navigation);
@@ -45,6 +68,10 @@ export default function App() {
 
   const openTop = (id: string) => {
     navigate({ path: [id], stepping: false }, "push");
+  };
+  const selectTopic = (nextPath: string[]) => {
+    if (nextPath.length) markRead(nextPath[nextPath.length - 1]);
+    navigate({ path: nextPath, stepping: false }, "push");
   };
   const push = (id: string) => {
     markRead(id);
@@ -96,6 +123,9 @@ export default function App() {
         toggleStep={() => navigate({ stepping: !stepping }, "push")}
         read={visited.size}
         total={TRACKABLE}
+        catalog={catalog}
+        recent={recent}
+        onSelectTopic={selectTopic}
       />
 
       {stepping ? (

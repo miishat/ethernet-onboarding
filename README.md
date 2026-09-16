@@ -27,6 +27,18 @@ project, with a refined instrument aesthetic and a **light / dark** theme.
 
 ## Getting started
 
+Use **Search topics** in the header or **Ctrl+K / Cmd+K** to open topic discovery.
+Search covers names, aliases, summaries, article text, glossary terms and definitions,
+and clause numbers. With an empty query, browse the complete index grouped by layer;
+the index and search results follow the active TX or RX direction, including ancestry.
+Unwritten topics are marked **Outline**. Selecting a topic preserves the current rate,
+direction, and lane generation, exits the walkthrough, and supports Browser Back.
+
+Recently viewed topics and **Resume** are local conveniences stored in this browser.
+Discovery still works when browser storage is unavailable. **Escape** closes search
+and returns focus to its button without changing the selected topic. The panel does
+not trap focus, and the existing header controls remain available while it is open.
+
 ```bash
 npm install
 npm run dev      # http://localhost:5173
