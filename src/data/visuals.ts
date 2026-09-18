@@ -1,4 +1,4 @@
-// Auto-extracted verbatim from the original EthernetStack.jsx (VISUALS diagram specs).
+// Schematic lesson diagrams. Captions identify example scope and simplifications.
 /* eslint-disable */
 import type { DiagramSpec } from "../types";
 
@@ -20,7 +20,7 @@ export const VISUALS: Record<string, DiagramSpec> = {
       { label: "sync", w: 2, accent: true, note: "01 or 10" },
       { label: "payload", w: 64, note: "eight octets" },
     ],
-    caption: "Two bits decide how the other sixty-four are read. Nothing else in the block is self-describing.",
+    caption: "The sync header distinguishes data from control. A control block also carries a block-type field that defines how its payload is interpreted.",
   },
 
   "pcs-6466-struct": {
@@ -31,7 +31,7 @@ export const VISUALS: Record<string, DiagramSpec> = {
       { label: "0", w: 8 }, { label: "1", w: 8 }, { label: "2", w: 8 }, { label: "3", w: 8 },
       { label: "4", w: 8 }, { label: "5", w: 8 }, { label: "6", w: 8 }, { label: "7", w: 8 },
     ],
-    caption: "Header 01 means every octet is data, passed through untouched. The header itself carries no protection.",
+    caption: "In a data block, header 01 precedes eight data octets. Sync-header legality provides a boundary check, not a checksum for the payload.",
   },
 
   "pcs-6466-control": {
@@ -66,55 +66,55 @@ export const VISUALS: Record<string, DiagramSpec> = {
     },
     b: {
       type: "bitfield", compact: true,
-      fields: [{ label: "1", w: 1, accent: true }, { label: "256 bits of payload", w: 256 }],
+      fields: [{ label: "indicator", w: 1, accent: true }, { label: "256-bit representation", w: 256 }],
     },
-    caption: "Seven bits saved per four blocks. Overhead falls from 3.125 to 0.39 percent, and the difference is what pays for parity.",
+    caption: "Four blocks shrink from 264 to 257 bits without losing their data and control information. Coding overhead falls from 3.125 to about 0.39 percent before FEC parity is added.",
   },
 
   "pcs-257-lead": {
     type: "bitfield", ruler: false,
     title: "The all-data case",
     fields: [
-      { label: "1", w: 1, accent: true, note: "all four were data" },
+      { label: "indicator", w: 1, accent: true, note: "identifies the all-data case" },
       { label: "four 64-bit payloads, end to end", w: 256 },
     ],
-    caption: "The common case costs exactly one bit, which is why the encoding is shaped this way round.",
+    caption: "An all-data group contains four 64-bit data payloads and one indicator bit.",
   },
 
   "pcs-257-control": {
     type: "transcode",
     title: "With control blocks present",
     items: [
-      { label: "leading flag", bits: "1 bit", note: "0: one or more control blocks" },
-      { label: "control-position map", bits: "4 bits", note: "which of the four were control" },
-      { label: "relocated type fields", bits: "8 bits", note: "their block types" },
-      { label: "remaining payload", bits: "244 bits", note: "all other source data" },
+      { label: "indicator", bits: "1 bit", note: "distinguishes the data and control representations" },
+      { label: "control positions", bits: "encoded", note: "identifies the source control blocks" },
+      { label: "control types", bits: "encoded", note: "preserves their defined meanings" },
+      { label: "source data", bits: "retained", note: "reconstructed by reverse transcoding" },
     ],
     caption: "Type information moves into the space the sync headers vacated, so all four blocks can be rebuilt exactly.",
   },
 
   "pcs-scramble": {
-    type: "compare", labels: ["unscrambled: long runs, sparse transitions", "scrambled: dense transitions, balanced"],
+    type: "compare", labels: ["example repetitive input", "example scrambled output"],
     a: { type: "wave", pattern: "runs" },
     b: { type: "wave", pattern: "random" },
-    caption: "The receiver recovers its clock from transitions. The left trace starves it and drags the decision thresholds with it.",
+    caption: "Scrambling reduces repetitive patterns and improves transition and balance statistics. These traces illustrate the effect, not a guaranteed run-length or DC-balance bound.",
   },
 
   "pcs-scramble-257": {
     type: "bitfield", ruler: true,
-    title: "Where bit 257 sits",
+    title: "The entire transcoded block is scrambled",
     fields: [
-      { label: "bits 1 to 256, transcoded payload", w: 256 },
-      { label: "257", w: 1, accent: true, note: "constant through data runs" },
+      { label: "indicator", w: 1, accent: true, note: "can repeat in all-data groups" },
+      { label: "256-bit representation", w: 256 },
     ],
     caption: "Left unscrambled, that one bit would put a predictable periodic line into the transmitted spectrum.",
   },
 
   "pcs-scramble-mult": {
-    type: "compare", labels: ["one bit error arrives from the channel", "after descrambling, a short burst"],
+    type: "compare", labels: ["one residual error at descrambler input", "several affected output bits, schematic"],
     a: { type: "symbols", n: 20, damaged: [8], unit: "bits" },
     b: { type: "symbols", n: 20, damaged: [8, 9, 10], unit: "bits" },
-    caption: "The errored bit re-enters the shift register. Some of the burstiness FEC must handle is manufactured inside the PHY.",
+    caption: "A residual input error can affect multiple descrambled output bits. Outer FEC decoding precedes this stage; PCS error-marking rules account for propagation. Drawn positions are not exact polynomial offsets.",
   },
 
   "pcs-am-parts": {
@@ -124,7 +124,7 @@ export const VISUALS: Record<string, DiagramSpec> = {
       { label: "common part", w: 60, accent: true, note: "same on every lane" },
       { label: "unique part", w: 60, alt: true, note: "identifies this lane" },
     ],
-    caption: "You cannot identify a lane with a pattern that is identical everywhere, nor hunt a boundary with one that differs per lane.",
+    caption: "The common pattern helps locate markers. The unique pattern identifies the logical lane. This diagram shows the two parts, not the complete on-wire marker layout.",
   },
 
   "pcs-dist": {
@@ -138,9 +138,10 @@ export const VISUALS: Record<string, DiagramSpec> = {
   },
 
   "pcs-dist-div": {
-    type: "fold", logical: { "400G": 16, "800G": 8, "1.6T": 16 }, physical: { "400G": 4, "800G": 8, "1.6T": 8 },
+    type: "fold", logical: { "400G": 16, "800G": 32, "1.6T": 16 }, physical: { "400G": 4, "800G": 8, "1.6T": 8 },
     title: "Logical lanes folded onto physical lanes",
-    caption: "Because the logical count divides evenly, the same PCS drives four-lane and eight-lane interfaces with no change above the PMA.",
+    caption: "Specified PMA mappings adapt logical PCS lanes to physical interfaces. The drawn counts are reference examples, not a list of every standardized mapping.",
+    captionByRate: { "1.6T": "This 16:8 example represents sixteen electrical AUI lanes mapped toward eight optical lanes. Sixteen is not a confirmed 1.6T PCS lane count." },
   },
 
   "pcs-lock": {
@@ -150,9 +151,10 @@ export const VISUALS: Record<string, DiagramSpec> = {
   },
 
   "pcs-lock-debug": {
-    type: "lanes", n: { "400G": 16, "800G": 32, "1.6T": 8 }, fail: [11],
+    type: "lanes", n: { "400G": 16, "800G": 32, "1.6T": 8 }, fail: [3],
     title: "One lane failing",
-    caption: "Isolation to a single lane points at that lane's own path. A fault in configuration would take every lane down together.",
+    caption: "A lane-specific failure prioritizes checks of its signal path and mapping. Lane-specific configuration can also cause this symptom; it does not prove a hardware fault.",
+    captionByRate: { "1.6T": "Eight rows illustrate a lane-specific failure, not a confirmed logical PCS count. Check the affected paths and mappings; the symptom does not prove a hardware fault." },
   },
 
   "pcs-lock-buffer": {
@@ -165,13 +167,14 @@ export const VISUALS: Record<string, DiagramSpec> = {
     type: "lanes", n: { "400G": 16, "800G": 32, "1.6T": 8 }, shuffled: true,
     title: "Arrival order against logical order",
     caption: "Physical lane order need not be preserved by the cable, because identity travelled inside the markers.",
+    captionByRate: { "1.6T": "Eight rows illustrate marker-based reordering only. The 1.6T logical PCS count remains unconfirmed in this source base." },
   },
 
   /* ---------------------------------------------------------------- FEC --- */
   "fec-cw": {
     type: "symbols", n: 34, parityFrom: 30, scale: 16,
     title: "RS(544,514)",
-    caption: "514 message symbols then 30 parity. Each cell here stands for sixteen real symbols.",
+    caption: "A real codeword contains 514 message symbols and 30 parity symbols, each ten bits. Cells group symbols schematically; the drawn message/parity boundary is not to scale.",
   },
 
   "fec-cw-gf": {
@@ -188,45 +191,46 @@ export const VISUALS: Record<string, DiagramSpec> = {
     type: "compare", labels: ["40 bits of damage inside four symbols", "the same 40 bits spread across twenty symbols"],
     a: { type: "symbols", n: 24, damaged: [9, 10, 11, 12], budget: true },
     b: { type: "symbols", n: 24, damaged: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20], budget: true },
-    caption: "Identical bit damage, opposite outcome. This is the whole reason distribution and multiplexing are argued about.",
+    caption: "Four erroneous symbols fit within the guaranteed correction capacity; twenty exceed it. Beyond fifteen, successful correction is not guaranteed. Equal bit-error counts can impose different symbol-error loads.",
   },
 
   "fec-interleave": {
     type: "lanes", n: { "400G": 16, "800G": 32, "1.6T": 8 }, mapping: true,
     title: "Codeword symbols across lanes",
-    caption: "Two codewords interleaved ten bits at a time. Spreading means no single lane destroys a codeword alone; concentrating means a burst costs fewer symbols.",
+    caption: "The 400G example interleaves two codewords in ten-bit units. Mapping can spread a short event among codewords or keep erroneous bits within fewer symbols. A persistent lane failure is not thereby correctable.",
+    captionByRate: { "1.6T": "These eight rows are a schematic distribution example, not a confirmed 1.6T PCS lane or codeword arrangement. Use the applicable mapping to determine how errors reach outer codewords." },
   },
 
   "fec-il-sym": {
     type: "compare", labels: ["bit multiplexed: damage touches many symbols", "symbol multiplexed: damage stays in a few"],
     a: { type: "symbols", n: 24, damaged: [3, 5, 7, 9, 11, 13, 15, 17], budget: true },
     b: { type: "symbols", n: 24, damaged: [10, 11, 12], budget: true },
-    caption: "The same channel burst, mapped two ways. At 200G per lane the bursts are long enough that containment wins.",
+    caption: "Illustrative mappings of a burst, not measured error counts. Symbol multiplexing can reduce the number of affected RS symbols; performance depends on the channel and receiver error model.",
   },
 
   "fec-dec-cliff": {
     type: "curve",
     title: "Post-FEC against pre-FEC error rate",
-    caption: "Flat, then vertical. A link reporting no loss may be sitting just left of the edge, and nothing downstream will say so.",
+    caption: "Frame loss can rise sharply as correction capacity is exceeded. This schematic is not a measured performance curve. Zero observed loss alone does not establish spare margin.",
   },
 
   "fec-cc-inner": {
     type: "spans", mode: "concatenated",
     title: "Where each code sits",
-    caption: "The inner code covers the segment with the worst statistics. The outer code still spans the whole path.",
+    caption: "In this concatenated optical architecture, the inner code protects the optical segment while the outer code protects the broader path.",
   },
 
   /* ---- MAC, RS ---- */
   "mac-frame": {
     type: "bitfield", ruler: false,
-    title: "An Ethernet frame",
+    title: "An untagged Ethernet packet at minimum frame size",
     fields: [
       { label: "preamble", w: 7 }, { label: "SFD", w: 1, alt: true },
       { label: "destination", w: 6 }, { label: "source", w: 6 },
-      { label: "type", w: 2, alt: true }, { label: "payload, 46 to 1500", w: 46 },
+      { label: "Length/Type", w: 2, alt: true }, { label: "data + pad, 46 minimum", w: 46 },
       { label: "FCS", w: 4, accent: true },
     ],
-    caption: "Widths in octets, drawn at the 64-octet minimum. The FCS covers everything from the destination address onward.",
+    caption: "Widths in octets. The frame is 64 octets from destination address through FCS; preamble and SFD are outside it. FCS calculation covers destination address through data/pad, excluding the FCS itself.",
   },
 
   "mac-rate": {
@@ -234,16 +238,16 @@ export const VISUALS: Record<string, DiagramSpec> = {
     title: "Minimum-frame occupancy",
     fields: [
       { label: "preamble + SFD", w: 8, alt: true },
-      { label: "header", w: 14 }, { label: "payload", w: 46, accent: true },
+      { label: "header", w: 14 }, { label: "data + pad", w: 46, accent: true },
       { label: "FCS", w: 4 }, { label: "gap", w: 12, alt: true },
     ],
-    caption: "84 octets on the wire carry 46 octets of payload. This includes the preamble, frame, and required inter-frame gap; the same 26 octets of overhead barely register against a 1500-octet payload.",
+    caption: "A minimum untagged frame occupies 84 octet times including preamble/SFD and a 12-octet-time average gap. It carries 46 octets of data/pad, not necessarily useful client data. The corresponding fixed occupancy overhead is 38 octet times.",
   },
 
   "rs-adapt": {
     type: "states",
     title: "Aligning the next Start",
-    nodes: ["frame ends anywhere", "gap too short or long", "insert or delete idles", "Start lands in lane 0"],
+    nodes: ["frame ends", "next Start needs alignment", "adjust idles within the rules", "Start at a permitted position"],
     caption: "The deficit idle count records what was borrowed, bounded so it must be repaid and the average gap holds.",
   },
 
@@ -251,13 +255,13 @@ export const VISUALS: Record<string, DiagramSpec> = {
   "pma-pam4": {
     type: "eye",
     title: "PAM4: four levels, three eyes",
-    caption: "Four levels share the amplitude range NRZ used for two, so each eye is about a third the height. That is the roughly 9.5 dB penalty, drawn.",
+    caption: "With equally spaced levels over the same amplitude range, adjacent PAM4 levels are one-third as far apart as NRZ levels. The idealized 9.5 dB noise-margin comparison is not a complete practical link budget.",
   },
 
   "pma-eq": {
     type: "symbols", n: 20, damaged: [8, 9, 10, 11], unit: "PAM4 symbols",
     title: "DFE error propagation",
-    caption: "One wrong decision feeds the next. With a one-tap DFE at coefficient 1 the chance of continuing is about 3/4 per symbol.",
+    caption: "A wrong DFE decision can promote subsequent errors. In a simplified one-tap PAM4 model with coefficient 1, continuation probability can approach 3/4. This is not a universal burst probability.",
   },
 
   "pma-skew": {
@@ -280,7 +284,7 @@ export const VISUALS: Record<string, DiagramSpec> = {
       { label: "connector", w: 8, accent: true },
       { label: "module channel", w: 28, alt: true },
     ],
-    caption: "Two vendors, one channel. The specification divides the budget at the connector and defines compliance points either side, so neither has to test against the other.",
+    caption: "Defined host and module compliance points make each side's requirements measurable. This supports interoperability assessment; it does not remove the need for appropriate testing.",
   },
 
   /* ---- PMD ---- */
@@ -297,7 +301,7 @@ export const VISUALS: Record<string, DiagramSpec> = {
   "pmd-tdecq": {
     type: "eye", windows: true,
     title: "Where TDECQ is measured",
-    caption: "Two vertical histograms at 0.45 and 0.55 unit intervals, spanning all four levels. The noise they capture is compared with an ideal receiver, and the difference in dB is the penalty.",
+    caption: "Sample distributions are evaluated at positions separated by 0.1 UI after specified reference processing. Nominal timing and permitted optimization depend on the PMD and revision. TDECQ reports a power penalty, not measured operational BER.",
   },
 
   /* ---- flow control, faults, modules ---- */
@@ -328,13 +332,13 @@ export const VISUALS: Record<string, DiagramSpec> = {
     type: "states",
     title: "How a one-way failure gets reported",
     nodes: ["receive path breaks", "PCS sends local fault", "RS transmits remote fault", "far end sends idles only"],
-    caption: "The far end's transmitter is the broken part, but it sees good data coming back. Remote fault is how it finds out.",
+    caption: "A local receive fault causes the endpoint to send Remote Fault toward its peer. The indication reports an observed receive problem, not proof that the peer's transmitter is the failed component.",
   },
 
   "form-lanes": {
     type: "fold", logical: { "400G": 8, "800G": 8, "1.6T": 16 }, physical: { "400G": 4, "800G": 8, "1.6T": 8 },
     title: "Electrical lanes into optical lanes",
-    caption: "The cage decides how many electrical lanes arrive; the PMD decides how many optical lanes leave. They need not match.",
+    caption: "Example electrical-to-optical mappings. Host, module and form factor must support the chosen electrical interface; the PMD defines the optical arrangement. Counts need not match.",
     captionByRate: {
       "1.6T": "1.6TAUI-16 into a DR8: sixteen electrical lanes at 100G, eight optical lanes at 200G. The OSFP-XD cage exists to carry the sixteen.",
     },
@@ -346,17 +350,17 @@ export const VISUALS: Record<string, DiagramSpec> = {
     title: "A MACsec-protected frame",
     fields: [
       { label: "destination", w: 6 }, { label: "source", w: 6 },
-      { label: "SecTAG", w: 16, accent: true },
+      { label: "MACsec EtherType + SecTAG", w: 16, accent: true },
       { label: "secure data", w: 46 },
       { label: "ICV", w: 16, accent: true }, { label: "FCS", w: 4 },
     ],
-    caption: "Widths in octets, drawn with a 16-octet SecTAG and a 16-octet ICV - the usual case, and 32 octets of addition.",
+    caption: "This example uses a two-octet MACsec EtherType, a fourteen-octet SecTAG including SCI, and a sixteen-octet ICV. Those fields add 32 octets. Secure-data width is illustrative; padding and encapsulation affect actual frame size.",
   },
 
   "fec-cc-seg": {
     type: "compare", labels: ["concatenated: outer code spans the whole link", "segmented: corrected and re-encoded per hop"],
     a: { type: "spans", mode: "concatenated" },
     b: { type: "spans", mode: "segmented" },
-    caption: "Segmenting contains errors per hop but re-encodes an uncorrected error as apparently clean data for the next hop.",
+    caption: "Segmented decoding separates correction spans. Residual wrong data can be re-encoded into a valid next-segment codeword, so detected failures need defined propagation. Concatenation retains the broader outer-code span.",
   },
 };

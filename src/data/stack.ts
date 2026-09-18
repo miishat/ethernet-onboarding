@@ -1,12 +1,12 @@
-// Auto-extracted verbatim from the original EthernetStack.jsx (DATA/RATE_META/etc.).
-// Content is verified against research-brief.md - do not edit facts here.
+// Lesson content and rate-specific reference data.
+// Source base: research-brief.md and docs/prose-review/2026-09-17-assessment.md.
 /* eslint-disable */
 import type { Rate, Dir, StackNode } from "../types";
 
 export const RATES: Rate[] = ["400G", "800G", "1.6T"];
 
 export const RATE_META: Record<Rate, { std: string; lanes: string; draft: boolean }> = {
-  "400G": { std: "IEEE Std 802.3, Clause 119", lanes: "4 or 8 electrical lanes", draft: false },
+  "400G": { std: "IEEE Std 802.3, Clause 119", lanes: "4 x 100G; 2 x 200G in P802.3dj", draft: false },
   "800G": { std: "IEEE 802.3df-2024, Clause 172", lanes: "8 x 100G, or 4 x 200G (802.3dj)", draft: false },
   "1.6T": { std: "IEEE P802.3dj, Clause 175", lanes: "8 x 200G, or 16 x 100G", draft: true },
 };
@@ -23,11 +23,11 @@ export const DATA: Record<string, StackNode> = {
     id: "mac", name: "MAC", alias: "Media Access Control", zone: "framing", written: true,
     clause: { "400G": "Clause 3, 4", "800G": "Clause 3, 4", "1.6T": "Clause 3, 4; 174 (draft)" },
     face: { "400G": "400 Gb/s", "800G": "800 Gb/s", "1.6T": "1.6 Tb/s" },
-    summary: "Builds and checks frames. Deliberately unaware of the rate.",
+    summary: "Builds and checks Ethernet frames, independent of PHY lane layout.",
     intro:
-      "The MAC has changed less than anything else in Ethernet. It frames data, appends a frame check sequence, and enforces a minimum spacing between frames. It does not know whether it sits on four optical lanes or sixteen electrical ones.\n\nThat indifference is the whole architectural trick. A frame built by a 10 Mb/s MAC in 1990 and a frame built by a 1.6 Tb/s MAC have the same fields in the same order, so everything above the MAC survives every change below it. When a new speed is standardised, the MAC clause barely moves; the work is all in the PHY.\n\nWhat does change per rate is the [[inter-packet gap]] accounting, because the interface below the MAC is a parallel bus whose width does not divide neatly into arbitrary frame lengths.",
+      "The MAC, or Media Access Control sublayer, handles Ethernet frames. On transmit it adds the frame check sequence and controls the spacing between packets. On receive it checks the frame and reports whether it is valid. Its interface carries data and control information; it does not expose the optical wavelengths or physical lane layout below it.\n\nThe basic address, length/type, data and FCS fields are shared across Ethernet rates. Moving from 400G to 800G therefore changes the timing and the PHY implementation without requiring a new basic frame format. Clause 4 still needs rate-specific MAC parameters when a new speed is added.\n\nThe [[inter-packet gap]] connects this framing role to the next block. Frames can end at different byte positions on the parallel MII, while the next packet's Start character has an alignment requirement. The Reconciliation Sublayer adjusts idles between packets to meet that requirement while preserving the specified average gap.",
     terms: {
-      "inter-packet gap": "The mandatory idle period between frames, specified as an average minimum of 12 octets (96 bit times). Individual gaps may be shorter, within bounded rules, provided the average holds.",
+      "inter-packet gap": "The spacing between Ethernet packets. MAC transmission uses a minimum of 96 bit times; the RS can adjust individual gaps within specified rules to meet Start alignment while preserving the required average.",
     },
     params: {
       "400G": [["MAC data rate", "400 Gb/s"], ["Interface below", "400GMII"], ["Minimum frame", "64 octets"], ["FCS", "CRC-32"], ["Minimum average IPG", "12 octets"]],
@@ -38,16 +38,16 @@ export const DATA: Record<string, StackNode> = {
       {
         id: "mac-frame", name: "Frame format and FCS", alias: "the octets on the wire", dir: "both", written: true,
         clause: { all: "Clause 3" },
-        summary: "Preamble, addresses, type, payload, CRC-32.",
+        summary: "Where the MAC frame begins, which fields it carries, and what the FCS checks.",
         intro:
-          "A frame is a fixed sequence of fields. Seven octets of preamble and one start-of-frame delimiter get the receiver's attention, then six octets of destination address, six of source address, two of length or type, the payload, and four octets of frame check sequence.\n\nThe FCS is a 32-bit cyclic redundancy check computed over everything from the destination address through the end of the payload. It is the last line of defence, and it is why the PHY below is allowed to discard frames but never to deliver corrupted ones: a frame whose FCS fails is dropped, and the rules further down exist to make sure damaged frames actually fail that check rather than sneaking past it.",
-        params: { all: [["Preamble", "7 octets"], ["Start of frame delimiter", "1 octet"], ["Destination address", "6 octets"], ["Source address", "6 octets"], ["Length / type", "2 octets"], ["Payload", "46 to 1500 octets, untagged"], ["FCS", "4 octets, CRC-32"], ["Minimum frame", "64 octets, excluding preamble and SFD"]] },
+          "The MAC frame begins at the destination address and ends at the frame check sequence (FCS). The preamble and start-of-frame delimiter (SFD) precede it. Together, these form the Ethernet packet described by Clause 3.\n\nIn a basic untagged frame, destination and source addresses are followed by the length/type field, client data, any required padding, and the FCS. A length/type value of 1500 or less specifies the client-data length, excluding pad. A value of 1536 or greater is an EtherType identifying the carried protocol. Values between those ranges have no defined length/type interpretation. VLAN tags add fields after the source address. The table below gives the field sizes.\n\nThe FCS is a CRC-32 calculated from the destination address through the last data or pad octet, including any tags. Preamble, SFD and the FCS itself are excluded. The receiving MAC rejects a frame with an invalid FCS. This provides strong error detection, although some corrupted bit patterns can still produce a valid CRC.",
+        params: { all: [["Preamble", "7 octets, before the MAC frame"], ["Start of frame delimiter", "1 octet, before the MAC frame"], ["Destination address", "6 octets"], ["Source address", "6 octets"], ["Length / type", "2 octets; length ≤ 1500, EtherType ≥ 1536"], ["Payload + pad", "46 to 1500 octets, basic untagged frame"], ["FCS", "4 octets, CRC-32"], ["FCS coverage", "destination address through data and pad, including tags"], ["Minimum frame", "64 octets, destination address through FCS"]] },
         sections: [
           {
             id: "mac-frame-min", name: "Why 64 octets",
             body:
-              "The 64-octet minimum is a fossil. It comes from half-duplex CSMA/CD, where a frame had to stay on the wire long enough for a collision at the far end of the maximum-length segment to propagate back to the sender before transmission finished. Below that length a station could finish sending before learning it had collided.\n\nNothing about a modern full-duplex 400G link needs this. It survives because changing it would break the frame format that everything above depends on, and because the cost of padding short frames is small next to the cost of a flag day. It is the clearest example in Ethernet of a constraint that is kept for compatibility rather than for physics.",
-            params: { all: [["Origin", "half-duplex collision detection"], ["Requirement", "frame longer than the round-trip slot time"], ["Still true today?", "physically no; architecturally yes"], ["Enforced by", "padding short payloads to 46 octets"]] },
+              "An Ethernet MAC frame must be at least 64 octets long, measured from the destination address through the FCS. For a basic untagged frame, the addresses and length/type field occupy 14 octets and the FCS occupies four. That leaves at least 46 octets for client data and pad. If the client supplies fewer than 46, the MAC adds padding.\n\nThe minimum originated in half-duplex Ethernet. Devices shared a medium and used CSMA/CD, or carrier sense multiple access with collision detection. A sender had to keep transmitting long enough to detect a collision within the network's allowed propagation time. Modern full-duplex links do not use collision detection, but retain the 64-octet minimum as part of the Ethernet MAC specification.",
+            params: { all: [["Minimum MAC frame", "64 octets, destination address through FCS"], ["Origin", "half-duplex collision detection"], ["Modern full-duplex links", "retain the minimum; do not use collision detection"], ["Basic untagged data + pad", "at least 46 octets"]] },
           },
         ],
       },
@@ -57,23 +57,23 @@ export const DATA: Record<string, StackNode> = {
         clause: { all: "Clause 4.4.2" },
         summary: "An average minimum of 12 octets between frames.",
         intro:
-          "Frames are separated by an idle period of at least twelve octets on average - 96 bit times. The gap exists to give receivers time to finish processing one frame and re-arm for the next, and it is part of the rate arithmetic, not a courtesy: the 12 octets are bandwidth you do not get to use.\n\nThe word **average** is doing real work in that sentence. Individual gaps are allowed to be shorter, under bounded rules, because the layer below cannot always place the next frame exactly where the MAC would like it. That mechanism lives in the Reconciliation Sublayer and is covered there.",
-        params: { all: [["Minimum average IPG", "12 octets (96 bit times)"], ["Enforced as", "an average, not per-gap"], ["Reason for the gap", "receiver recovery between frames"], ["Consequence", "it counts against usable throughput"]] },
+          "The inter-packet gap is idle time between the end of one packet and the beginning of the next. The MAC's transmit timing uses a 96-bit-time gap, equivalent to 12 octet times. At 400 Gb/s, 96 bit times take 0.24 ns; at 800 Gb/s they take 0.12 ns. The same octet-time rule therefore occupies less time as the rate increases.\n\nThe gap contributes to packet transmission time even though it carries no frame data. Use the 12-octet average when calculating sustained throughput at the rates covered here. Individual gaps at the MII can vary under the RS alignment rules, and received gaps can also be affected by clock tolerance. The Deficit idle count lesson explains the transmit alignment mechanism.",
+        params: { all: [["MAC transmit gap", "96 bit times = 12 octet times"], ["RS alignment", "individual gaps can vary under the applicable rules"], ["Received gap", "can also change with clock tolerance"], ["Throughput calculation", "use the specified average gap"]] },
       },
 
       {
         id: "mac-rate", name: "Data rate versus goodput", alias: "where the headline number goes", dir: "both", written: true,
         clause: { all: "Clause 4" },
-        summary: "What fraction of 400 Gb/s carries payload.",
+        summary: "Calculate the share of MAC-rate transmission time available to client data.",
         intro:
-          "The headline rate is the MAC data rate, and payload is strictly less than that. Each frame carries 8 octets of preamble and SFD ahead of it and at least 12 octets of gap after it, so a 64-octet frame occupies 84 octets on the wire. That is 76 percent efficiency before you count the 18 octets of header and FCS inside the frame itself - of the 84 octets, only 46 are payload, about 55 percent.\n\nAt the other extreme, a 1500-octet payload occupies 1538 octets, which is about 97.5 percent. This is why benchmark numbers are always quoted with a frame size, and why small-frame line-rate performance is a much harder engineering claim than large-frame line-rate performance.\n\nNote that none of this counts PHY-layer overhead. The coding and FEC below have their own costs, but they are absorbed by running the line faster rather than by stealing MAC bandwidth - which is exactly why lane rates are odd numbers like 106.25 Gb/s rather than round ones.",
-        params: { all: [["64-octet frame occupies", "84 octets on the wire"], ["Payload fraction", "46 / 84, about 55 percent"], ["1500-octet frame occupies", "1538 octets"], ["Payload fraction", "about 97.5 percent"], ["PHY overhead", "absorbed by a faster line rate, not by MAC bandwidth"]] },
+          "Goodput is the rate of useful data delivered to the receiver. It is lower than the MAC data rate because frame headers, the FCS, preamble/SFD and the inter-packet gap all take transmission time. The examples here use basic untagged frames and a 12-octet average gap.\n\nA minimum-size frame occupies 64 + 8 + 12 = 84 octet times. Its client-data-and-pad field occupies 46 of those, giving 46 / 84 ≈ 55 percent. If some of that field is pad, the useful-data fraction is lower. With 1500 octets of client data, the total is 1500 + 14 + 4 + 8 + 12 = 1538 octet times, giving about 97.5 percent before any higher-layer headers are counted.\n\nPHY coding and FEC add overhead below the MAC. The specified lane signaling rates account for that overhead so the PHY can sustain the nominal MAC rate. For example, a 100G-class PAM4 lane carries 106.25 Gb/s rather than exactly 100 Gb/s. Tags, MACsec and application protocols introduce additional overhead beyond these examples.",
+        params: { all: [["64-octet frame occupies", "84 octet times, including preamble/SFD and average gap"], ["Payload fraction", "46 / 84, about 55 percent"], ["Assumption for 46 octets", "client data; padding reduces the useful share"], ["1500-octet client data occupies", "1538 octet times, basic untagged example"], ["Payload fraction", "about 97.5 percent"], ["PHY overhead", "accounted for in the specified serial signaling rate"]] },
         quiz: [
           {
             q: "Why does a 400G link never deliver 400 Gb/s of payload?",
             opts: ["FEC steals bandwidth from the MAC", "Preamble, gap, header and FCS all occupy wire time", "The PCS drops frames", "Clock tolerance reduces it"],
             a: 1,
-            why: "The MAC rate is the frame rate including framing overhead and the gap. PHY coding overhead is handled separately by raising the line rate.",
+            why: "MAC-rate transmission time includes frame headers, FCS, preamble/SFD and idle spacing. PHY coding and FEC overhead are accounted for in the specified serial signaling rates.",
           },
         ],
       },
@@ -81,15 +81,15 @@ export const DATA: Record<string, StackNode> = {
       {
         id: "mac-flow", name: "Flow control", alias: "PAUSE and PFC", dir: "both", written: true,
         clause: { all: "Clause 31, Annex 31A, 31B; IEEE 802.1Qbb" },
-        summary: "Telling a sender to stop, without dropping frames.",
+        summary: "Ask the peer to pause transmission before receive buffers overflow.",
         intro:
-          "A receiver running out of buffer has two options: drop frames, or ask the sender to stop. **PAUSE** is the mechanism for asking. It arrived in 802.3x in 1997, and it is built on the MAC control frame defined in Clause 31, with opcodes in Annex 31A and the PAUSE frame format in Annex 31B.\n\nA PAUSE frame is a 64-octet MAC control frame carrying an opcode and a 16-bit pause duration. The duration is expressed in **quanta**, where one quantum is the time to transmit 512 bits at the current link speed - so the units scale with the link rather than being absolute. A duration of zero means resume immediately, which is how a sender is released early.\n\nThe fatal limitation is in the name of its successor. PAUSE stops **all** traffic on the link. That makes an Ethernet segment unsuitable for carrying flows with different quality-of-service needs, because pausing for one application stops everything.",
-        params: { all: [["Defined in", "Clause 31, Annex 31A, Annex 31B"], ["Introduced by", "802.3x, 1997"], ["Frame", "64-octet MAC control frame"], ["EtherType", "0x8808"], ["Duration field", "16 bits, in quanta"], ["One quantum", "512 bit times at the current speed"], ["Duration zero", "resume"], ["Scope", "all traffic on the link"]] },
+          "If data arrives faster than a receiver can drain its buffers, the receiver can send a PAUSE control frame to its link partner. The partner then suspends ordinary data transmission for the requested interval. This can prevent buffer overflow when PAUSE is enabled and enough buffer headroom remains for data already in flight.\n\nPAUSE uses a 64-octet MAC control frame with a 16-bit duration field. The duration is measured in quanta: one quantum is 512 bit times at the current MAC rate. A zero duration releases the pause early. Clause 31 and Annexes 31A and 31B define the mechanism introduced by IEEE 802.3x.\n\nPAUSE acts on the link's ordinary data traffic as a whole. Congestion in one queue can therefore delay unrelated traffic. Priority Flow Control, described below, allows selected priorities to be paused instead. Neither mechanism removes the need to size buffers or manage congestion elsewhere in the network.",
+        params: { all: [["Defined in", "Clause 31, Annex 31A, Annex 31B"], ["Introduced by", "802.3x, 1997"], ["Frame", "64-octet MAC control frame"], ["EtherType", "0x8808"], ["Duration field", "16 bits, in quanta"], ["One quantum", "512 bit times at the current MAC speed"], ["Duration zero", "release the pause"], ["Scope", "ordinary data transmission toward the requesting peer"]] },
         sections: [
           {
             id: "mac-flow-quanta", name: "Quanta, and why max pause shrinks",
             body:
-              "Because a quantum is 512 bit times rather than a fixed interval, the same numeric value means less time as the link gets faster. The maximum field value is 65,535 quanta, which is 65,535 × 512 = about 33.6 million bit times.\n\nConvert that to seconds and the effect is striking. At 400 Gb/s the longest possible pause is roughly 84 microseconds. At 800 Gb/s it is about 42, and at 1.6 Tb/s about 21. The mechanism was designed when links were three orders of magnitude slower, and its maximum hold time has been quietly shrinking ever since.\n\nIn practice implementations rarely try to compute a duration anyway. The common pattern is to pause for a large number of quanta and then send an explicit zero to resume - using PAUSE as an on/off signal rather than a timer.",
+              "A pause quantum is 512 bit times. To convert a requested pause to seconds, multiply the field value by 512 and divide by the MAC rate in bits per second.\n\nThe largest field value is 65,535. Its maximum duration is approximately 84 microseconds at 400G, 42 microseconds at 800G, and 21 microseconds at 1.6T. The field width stays the same; the bit time gets shorter.\n\nA receiver can issue another PAUSE request if it still needs the peer to wait, or send a zero duration to resume early. The requested duration and refresh policy depend on the implementation's buffer-management strategy.",
             params: {
               "400G": [["Max field value", "65,535 quanta"], ["In bit times", "about 33.6 million"], ["Max pause at this rate", "about 84 microseconds"]],
               "800G": [["Max field value", "65,535 quanta"], ["Max pause at this rate", "about 42 microseconds"]],
@@ -108,8 +108,8 @@ export const DATA: Record<string, StackNode> = {
           {
             id: "mac-flow-pfc", name: "Priority Flow Control",
             body:
-              "PFC, standardised as IEEE 802.1Qbb, keeps the same 64-octet control frame and extends the semantics to eight classes of service. The frame carries a **class enable vector** - one bit per priority - followed by a separate two-octet quanta value for each enabled class.\n\nSo instead of stopping the link, you stop priority 3 and leave the rest running. That is what makes lossless behaviour possible for one traffic class while other classes tolerate drops, and it is why PFC underpins storage and AI fabrics that assume a lossless medium.\n\nNote the layering: PFC is an 802.1 standard using an 802.3 frame format. Like MACsec, it sits beside this stack rather than inside it.",
-            params: { all: [["Standard", "IEEE 802.1Qbb"], ["Frame", "the same 64-octet MAC control frame"], ["Classes", "8, from the 802.1p priority values"], ["Class enable vector", "8 bits, one per priority"], ["Per-class duration", "2 octets each, in quanta"], ["Enables", "lossless behaviour per class"]] },
+              "Priority Flow Control (PFC) lets a receiver pause selected priorities while other priorities continue transmitting. It was introduced by IEEE 802.1Qbb and is now part of IEEE 802.1Q. Like PAUSE, it uses a 64-octet MAC control frame.\n\nThe PFC frame contains a class-enable vector and eight two-octet pause-time fields, one for each priority. The vector selects which priorities' timers are updated by the frame. For example, a request can pause priority 3 while leaving priority 0 running.\n\nPFC can help prevent congestion drops for selected traffic in a network designed and configured for it. It does not by itself guarantee lossless delivery: buffer headroom, propagation delay and congestion behavior still matter. It operates through MAC control, alongside the PHY data path shown in this application.",
+            params: { all: [["Standard", "IEEE 802.1Q; introduced by 802.1Qbb"], ["Frame", "64-octet MAC control frame"], ["Priorities", "8"], ["Class enable field", "2 octets; eight enable bits and eight reserved bits"], ["Pause-time fields", "eight 2-octet values in quanta"], ["Purpose", "control congestion drops for selected priorities"]] },
             quiz: [
               {
                 q: "What does PFC add over PAUSE?",
@@ -123,7 +123,7 @@ export const DATA: Record<string, StackNode> = {
           {
             id: "mac-flow-timing", name: "Why the threshold is not 'buffer full'",
             body:
-              "There is no value in sending PAUSE once the buffers are already full, because frames will be lost in the time it takes to act. The receiver has to predict.\n\nThe threshold has to allow for the PAUSE frame's own transmission time, the propagation delay of the link, the delay through both PHYs, the far end's response time, and the possibility that a maximum-length frame has just started transmitting and cannot be stopped. On a long link at high rate those terms add up to a meaningful amount of data in flight, and the headroom must cover all of it.\n\nThis is where PHY latency stops being an abstraction. Every nanosecond the PHY adds is buffer the receiver must reserve, which is one reason FEC latency and deskew buffer depth are argued over so carefully further down the stack.",
+              "A receiver needs to request a pause before its buffer is full. Data continues arriving while the control frame reaches the peer and the peer responds, so the receiver must reserve space for that data. This reserved space is called headroom.\n\nThe response interval includes control-frame transmission, propagation, PHY processing and the peer's response delay. It must also allow for a data frame that is already being transmitted. As a first sizing estimate, multiply the incoming data rate by the response interval, then account for the implementation's additional requirements.\n\nFor scale, 100 ns at 400 Gb/s corresponds to 5000 octets. Even a short additional delay can therefore change the buffer headroom needed at high rates.",
             params: { all: [["Must allow for", "PAUSE transmission time"], ["Plus", "link propagation delay"], ["Plus", "PHY delay at both ends"], ["Plus", "the far end's response time"], ["Plus", "a max-length frame already in flight"], ["Consequence", "PHY latency becomes reserved buffer"]] },
           },
         ],
@@ -138,7 +138,7 @@ export const DATA: Record<string, StackNode> = {
     face: { "400G": "400GMII", "800G": "800GMII", "1.6T": "1.6TMII" },
     summary: "Adapts the MAC to a fixed-width parallel interface.",
     intro:
-      "The RS presents the MAC with something that still behaves like the classic media independent interface, and presents the PCS with a fixed-width parallel bus. It is a translator, and like most translators its interesting work is in the places where the two sides do not line up.\n\nThe main mismatch is alignment. Frames can be any whole number of octets, but the Start control character must appear in a fixed position on the parallel bus. Something has to absorb the difference, and that something is the [[deficit idle count]].\n\nThe RS is also where local and remote fault signalling lives, which makes it the answer to how a broken receive direction gets reported back to the far end.",
+      "The Reconciliation Sublayer (RS) connects the MAC service to the data-and-control representation used by the MII and PCS. On transmit it represents packet boundaries and idle periods with control characters. On receive it interprets the information coming back from the PHY.\n\nThe parallel interface has defined positions for the Start character. Because frames can end at different byte positions, the next Start may require idle adjustment. The [[deficit idle count]] tracks those adjustments so alignment does not reduce the specified average inter-packet gap.\n\nThe RS also handles Local Fault and Remote Fault signalling. These let one endpoint report a receive-path failure to its peer over the opposite direction of the link.",
     terms: {
       "deficit idle count": "A counter in the RS tracking idle characters deleted or inserted to keep the Start character aligned, bounded so that the average inter-packet gap is preserved even though individual gaps vary.",
     },
@@ -153,14 +153,14 @@ export const DATA: Record<string, StackNode> = {
         clause: { "400G": "Clause 81, 117", "800G": "Clause 81, 118", "1.6T": "Clause 174 (draft)" },
         summary: "A parallel bus of octet lanes, each with a control flag.",
         intro:
-          "The media independent interface is a parallel bus carrying octets, each accompanied by a flag saying whether it is data or a control character. Idle, Start, Terminate and the ordered sets are all control characters on this bus.\n\nTwo placement rules matter, and the asymmetry between them is the source of everything on the next page. The **Terminate** character may appear in any lane, because a frame can end on any octet. The **Start** character must appear in a fixed lane - the first one. Frames are arbitrary lengths; the bus is a fixed width; so the gap between frames is where the two get reconciled.\n\nThe PCS above this bus encodes eight of these octets into each 66-bit block, which is why the interface width and the coding block size are related by design rather than coincidence.",
-        params: { all: [["Carries", "octets plus data/control flags"], ["Control characters", "Idle, Start, Terminate, ordered sets"], ["Terminate", "may occur in any lane"], ["Start", "must occur in the first lane"], ["Consumed by", "the PCS, eight octets per 66-bit block"]] },
+          "A media independent interface (MII) represents data in parallel byte lanes. Each byte position has a control flag that distinguishes an ordinary data octet from a control character. Here, a byte lane means a position within the parallel word; it is different from a PCS lane or a physical serial lane.\n\nStart and Terminate mark packet boundaries, while Idle represents the gap between packets. Ordered sets carry signalling such as faults and contain a defined sequence of control and data characters. Terminate can occur at different byte positions, but Start must use a position permitted by the relevant MII specification.\n\nThe RS adjusts idles to meet that Start-alignment rule. The PCS below the interface then encodes groups of eight interface octets and their control information into 66-bit blocks. This is where the parallel byte representation becomes a coded block stream.",
+        params: { all: [["Carries", "octets plus data/control flags"], ["Control characters", "Idle, Start, Terminate, error and sequence indications"], ["Ordered sets", "defined sequences containing control and data characters"], ["Terminate", "different byte positions permitted"], ["Start", "position defined by the relevant MII"], ["PCS grouping", "eight octets and their control information per 66-bit block"]] },
         quiz: [
           {
-            q: "Why can Terminate appear in any lane but Start cannot?",
-            opts: ["Terminate is higher priority", "Frames end on arbitrary octets, but the next frame must begin at a fixed bus position", "Start is not a control character", "It is an arbitrary rule"],
+            q: "Why does the RS adjust idles between packets?",
+            opts: ["Terminate is higher priority", "Frame lengths vary, while Start has a defined alignment requirement", "Start is not a control character", "The FCS needs a seed exchange"],
             a: 1,
-            why: "Frame length is arbitrary so the end lands anywhere, but the receiver needs the frame start at a predictable position - so the idle between frames absorbs the difference.",
+            why: "The idle gap permits Start alignment without changing the frame data. Permitted Start positions are specified for the relevant MII.",
           },
         ],
       },
@@ -170,14 +170,14 @@ export const DATA: Record<string, StackNode> = {
         clause: { all: "Clause 46.3.1.4, and equivalents at higher rates" },
         summary: "Insert or delete idles to align Start, and keep a running tally.",
         intro:
-          "A frame ends wherever it ends. The next frame's Start must land in the first lane. So the RS has to insert or delete idle characters in the gap to push the Start into position - and if it only ever inserted, it would waste bandwidth, while if it only ever deleted, it would violate the 12-octet average.\n\nThe solution is a small counter. The **deficit idle count** is incremented when idle characters are deleted and decremented when they are inserted, and it is bounded, so the RS can only run a deficit so far before it must pay it back by inserting.\n\nIn the original 10 Gb/s specification the counter is bounded between **zero and three**, meaning up to three idles can be deleted at once - shrinking an individual gap from twelve octets to nine - but the deletions must be repaid, so the average holds at twelve. The counter resets only at initialisation and applies regardless of the gap the MAC asked for. Higher-rate Reconciliation Sublayers use the same technique; an implementation may use any equivalent method provided the result matches what DIC would produce.",
-        params: { all: [["Incremented when", "idle characters are deleted"], ["Decremented when", "idle characters are inserted"], ["Bounds (10 Gb/s RS)", "0 to 3"], ["Effect", "individual gaps as short as 9 octets"], ["Preserved", "the 12-octet average"], ["Reset", "at initialisation only"], ["Alternatives", "any method with identical results is allowed"]] },
+          "The RS must place the next packet's Start character at a permitted MII position. It can adjust the number of idles in the gap to do this. Adding idles increases transmission time; deleting them shortens the gap. Deficit idle count (DIC) keeps track of the adjustments so the specified average gap is preserved.\n\nDeleting idles increases the deficit. Adding idles reduces it. A bounded counter prevents the RS from repeatedly shortening gaps without compensating for the deletions.\n\nThe original 10 Gb/s RS uses a counter from zero to three and can shorten a nominal 12-octet gap to nine octets. Those numbers are a 10G example, not the bounds for every rate. Higher-rate interfaces have their own alignment rules and DIC definitions; use the relevant RS clause for the selected rate.",
+        params: { all: [["Incremented when", "idle characters are deleted"], ["Decremented when", "idle characters are inserted"], ["Bounds in the 10G example", "0 to 3"], ["10G example gap", "nominal 12 octets can become 9"], ["Higher rates", "use the relevant RS alignment and DIC definition"], ["Preserved", "the specified average gap"]] },
         sections: [
           {
             id: "rs-adapt-why", name: "Why not just always insert",
             body:
-              "Always inserting idles would be simpler and would never violate the minimum gap. It would also permanently reduce the effective data rate, because every misalignment would cost extra idle time that is never recovered. For minimum-size frames, where misalignment happens constantly, the loss would be significant.\n\nThe deficit counter is the compromise: borrow bandwidth when alignment demands it, repay it when alignment permits. Over any window longer than a few frames the average gap is what the standard requires, while no individual frame pays much.",
-            params: { all: [["Always insert", "simple, but permanently slower"], ["Always delete", "violates the average"], ["Deficit counter", "borrow and repay, bounded"]] },
+              "One way to align Start would be to add idles whenever the next permitted byte position is farther away. That would satisfy alignment, but repeated additions would increase the average gap and reduce throughput.\n\nDIC permits some gaps to be shortened and tracks the resulting deficit. Later idle additions compensate for those deletions. The bounded accounting lets the RS satisfy Start alignment while maintaining the required average spacing. It does not promise a 12-octet gap over every arbitrary short group of frames.",
+            params: { all: [["Repeated insertion", "increases average transmission time"], ["Uncompensated deletion", "can violate the average gap"], ["Deficit counter", "tracks bounded idle adjustments"]] },
             quiz: [
               {
                 q: "The deficit idle count is bounded rather than free-running. Why?",
@@ -190,8 +190,8 @@ export const DATA: Record<string, StackNode> = {
           {
             id: "rs-adapt-clock", name: "A second, separate mechanism",
             body:
-              "Do not confuse alignment with clock compensation. They both insert and delete idles, and they are different functions with different counters.\n\nAlignment is about bus position and works octet by octet. Clock compensation is about two ends of a link running from independent oscillators with a tolerance between them: over time one side produces data slightly faster than the other consumes it, and idles must be removed or added to absorb the drift. That removal happens in larger units to stay compatible with the block structure below.\n\nThe practical consequence is that the gap you observe on a working link is the result of at least two mechanisms, which is why measured inter-frame spacing varies more than a naive reading of 'minimum 12 octets' would suggest.",
-            params: { all: [["Alignment", "octet-level, to place Start correctly"], ["Clock compensation", "absorbs oscillator tolerance between ends"], ["Separate counters", "yes"], ["Observable effect", "measured gaps vary more than the minimum implies"]] },
+              "Idle adjustment can serve two different purposes. Start alignment places a packet at a permitted byte position on the local MII. Clock compensation accommodates a frequency difference between independently clocked parts of the link.\n\nEven clocks within specification can run at slightly different rates. The receive path may therefore need to add or remove idle time to cross between clock domains without changing frame data. The units and rules depend on the relevant interface and coding scheme.\n\nWhen measuring packet spacing, identify the observation point. A gap measured after receive-side clock compensation need not equal the gap originally produced by the transmitting MAC or RS.",
+            params: { all: [["Alignment", "meets the local MII Start-position rule"], ["Clock compensation", "accommodates clock-frequency differences"], ["Implementation", "units and rules depend on the interface"], ["Measurement", "identify the transmit or receive observation point"]] },
           },
         ],
       },
@@ -201,7 +201,7 @@ export const DATA: Record<string, StackNode> = {
         clause: { "400G": "Clause 81.3.4", "800G": "Clause 81.3.4", "1.6T": "Clause 174 (draft)" },
         summary: "How a broken receive direction is reported back to the far end.",
         intro:
-          "A link failure is usually one-directional. Your receiver goes dark, but your transmitter is fine - and the far end, whose transmitter is the broken part, sees perfectly good data coming back and has no idea anything is wrong. Fault signalling is how it finds out.\n\nThe mechanism is two ordered sets carried in the coded stream. When a sublayer detects a fault, the receive path sends **local fault** ordered sets up to the RS. The RS, on seeing local fault, stops sending MAC data and instead continuously transmits **remote fault** on its own transmit path. The far-end RS, on receiving remote fault, stops sending frames and transmits only idles.\n\nSo the two signals mean different things from the perspective of whoever is reading them. Local fault means \"my receive path is broken\". Remote fault means \"the other end is telling me my transmit path is broken\". Both bring the link down until the condition clears.\n\nFor 40G and above, this behaviour is specified in Clause 81.3.4 and follows the Clause 46 definition. One constraint worth knowing: Clause 81 link fault signalling supports **bidirectional operation only** - unlike the 10G lineage, it has no unidirectional mode.",
+          "An Ethernet link has two directions. One endpoint can lose its receive path while the opposite direction still carries data. Local Fault and Remote Fault signalling allow that endpoint to tell its peer that reception has failed.\n\nWhen the PHY indicates Local Fault to the RS, the RS stops transmitting MAC data and sends Remote Fault toward the peer. The peer receiving Remote Fault stops its own MAC data transmission and sends idles. This behavior helps both endpoints recognize that the link is unavailable.\n\nLocal Fault means a problem was detected in the local receive direction. Remote Fault means the peer reports a problem receiving from this endpoint. These names describe where the fault is observed, not which component caused it. Clause 81.3.4 defines the behavior for the relevant higher-rate interfaces and supports bidirectional operation; the 1.6T interface is described in the draft material referenced here.",
         params: {
           "400G": [["Specified in", "Clause 81.3.4, following Clause 46"], ["Local fault means", "a fault on my receive path"], ["Remote fault means", "the far end cannot receive from me"], ["On local fault, the RS", "stops MAC data, transmits remote fault"], ["On remote fault, the RS", "stops frames, sends only idles"], ["Unidirectional operation", "not supported"], ["Status exposed via", "MDIO registers, Clause 45"]],
           "800G": [["Specified in", "Clause 81.3.4"]],
@@ -211,15 +211,15 @@ export const DATA: Record<string, StackNode> = {
           {
             id: "rs-fault-limits", name: "What it cannot tell you",
             body:
-              "LF and RF localise a fault to \"somewhere between the two Reconciliation Sublayers\", and no further. They do not identify which sublayer failed.\n\nThat gap was recognised early and argued over during the 10 Gb/s work. The awkward case is a far-end fault in, say, the PCS: it presents to you as a **local** fault, because from your side the symptom is that your receive path is broken - while the far end reports nothing wrong at all. An operator can then spend a long time running diagnostics on equipment that is working correctly.\n\nThe resolution is that fault signalling is a link-state mechanism, not a diagnostic one. Localisation comes from the **MDIO registers** in Clause 45, where each sublayer reports its own status, so management can walk the stack and find which one is unhappy. If you take one practical thing from this page: when you see local fault, the fault is probably not local.",
-            params: { all: [["Resolution of LF/RF", "somewhere between the two RSs"], ["Cannot identify", "which sublayer failed"], ["Awkward case", "a far-end fault appears to you as local fault"], ["Localisation tool", "per-sublayer MDIO status, Clause 45"], ["Rule of thumb", "local fault rarely means the fault is local"]] },
+              "Local Fault and Remote Fault identify an affected direction, but do not identify the failed component. A Local Fault can result from a problem in the local receiver, the connecting medium, or the peer's transmit path.\n\nFor example, the peer's optical transmitter could fail while its receiver continues receiving correctly. This endpoint would see Local Fault even though the initiating failure occurred at the peer. The opposite situation, a failure in this endpoint's receiver, can produce the same indication.\n\nUse per-sublayer status, available through management such as Clause 45 MDIO, together with signal and error measurements to narrow the cause. A fault indication is a starting point for diagnosis, not proof that the failed hardware is local or remote.",
+            params: { all: [["Resolution of LF/RF", "affected link direction"], ["Cannot identify", "the initiating failed component"], ["Local fault can originate in", "local receive hardware, medium or peer transmit path"], ["Localisation tools", "per-sublayer MDIO status and signal/error measurements"]] },
             quiz: [
               {
-                q: "You see local fault and the far end reports nothing wrong. What is the likely situation?",
-                opts: ["Your own transmitter has failed", "Something in the path toward you has failed, which the far end cannot detect",
+                q: "You see Local Fault. What can you conclude from that indication alone?",
+                opts: ["Your own transmitter has failed", "A problem was detected in your receive direction; the component is not identified",
                        "The link is fine", "Both ends have failed"],
                 a: 1,
-                why: "Local fault means your receive path is broken. The far end is transmitting into that broken path and is receiving your good data, so it has no symptom to report.",
+                why: "The name identifies the observation direction. The cause can be local receive hardware, the medium, or the peer's transmit path.",
               },
             ],
           },
@@ -235,10 +235,10 @@ export const DATA: Record<string, StackNode> = {
     face: { "400G": "16 PCS lanes", "800G": "two flows", "1.6T": "two flows" },
     summary: "Codes the stream, marks it, and splits it across lanes.",
     intro:
-      "The PCS turns one fast stream of octets into something that can survive being sent across many independent lanes and reassembled at the far end. Five steps in a fixed order: code the data so the receiver can tell data from control, transcode to shrink that overhead and make room for error correction, scramble so the line has transitions and no sustained DC imbalance, insert periodic markers so lanes can be identified and deskewed, then distribute across [[PCS lanes]].\n\nThe lane count is a PCS decision pushed downward, not an optical decision pushed up. The PCS produces a fixed number of lanes and the PMA maps however many exist onto however many physical lanes the medium has. That is why one 400G PCS drives four lanes of parallel single-mode or eight lanes of multimode with nothing above it changing.\n\nOne structural note that trips people up: the 800G and 1.6T PCSs run **two flows** rather than one wider pipeline. At 800G, flow 0 carries the even encoded 4×66-bit blocks and flow 1 carries the odd ones. Each flow is close enough to a 400G PCS that the standard reuses the Clause 119 machinery rather than inventing new logic.\n\nAlso worth knowing early: the standard places the [[RS-FEC]] inside the PCS clause at these rates, while vendor block diagrams usually draw PCS and FEC as separate boxes. Both are defensible; they answer different questions.",
+      "The Physical Coding Sublayer (PCS) converts MII data and control characters into a coded stream that the receiver can reconstruct. For 400GBASE-R, the transmit sequence is 64B/66B encoding, 256B/257B transcoding, scrambling, alignment-marker insertion, distribution into FEC messages, RS-FEC encoding, and distribution onto [[PCS lanes]]. The receive path reverses these operations after recovering and aligning the lanes.\n\nPCS lanes are logical streams. The PMA maps them onto a supported physical interface, so the PCS lane count can differ from the number of electrical or optical lanes. For example, the 400GBASE-R PCS uses 16 logical lanes even when the physical interface uses four lanes.\n\n800GBASE-R uses two flows with processing derived from the 400G PCS. The referenced 1.6T draft also uses two flows, but its details should not be inferred by simply doubling every 800G value. The 1.6T lane count remains unconfirmed in this application's source set.\n\nAt these rates, [[RS-FEC]] is specified as part of the PCS. This map draws it separately to make its role easier to study. The separate box does not imply an additional IEEE sublayer boundary between PCS processing and its RS-FEC functions.",
     terms: {
       "PCS lanes":
-        "A logical lane created by the PCS. The count is fixed per rate and chosen so that it divides evenly by every supported physical lane count, which is what makes one PCS reusable across many PMDs.",
+        "A logical stream produced by a particular PCS definition. A compatible PMA maps logical lanes onto its specified interface. PCS lanes, MII byte positions and physical serial lanes are different kinds of lane.",
       "RS-FEC":
         "Reed-Solomon forward error correction. At 400G it is specified inside Clause 119 rather than as a separate clause, though it is a distinct function.",
     },
@@ -269,45 +269,45 @@ export const DATA: Record<string, StackNode> = {
       {
         id: "pcs-6466", name: "64B/66B encoding", alias: "line coding", dir: "tx", written: true,
         clause: { "400G": "Clause 119.2.4", "800G": "Clause 172", "1.6T": "Clause 175 (draft)" },
-        summary: "64 bits of payload plus a two-bit header that says data or control.",
+        summary: "Encode eight interface octets and control information into 66-bit blocks.",
         intro:
-          "Every 64 bits of data acquires a two-bit sync header, making a 66-bit block. The header is the entire point: 01 means the remaining 64 bits are all data, 10 means this is a control block whose first octet is a block type field. 00 and 11 never occur legally, and that illegality is how a receiver detects it has locked onto the wrong bit boundary.\n\nThe overhead is 2 bits in 66, about 3.125 percent. That was acceptable at 10G where this coding originated and is not acceptable at 400G, because forward error correction needs overhead of its own and the total has to fit inside what the optics and the [[baud rate]] can carry. That pressure is what the next stage exists to relieve.",
+          "64B/66B encoding turns eight MII octets and their data/control information into a 66-bit block. A two-bit sync header identifies the block category: 01 for data and 10 for control. A control block also carries a block-type field that specifies how its remaining bits should be interpreted.\n\nThe extra two bits give an overhead of 2 / 64 = 3.125 percent relative to the uncoded data. In the PCS designs covered here, four 66-bit blocks are subsequently transcoded into 257 bits. That reduces the coding overhead before Reed-Solomon parity is added.\n\nHeaders 00 and 11 are invalid for normal transmitted blocks. In designs that acquire block lock from sync headers, repeated legality checks help locate the block boundary. The higher-rate receive pipeline also uses alignment markers and FEC, so sync-header checking should not be treated as its only alignment mechanism.",
         terms: { "baud rate": "Symbols per second on the line, as distinct from bits per second. PAM4 carries two bits per symbol, so a 106.25 Gb/s lane runs at 53.125 GBd." },
         params: { all: [["Block", "66 bits"], ["Payload", "64 bits"], ["Overhead", "3.125 percent"], ["Data header", "01"], ["Control header", "10"], ["Illegal", "00 and 11"]] },
         sections: [
           {
             id: "pcs-6466-struct", name: "Block structure",
             body:
-              "Bits 1 and 2 are the sync header. Bits 3 to 66 are the payload. In a data block the payload is eight octets of data, straight through, unmodified. In a control block the first octet of the payload is a block type field, and the interpretation of the remaining seven octets depends on it.\n\nThe header carries no error protection of its own. It survives because it is checked for legality, because FEC below corrects most errors before this layer sees them, and because persistent header violations cause a loss of block lock rather than being quietly accepted.",
+              "A 66-bit block has a two-bit sync header followed by a 64-bit payload. For a data block, that payload is eight data octets. For a control block, the first payload octet is the block-type field; the remaining bits represent data and control according to that type.\n\nThe sync header is not a checksum. Some bit errors turn a legal header into an illegal one, but others change one legal header into the other. Error correction and the receive validity checks are therefore needed in addition to header legality.",
             params: { all: [["Bits 1-2", "sync header"], ["Bits 3-66", "payload, 8 octets"], ["Control block", "first payload octet is block type"], ["Header protection", "none; legality-checked"]] },
           },
           {
             id: "pcs-6466-control", name: "Control blocks and ordered sets",
             body:
-              "Control blocks carry everything that is not data: idle, error, start and terminate of a frame, and ordered sets used for signalling such as local and remote fault. The block type field distinguishes them.\n\nThis is the mechanism behind a fact that matters on the receive side: when an uncorrectable FEC codeword is detected, the PCS marks the affected blocks as error blocks. There is nowhere else in the stack such a marker could live, which is why the coding and the error-marking rules are specified together.",
+              "The MII carries more than frame data. It also carries Idle, Start, Terminate, error indications and ordered sets for signalling. A 64B/66B control block represents defined combinations of these characters, sometimes together with data octets. Its block-type field tells the receiver which combination is present.\n\nAfter a detected uncorrectable FEC event, the receive PCS produces error indications rather than treating the affected blocks as valid data. The coding and decoding rules define how those indications reach the interface above the PCS.",
             params: { all: [["Carried as", "control blocks, header 10"], ["Examples", "idle, error, start, terminate, ordered sets"], ["Selector", "block type field"], ["Used by", "fault signalling and error marking"]] },
           },
           {
             id: "pcs-6466-lock", name: "Illegal headers and block lock",
             body:
-              "A receiver that does not yet know where blocks begin guesses a boundary and tests it. If the guess is wrong, sync headers land on arbitrary bit pairs and 00 and 11 appear at roughly the rate chance predicts. Enough violations and the receiver shifts its guess and tries again; enough clean blocks and it declares lock.\n\nIn practice, a link that cannot achieve lock is rarely suffering a subtle coding problem. It is usually receiving something structurally wrong: the wrong rate, the wrong lane count, or nothing at all.",
-            params: { all: [["Hunt", "shift boundary, re-test"], ["Evidence of error", "00 or 11 headers"], ["Declares", "block lock"], ["Typical real cause", "rate or lane-count mismatch"]] },
+              "A sync-header-based block-lock process tests a candidate boundary by checking successive two-bit headers. At a wrong boundary, the tested pairs can resemble random data, producing many 00 and 11 values. The process shifts the candidate boundary until enough legal headers meet the lock criteria.\n\nRepeated failure to acquire or retain lock is evidence that the receiver cannot reliably interpret the stream. Check the configured rate and coding, signal presence, and error measurements. Illegal headers alone do not uniquely identify the cause; poor signal quality can also prevent lock.",
+            params: { all: [["Hunt", "test candidate sync-header boundaries"], ["Illegal normal headers", "00 and 11"], ["Declares", "block lock when specified criteria are met"], ["Checks after failure", "signal, coding, configuration and error measurements"]] },
             quiz: [
               {
-                q: "A receiver sees 00 and 11 sync headers at about the rate chance would predict. What is happening?",
-                opts: ["FEC has failed", "It has not found the block boundary", "The scrambler is misconfigured", "Lane skew exceeds the budget"],
+                q: "During block-lock acquisition, what does a high rate of illegal headers suggest?",
+                opts: ["It proves FEC has failed", "The candidate block boundary may be wrong", "It proves the scrambler is misconfigured", "It identifies a failed fibre"],
                 a: 1,
-                why: "Random-looking illegal headers are the signature of testing a wrong boundary. A real coding fault would show a pattern rather than chance statistics.",
+                why: "At a wrong boundary the tested bit pairs can resemble random data. Poor signal quality can also cause violations, so this is evidence rather than a unique diagnosis.",
               },
             ],
           },
         ],
         quiz: [
           {
-            q: "Why did 3.125 percent overhead stop being acceptable at 400G?",
+            q: "Why does the 400G PCS transcode the 66-bit blocks before FEC encoding?",
             opts: ["Encoders cannot run that fast", "FEC needs overhead too, and the total must fit the baud rate", "Control blocks become ambiguous", "It breaks the scrambler"],
             a: 1,
-            why: "FEC is mandatory at these rates and its parity also costs overhead. Something has to give, which is why 66-bit blocks are transcoded down before FEC is applied.",
+            why: "Transcoding reduces coding overhead while preserving data and control information, allowing Reed-Solomon parity within the selected serial-rate overhead budget.",
           },
         ],
       },
@@ -318,25 +318,25 @@ export const DATA: Record<string, StackNode> = {
         clause: { "400G": "Clause 119.2.4.2", "800G": "Clause 172", "1.6T": "Clause 175 (draft)" },
         summary: "Four 66-bit blocks compressed into one 257-bit block.",
         intro:
-          "Four consecutive 66-bit blocks carry eight sync-header bits between them. Transcoding replaces those eight bits with one leading bit plus, where needed, positional information, producing 257 bits where there were 264. Overhead falls from 3.125 percent to about 0.39 percent, and the recovered room is spent on Reed-Solomon parity.\n\nIt is lossless and exactly reversible. The receiver runs the inverse after FEC decoding, and no information about the original four blocks is lost in either direction.\n\nThe 257-bit block is the unit that everything downstream counts in. FEC messages are whole numbers of them, alignment marker groups are sized in them, and insertion periods are quoted in them.",
+          "256B/257B transcoding combines four 66-bit blocks into one 257-bit block. The input occupies 264 bits, including eight sync-header bits. The transcoder uses a more compact representation of the data/control information while preserving the contents needed to reconstruct those four blocks.\n\nFor an all-data group, one leading bit identifies the group and the remaining 256 bits carry the data. Coding overhead falls from 2 / 64 = 3.125 percent to 1 / 256 ≈ 0.39 percent. This leaves more of the specified line-rate overhead available for FEC parity.\n\nThe operation is reversible. After FEC decoding and descrambling, the receiver reconstructs the original 66-bit blocks. In the 400G chain, the resulting 257-bit units also provide a convenient size for FEC-message and alignment-marker-group accounting.",
         params: { all: [["Input", "4 x 66 bits = 264"], ["Output", "257 bits"], ["Overhead before", "3.125 percent"], ["Overhead after", "0.39 percent"], ["Reversible", "exactly"]] },
         sections: [
           {
             id: "pcs-257-lead", name: "The leading bit",
             body:
-              "Bit 1 of the 257-bit block says whether all four source blocks were data blocks. If it says yes, nothing further is needed and the remaining 256 bits are the four 64-bit payloads laid end to end. This is the overwhelmingly common case, and the encoding is built so the common case costs one bit.",
-            params: { all: [["Bit 1 set", "all four were data blocks"], ["Then", "256 bits are four payloads"], ["Frequency", "the common case"]] },
+              "The leading bit identifies whether all four source blocks were data blocks. In the all-data case, the other 256 bits are simply the four 64-bit payloads placed in sequence.\n\nIf a control block is present, the receiver uses the control-case representation instead. The leading bit distinguishes these cases; it does not check the block for errors.",
+            params: { all: [["Leading bit", "distinguishes all-data and control-containing groups"], ["All-data representation", "four 64-bit payloads plus the indicator"], ["Error protection", "the indicator is not a checksum"]] },
           },
           {
             id: "pcs-257-control", name: "When control blocks are present",
             body:
-              "If any of the four source blocks was a control block, the encoding records which positions were control and relocates their block type information into the space freed by removing the sync headers. Reconstruction is unambiguous: the receiver reads the flags, learns which positions were control, and rebuilds all four 66-bit blocks exactly.\n\nSo transcoding needs no escape hatch for control-heavy traffic. A stream of pure idle transcodes as happily as a stream of pure data.",
+              "When a group contains control blocks, the transcoder must preserve their positions and types as well as any accompanying data. It encodes that information using the defined control-case format.\n\nThe receiver uses the format to reconstruct all four 66-bit blocks, including their headers and control information. A mixture of data and control blocks, or a group of idles, is supported by the same transcoding process.",
             params: { all: [["Flagged", "which of the four were control"], ["Relocated", "block type fields"], ["Reconstruction", "exact, unambiguous"], ["Works for", "any mix of data and control"]] },
           },
           {
             id: "pcs-257-order", name: "Transcode before scramble",
             body:
-              "For 200G and 400G the transcoding happens before scrambling, which simplifies the transcoder. The 100G-era design in 802.3bj scrambled first. If you are reading a 100G block diagram beside a 400G one, that swap is a real difference and not a drafting error.\n\nIt also has a consequence on the receive side. Because scrambling is applied after transcoding, descrambler error propagation lands inside transcoded blocks, which is part of why the error-marking rules after an uncorrectable codeword extend past the codeword itself.",
+              "For the 200GBASE-R and 400GBASE-R chain in Clause 119, transcoding comes before scrambling. This differs from the 100G RS-FEC chain introduced by IEEE 802.3bj, which scrambles before transcoding. Check the rate and PCS definition when comparing diagrams.\n\nOn receive, the Clause 119 chain performs FEC decoding, removes the alignment-marker group, descrambles, and reverses the transcode. If erroneous data reaches the descrambler, its error propagation can affect a subsequent 257-bit block. The receive error-marking rules account for that extension.",
             params: { all: [["200G and 400G onward", "transcode, then scramble"], ["100G era (802.3bj)", "scramble, then transcode"], ["Reason", "simpler transcoder"]] },
           },
         ],
@@ -345,7 +345,7 @@ export const DATA: Record<string, StackNode> = {
             q: "What is the recovered overhead spent on?",
             opts: ["Higher goodput", "Reed-Solomon parity", "Alignment markers", "Larger inter-packet gaps"],
             a: 1,
-            why: "Transcoding does not increase goodput. It buys room, and the room goes to FEC parity so the link can tolerate a far worse pre-FEC error rate.",
+            why: "In this PCS, reducing coding overhead provides room for FEC parity within the specified serial rate. It does not remove MAC framing overhead.",
           },
         ],
       },
@@ -354,9 +354,9 @@ export const DATA: Record<string, StackNode> = {
       {
         id: "pcs-scramble", name: "Scrambling", alias: "self-synchronous scrambler", dir: "tx", written: true,
         clause: { "400G": "Clause 119.2.4.3", "800G": "Clause 172", "1.6T": "Clause 175 (draft)" },
-        summary: "Randomises the stream for transitions and DC balance.",
+        summary: "Reduces repetitive patterns and improves the stream's transition statistics.",
         intro:
-          "A receiver recovers its clock from transitions in the incoming signal. A long run of identical symbols starves it, and a sustained DC imbalance drags the decision thresholds around, which is [[baseline wander]]. The scrambler prevents both by combining data with the output of a shift register, using a self-synchronous polynomial so the receiver needs no seed and no handshake: it runs the inverse register and converges.\n\nThe polynomial is x⁵⁸ + x³⁹ + 1, and it is applied after transcoding.",
+          "A receiver needs enough signal transitions to recover timing. Long repetitive patterns can also concentrate energy at particular frequencies and create low-frequency imbalance. Scrambling reduces those patterns by combining the data with a sequence generated from earlier bits.\n\nThe Clause 119 scrambler uses x⁵⁸ + x³⁹ + 1 and operates on the transcoded stream before alignment markers are inserted. It is self-synchronous: the receiver reconstructs the needed state from received bits, without negotiating a seed.\n\nScrambling improves the stream's statistics. It does not guarantee an exact balance of zeros and ones, or a fixed maximum run length. [[baseline wander]] is one receiver impairment that sustained low-frequency imbalance can contribute to.",
         terms: { "baseline wander": "Slow drift in the average signal level caused by sustained imbalance between high and low symbols, which shifts the receiver's decision thresholds and closes the eye." },
         params: {
           "400G": [["Polynomial", "x^58 + x^39 + 1"], ["Type", "self-synchronous"], ["Applied to", "all 257 bits of each block"], ["Position", "after transcoding"], ["Not scrambled", "the alignment marker group"]],
@@ -367,14 +367,14 @@ export const DATA: Record<string, StackNode> = {
           {
             id: "pcs-scramble-257", name: "Why bit 257 is scrambled",
             body:
-              "Bit 257 is a flag rather than payload, so leaving it alone is tempting. Its statistics are the problem: through long runs of all-data blocks it holds a constant value, and that regularity would appear on the line as periodic structure at a very predictable frequency - exactly the kind of spectral line the scrambler exists to remove. So it is included.",
+              "The scrambler includes the leading control/data indicator as well as the other bits of each 257-bit block. During a long run of all-data groups, that indicator would otherwise repeat at a regular interval.\n\nScrambling the entire block reduces the periodic structure that the repeated indicator could introduce. The receiver descrambles before interpreting the transcoded format, so the indicator is recovered along with the data.",
             params: { all: [["Nature", "flag bit, not payload"], ["Problem", "constant through all-data runs"], ["If omitted", "reduced randomness, periodic content"], ["Decision", "scramble it"]] },
           },
           {
             id: "pcs-scramble-mult", name: "Error multiplication",
             body:
-              "Self-synchronous descrambling has a cost. An errored bit re-enters the shift register, so one channel bit error emerges as a short burst after descrambling.\n\nThis is not a curiosity. It is why, after an uncorrectable codeword, the standard requires marking blocks beyond the codeword itself when the stateless decoder is used - the damage propagates into the next transcoded block through the descrambler. Some of the burstiness the FEC must handle is manufactured inside the PHY rather than by the channel.",
-            params: { all: [["Cause", "errored bit re-enters the register"], ["Effect", "one error becomes a short burst"], ["Consequence", "error marking extends past the codeword"], ["Absorbed by", "FEC burst tolerance"]] },
+              "A self-synchronous descrambler uses earlier received bits in its calculation. An erroneous input bit can therefore affect the current output and later outputs at the polynomial's delay positions. This is error multiplication, and the affected bits need not form a contiguous burst.\n\nIn the Clause 119 receive chain, FEC decoding happens before descrambling. Corrected errors do not reach the descrambler, but residual errors can propagate. That is why the applicable stateless-decoder rules extend error marking into the next transcoded block after a detected uncorrectable event.",
+            params: { all: [["Cause", "earlier received bits affect later descrambler outputs"], ["Effect", "one residual error can create several separated output errors"], ["FEC position", "decoding precedes descrambling in Clause 119"], ["Consequence", "applicable error marking accounts for extension"]] },
           },
         ],
         quiz: [
@@ -382,7 +382,7 @@ export const DATA: Record<string, StackNode> = {
             q: "Why use a self-synchronous scrambler rather than one needing a seed exchange?",
             opts: ["Better randomisation", "The receiver converges with no handshake", "It avoids error multiplication", "FEC requires it"],
             a: 1,
-            why: "No seed negotiation is needed; the receiver runs the inverse register and locks on. The price is error multiplication, accepted because FEC is sized for bursts anyway.",
+            why: "The receiver reconstructs the required state from received data. Residual errors can multiply during descrambling, which the receive error-marking rules must account for.",
           },
         ],
       },
@@ -393,7 +393,7 @@ export const DATA: Record<string, StackNode> = {
         clause: { "400G": "Clause 119.2.4.4", "800G": "Clause 172", "1.6T": "Clause 175 (draft)" },
         summary: "Per-lane fingerprints for identification, deskew and monitoring.",
         intro:
-          "Once the stream is split across lanes and sent over separate fibres or traces, three things go wrong that the receiver must undo. Lanes arrive out of order, because nothing guarantees which fibre carries which logical lane. They arrive skewed, because path lengths and equaliser latencies differ. And the receiver does not know where block boundaries sit. Alignment markers address all three.\n\nFor 400GBASE-R the marker for each lane is a 120-bit field with common elements and lane-unique elements. The markers for all 16 lanes are sent together as an [[alignment marker group]].",
+          "Logical lanes may reach the receiver with different delays and in a different order. Alignment markers provide a recurring reference that lets the receiver identify each PCS lane and line up corresponding positions before rebuilding codewords.\n\nIn 400GBASE-R, each lane's marker is a 120-bit field with common and lane-specific elements. The 16 markers are inserted together as an [[alignment marker group]] before FEC encoding and lane distribution. After distribution, the receiver can search for the markers independently on each logical lane.\n\nThe common elements help locate the recurring pattern; the lane-specific elements identify the logical lane. Once the markers are found, the receiver measures relative delay and uses buffering to remove it. The table distinguishes the verified 400G structure from details not confirmed for 1.6T.",
         terms: {
           "lane skew": "The arrival-time spread between lanes carrying one logical stream. The standard specifies maximum skew and skew variation, and the deskew buffer is sized from those numbers.",
           "alignment marker group": "The set of per-lane markers sent together, plus padding and status, sized to a whole number of 257-bit blocks so it fits the downstream arithmetic cleanly.",
@@ -415,29 +415,29 @@ export const DATA: Record<string, StackNode> = {
           {
             id: "pcs-am-parts", name: "Common and unique parts",
             body:
-              "The marker has elements identical on every lane and elements that differ per lane, because it solves two different problems. You cannot identify a lane using a pattern that is the same everywhere, and you cannot reliably hunt for a boundary using a pattern that changes per lane. The common part gives boundary and presence; the unique part gives identity.",
+              "Marker elements serve two roles. Common elements have the same defined pattern across lanes and give the receiver a recognizable alignment reference. Lane-specific elements distinguish one logical lane from another.\n\nThe receiver checks these patterns repeatedly at the expected interval. It uses the lane identity to restore logical order and the relative marker positions to measure skew. Marker-lock rules allow specified mismatches because the search occurs before FEC correction.",
             params: { all: [["Common elements", "boundary and lane presence"], ["Unique elements", "which lane this is"], ["Field size", "120 bits per lane at 400G"]] },
           },
           {
             id: "pcs-am-group", name: "The marker group",
             body:
-              "The markers are not sprinkled through the stream individually. At 400G all sixteen are sent together, followed by a 133-bit pad and a 3-bit status field, and the whole thing is sized to exactly eight 257-bit blocks so it drops into the downstream arithmetic without remainder. The group is aligned to the start of two FEC messages.\n\nThree properties of the group are worth holding onto. It is **not scrambled**. It does not follow the normal encoding rules. And the pad is a free-running PRBS9 sequence, generated by x⁹ + x⁵ + 1 with any non-zero seed, which is ignored on receive.\n\nRoom for the group is created by **deleting idles** rather than by speeding the line up. That is why inserting markers does not change the signalling rate.",
+              "The 400G alignment-marker group contains 16 markers of 120 bits each, a 133-bit pad, and a three-bit status field. The total is 16 × 120 + 133 + 3 = 2056 bits, equivalent to eight 257-bit blocks. The group is positioned at the start of a pair of FEC messages.\n\nIt is inserted after scrambling, so the marker pattern remains recognizable on receive. It does not use the normal transcoded-data format. The pad uses a free-running PRBS9 sequence with polynomial x⁹ + x⁵ + 1 and a nonzero seed; the receiver does not interpret the pad as frame data.\n\nIdle deletion or suppression makes room for the group in the fixed-rate stream. Marker insertion therefore does not require an increase in signaling rate.",
             params: { all: [["Composition", "16 markers + 133-bit pad + 3-bit status"], ["Size", "eight 257-bit blocks"], ["Pad", "PRBS9, x^9 + x^5 + 1, any non-zero seed"], ["Scrambling", "none"], ["Aligned to", "the start of two FEC messages"], ["Room made by", "deleting idles"]] },
           },
           {
             id: "pcs-am-period", name: "How often markers appear",
             body:
-              "At 400GbE the marker group appears every 163,840 × 257-bit blocks. That number looks arbitrary until you divide: each FEC message is 20 × 257-bit blocks, so 163,840 blocks is exactly 8192 codewords. The same interval is used as the measurement window for the high-symbol-error-rate indicator, which is why no separate counter is needed for it.\n\nFor 200GbE the period is half that, 81,920 blocks, or 4096 codewords.\n\nOne caveat: an early P802.3bs draft excerpt quotes 81,920 for 400GBASE-R. The published figure and the codeword arithmetic both give 163,840, so that is what is stated here, but it is worth verifying against the current published clause if you are designing to it.",
+              "For 400GBASE-R, successive alignment-marker groups begin 163,840 × 257-bit units apart. A FEC message contains the equivalent of 20 such units, so that interval corresponds to 163,840 / 20 = 8192 codewords across the interleaved stream. It includes the marker group itself.\n\nThe corresponding 200GBASE-R interval is 81,920 units, or 4096 codewords. These are Clause 119 values; the 1.6T marker interval is not confirmed in this application's source set.\n\nThe 400G high-symbol-error-rate indicator also uses an 8192-codeword observation window. Sharing an interval does not require implementations to use the same physical counter.",
             params: {
               "400G": [["Period", "163,840 x 257-bit blocks"], ["In codewords", "8192"], ["200GbE period", "81,920 blocks = 4096 codewords"], ["Also used as", "the hi_ser measurement window"]],
               "800G": [["Window", "8192 codewords per 400G flow, results OR'd"]],
-              "1.6T": [["Window", "8192 codewords", { draft: true }]],
+              "1.6T": [["Marker interval", "not confirmed in this source set", { draft: true }]],
             },
           },
           {
             id: "pcs-am-monitor", name: "Per-lane monitoring",
             body:
-              "Because markers are per-lane and periodic, they give the receiver a natural place to hang per-lane error statistics. That is what turns a link from reporting 'unhealthy' into reporting 'lane 11 is unhealthy', and it is the single most useful diagnostic in a high-speed Ethernet PHY.\n\nMarkers are processed **before** FEC correction, since deskew and reorder must happen before codewords can be reassembled. Marker lock therefore has to tolerate bit errors in the markers themselves, and it does.",
+              "Marker processing gives the receiver visibility into individual logical lanes. It can report which lanes have acquired marker lock and use the defined monitoring information to help identify an error concentration. This is more useful for diagnosis than a single link-up or link-down indication.\n\nAlignment-marker lock is acquired before FEC correction. The lock process must therefore tolerate the specified level of marker errors. Interpret marker status alongside corrected-symbol, codeword and physical-interface measurements; a logical lane is not always a separate fibre.",
             params: { all: [["Processed", "before FEC correction"], ["Implication", "marker lock tolerates some errored bits"], ["Gives", "per-lane rather than per-link visibility"], ["Lock processes", "one per lane, independent (16 at 400G)"]] },
           },
         ],
@@ -452,7 +452,7 @@ export const DATA: Record<string, StackNode> = {
             q: "Inserting markers adds data to the stream. Why does the line rate not rise?",
             opts: ["The markers replace deleted idles", "The scrambler compresses them", "They are sent out of band", "The FEC parity shrinks to compensate"],
             a: 0,
-            why: "Room is made by deleting idle characters, or not inserting them in the first place, so the marker group costs no additional bandwidth.",
+            why: "Idle deletion or suppression provides room for the group while keeping the specified signaling rate. The markers occupy stream space that would otherwise be idle.",
           },
         ],
       },
@@ -461,9 +461,9 @@ export const DATA: Record<string, StackNode> = {
       {
         id: "pcs-dist", name: "Pre-FEC distribution", alias: "splitting into FEC messages and lanes", dir: "tx", written: true,
         clause: { "400G": "Clause 119.2.4.5", "800G": "Clause 172", "1.6T": "Clause 175 (draft)" },
-        summary: "One stream becomes two FEC messages, then many lanes.",
+        summary: "Distribute data into FEC messages, then encoded symbols onto PCS lanes.",
         intro:
-          "This step is often drawn as a single arrow, and it is really two distinct operations. First the scrambled, marked stream is split into FEC messages. Then, after encoding, the resulting codewords are interleaved and dealt out to the PCS lanes.\n\nBoth are round-robin, and both operate at 10-bit granularity, because 10 bits is one Reed-Solomon symbol.",
+          "There are two distributions in the 400G chain. Before FEC encoding, the scrambled stream with inserted markers is split into messages. After encoding, the codewords are interleaved and their symbols are distributed onto PCS lanes.\n\nAt 400G, 40 × 257-bit blocks provide 10,280 bits. A 10-bit round-robin distribution splits them into two 5140-bit messages, mA and mB. Each message becomes a Reed-Solomon codeword with 544 ten-bit symbols. The encoded symbols are then interleaved and distributed onto 16 PCS lanes.\n\nThe table gives the rate-specific arrangement. The 800G PCS has two flows; the 400G two-message example should not be read as a total codeword count for 800G or 1.6T.",
         params: {
           "400G": [
             ["Input group", "40 x 257-bit blocks"],
@@ -481,7 +481,7 @@ export const DATA: Record<string, StackNode> = {
           {
             id: "pcs-dist-arith", name: "The arithmetic, exactly",
             body:
-              "At 400G the PCS takes a group of **40 × 257-bit blocks** and distributes it on a **10-bit round-robin** basis into two **5140-bit** messages, mA and mB. Those are then encoded by RS(544,514) into codeword A and codeword B.\n\nThe numbers close three ways, which is a good sign you have understood it rather than memorised it. 40 × 257 = 10,280 bits in, split into two 5140-bit messages. Each message is 514 symbols × 10 bits = 5140. And 5140 = 20 × 257, so each message is exactly twenty transcoded blocks. Nothing is left over anywhere, which is why the 257-bit block and the 10-bit symbol were chosen to fit each other.",
+              "Start with 40 transcoded blocks: 40 × 257 = 10,280 bits. Distributing ten bits at a time between mA and mB gives 5140 bits in each message.\n\nEach message contains 514 ten-bit symbols, which is the message length required by RS(544,514). It is also equal in length to 20 × 257 bits. That equality describes its size; the round-robin distribution does not simply hand 20 intact transcoded blocks to each message.\n\nThe encoder adds 30 symbols of parity to each message. Each output codeword is therefore 544 × 10 = 5440 bits.",
             params: { all: [["Group in", "40 x 257 = 10,280 bits"], ["Messages out", "2 x 5140 bits"], ["5140 =", "514 symbols x 10 bits"], ["5140 =", "20 x 257-bit blocks"], ["Granularity", "10 bits, one RS symbol"]] },
             quiz: [
               {
@@ -495,15 +495,15 @@ export const DATA: Record<string, StackNode> = {
           {
             id: "pcs-dist-interleave", name: "Interleaving and lane distribution",
             body:
-              "Once encoded, the two codewords are interleaved on a 10-bit basis, then distributed to the PCS lanes one 10-bit symbol at a time, from the lowest-numbered lane to the highest. The result is that consecutive symbols on any one lane come alternately from the two codewords.\n\nThat matters for a reason covered under FEC: damage concentrated in one lane is shared between two codewords rather than destroying one, and each codeword has its own fifteen-symbol budget.",
+              "After encoding, codewords A and B are interleaved in ten-bit symbols. The interleaved stream is distributed one symbol at a time across the 400G PCS lanes in ascending lane order. The defined mapping lets the receiver reverse that distribution and reconstruct both codewords.\n\nA channel error burst can affect symbols from more than one codeword, depending on this mapping and the PMA multiplexing below it. Correction capacity belongs to each codeword separately, so the distribution of errors matters as well as their total number.",
             params: { all: [["Interleave", "10-bit basis, two codewords"], ["Distribution", "one symbol per lane, ascending"], ["Effect", "lane damage is split across both codewords"]] },
           },
           {
             id: "pcs-dist-div", name: "Why the lane count divides",
             body:
-              "Sixteen PCS lanes at 400G maps cleanly onto 16, 8, 4, 2 or 1 physical lanes. That single arithmetic property is why one PCS definition serves DR4, FR4, LR4, SR8 and CR4 without modification. The design rule is that the number of PCS lanes is the least common multiple of the expected optical and electrical interface widths.\n\nThe key property is that all bits from one PCS lane follow the same physical path no matter how the multiplexing is arranged. A PCS lane is never split across two fibres.",
+              "The 400GBASE-R PCS produces 16 logical lanes. A compatible PMA can multiplex them onto a supported interface with fewer serial lanes, such as four 100G-class lanes. The logical lane count is therefore different from the physical interface width.\n\nThe lane structure was chosen to support the intended PMA mappings. Divisibility makes those mappings convenient, but it does not establish that every mathematical ratio has a standardized PMA or PMD. Use the specified interface combinations when selecting a PHY.",
             params: {
-              "400G": [["PCS lanes", "16"], ["Divides by", "16, 8, 4, 2, 1"], ["Rule", "least common multiple of interface widths"], ["Guarantee", "one PCS lane never splits across physical paths"]],
+              "400G": [["PCS lanes", "16"], ["Purpose", "support specified interface widths through PMA mappings"], ["Selection", "use the defined mapping, not any mathematically possible divisor"]],
               "800G": [["Multiplexing", "32:8 restricted bit-level"], ["Clause", "173"]],
               "1.6T": [["PMA", "Clause 176 symbol multiplexing", { draft: true }], ["Variants", "16:8 and 16:16 PMAs defined", { draft: true }]],
             },
@@ -517,7 +517,7 @@ export const DATA: Record<string, StackNode> = {
         clause: { "400G": "Clause 119.2.5", "800G": "Clause 172", "1.6T": "Clause 175 (draft)" },
         summary: "Locate markers, identify lanes, remove relative delay.",
         intro:
-          "This is the first real intelligence in the receive path and where most bring-up problems announce themselves. Each lane runs its own independent alignment-marker lock process - sixteen of them at 400G. Finding the common marker elements repeatedly at the expected period gives boundary and presence; the unique elements give the lane number. Then offsets are measured and each lane is buffered until the markers line up.\n\nBecause all of this happens before FEC correction, the lock process must work on data that still contains errors. It is specified to tolerate mismatches in some marker bits rather than demanding an exact match.",
+          "Before reconstructing FEC codewords, the receiver has to find the alignment markers and bring corresponding lane positions together. For 400GBASE-R, each of the 16 logical PCS lanes has an independent marker-lock process.\n\nRepeated detection of the expected marker pattern establishes alignment; the unique elements identify the lane. The receiver then measures offsets and delays earlier-arriving lanes in buffers until corresponding positions line up. This buffering is called deskew.\n\nMarker acquisition happens before FEC correction, so an exact bit-for-bit match cannot be required on every occurrence. The PCS specifies the matching and repetition criteria needed to acquire and retain lock despite errors.",
         params: {
           "400G": [["Lock processes", "16, one per lane, independent"], ["Uses", "common elements, then unique elements"], ["Runs", "before FEC correction"], ["Tolerates", "some errored bits in the marker"]],
           "800G": [["Markers", "32"], ["Lock", "per lane, independent"]],
@@ -527,21 +527,21 @@ export const DATA: Record<string, StackNode> = {
           {
             id: "pcs-lock-debug", name: "Reading the failure",
             body:
-              "One lane failing to lock while the others lock cleanly points at that lane's own physical path: its fibre, connector, trace or equaliser. Every lane failing points at something common: a rate mismatch, a lane-count mismatch, a configuration error, or a far end that is not sending what you believe it is.\n\nThis single distinction resolves a large fraction of real link problems before any instrument is attached.",
-            params: { all: [["One lane fails", "that lane's physical path"], ["All lanes fail", "rate, lane count, config, or far end"], ["Value", "narrows the search before instrumenting"]] },
+              "If one logical lane repeatedly fails to lock while others remain stable, inspect the paths and mappings associated with that lane. Possible causes include signal quality, a connector or trace problem, a lane-specific configuration issue, or an incorrect mapping. Several logical lanes may share a physical lane, so check the PMA mapping before identifying a fibre.\n\nIf all lanes fail, first check common causes such as signal presence, rate, coding and interface configuration. This comparison helps prioritize checks; it does not prove a particular component has failed. Use marker status together with per-lane error and signal measurements.",
+            params: { all: [["One lane fails", "prioritize its signal paths, mapping and lane-specific configuration"], ["All lanes fail", "check common signal, rate and configuration causes"], ["Interpretation", "diagnostic clues, not proven root causes"]] },
             quiz: [
               {
                 q: "Fifteen of sixteen lanes achieve lock. Where do you look?",
                 opts: ["PCS configuration", "The failing lane's physical path", "The far-end MAC", "The scrambler polynomial"],
                 a: 1,
-                why: "A configuration fault would affect all lanes. Isolation to one lane points at that lane's fibre, connector, trace or equaliser.",
+                why: "A lane-specific failure helps prioritize checks of the associated paths and mappings. Configuration and signal quality can both be lane-specific; the indication is not proof of a failed fibre.",
               },
             ],
           },
           {
             id: "pcs-lock-buffer", name: "The deskew buffer",
             body:
-              "Depth is set by the worst-case skew the receiver must tolerate plus its allowed variation - not by the lane count and not by the codeword length. Deeper costs latency and area, which is why the limit is specified rather than left to implementers: it has to be interoperable across vendors who each consume part of the budget.\n\nThe specific skew budget numbers are not yet researched here and are deliberately not quoted.",
+              "A deskew buffer holds data from earlier-arriving lanes while the receiver waits for the corresponding data on the latest lane. The receiver needs enough capacity to cover the permitted skew and its variation. At a given lane rate, a longer delay allowance requires more stored bits.\n\nBuffering costs implementation area and can add latency. The specification defines the required tolerance, while the implementation chooses how to meet it. The Skew and the skew budget lesson shows the cumulative allowances along an example 400G path.",
             params: { all: [["Depth set by", "worst-case specified skew plus variation"], ["Cost of depth", "latency and area"], ["Why specified", "the budget is shared across vendors"]] },
           },
         ],
@@ -553,13 +553,13 @@ export const DATA: Record<string, StackNode> = {
         clause: { "400G": "Clause 119.2.5", "800G": "Clause 172", "1.6T": "Clause 175 (draft)" },
         summary: "Restore logical order and undo interleaving before decode.",
         intro:
-          "Because identity came from the markers rather than the wiring, lanes can be put back into logical order regardless of which physical lane carried which. That is what lets a cable be assembled with lanes in any order, and it is deliberate rather than lucky.\n\nOnce the lanes are aligned, deskewed and reordered, the two interleaved codewords are de-interleaved to reconstruct the original codeword stream, and only then can the Reed-Solomon decoder run.",
+          "The receiver uses the lane identities in the alignment markers to restore logical lane order. This allows the receive PCS to reconstruct the transmitted stream even when a supported physical mapping changes which input carries a logical lane. It does not mean that arbitrary fibre wiring is valid for every PMD.\n\nAfter marker acquisition, deskew and lane ordering, the receiver reverses the symbol distribution and interleaving. The reconstructed codewords can then be passed to the Reed-Solomon decoder. FEC needs the correct symbol order before it can determine and correct errors.",
         params: { all: [["Input", "deskewed, identified lanes"], ["Output", "reassembled codewords"], ["Enables", "arbitrary physical lane order"], ["Order", "align, deskew, reorder, de-interleave, decode"]] },
         sections: [
           {
             id: "pcs-reorder-fail", name: "Why failure here is loud",
             body:
-              "A misordered lane does not degrade performance slightly. It produces codewords that fail to decode at all. That is convenient: the symptom is unambiguous and cannot be mistaken for marginal signal integrity. If a link is failing gradually, reorder is not the problem.",
+              "An incorrect lane order places symbols in the wrong codeword positions. A persistent mapping error will generally cause widespread decode failures rather than a small increase in random errors.\n\nCheck lane identities and the configured mapping when marker lock is present but decoding fails heavily. The symptom alone is not conclusive: severe signal errors, transient alignment loss and other configuration problems can also produce many uncorrectable codewords.",
             params: { all: [["Symptom", "codewords fail wholesale"], ["Not", "gradual degradation"], ["Diagnostic value", "rules itself in or out immediately"]] },
           },
         ],
@@ -571,23 +571,23 @@ export const DATA: Record<string, StackNode> = {
         clause: { "400G": "Clause 119.2.5", "800G": "Clause 172", "1.6T": "Clause 175 (draft)" },
         summary: "Descramble, expand back to 66-bit blocks, hand octets up.",
         intro:
-          "The receive path mirrors transmit in reverse: markers removed, stream descrambled, each 257-bit block expanded into four 66-bit blocks, those decoded into data and control.\n\nWhat makes this page worth reading is not the reversal but what happens when FEC has failed, because the rules are more specific than 'mark it bad'.",
-        params: { all: [["Order", "remove markers, descramble, reverse transcode, decode"], ["On uncorrectable", "blocks marked EBLOCK_R"], ["Marker used", "sync header set to 11"], ["Upstream effect", "FCS failure at the MAC"]] },
+          "After the lanes are aligned and the codewords reconstructed, RS-FEC corrects errors within its capacity. The PCS then removes alignment markers, descrambles the data, reverses 256B/257B transcoding, and decodes the 66-bit blocks back into MII data and control information.\n\nA detected uncorrectable codeword requires a different path. The PCS marks the affected output as erroneous so the MAC can reject the associated frames. The scope of that marking is defined by the relevant PCS and decoder rules; it is not simply a request to pass the remaining bits upward unchanged.",
+        params: { all: [["After FEC decoding", "remove markers, descramble, reverse transcode, decode"], ["On detected uncorrectable", "applicable blocks marked EBLOCK_R"], ["Error representation", "can use sync header 11"], ["Upstream effect", "error indication for frame rejection"]] },
         sections: [
           {
             id: "pcs-decode-eblock", name: "How an uncorrectable codeword is marked",
             body:
-              "If a codeword contains errors that were not corrected, the PCS sets every 66-bit block within the **two associated interleaved codewords** to an error block. Not just the failed codeword - both, because they were interleaved and the receiver cannot cleanly separate the damage.\n\nThe marking may be done by setting the sync header to **11** for all 66-bit blocks produced from those codewords, which is one of the two illegal header values. The illegality is the mechanism: an illegal header cannot be mistaken for data.\n\nThere is a further rule when the stateless 64B/66B decoder is used: the **first four 66-bit blocks following** the uncorrected codewords must also be marked. Those four blocks are the next transcoded block, and they are contaminated by descrambler error propagation.",
-            params: { all: [["Scope", "both interleaved codewords, not just one"], ["Mechanism", "sync header set to 11 (EBLOCK_R)"], ["Stateless decoder", "also mark the following four 66-bit blocks"], ["Reason for the extra four", "descrambler error propagation"]] },
+              "In the Clause 119 two-codeword arrangement, if either interleaved codeword is detected as uncorrectable, the PCS marks all reconstructed 66-bit blocks belonging to both codewords as error blocks. This is the specified marking scope, even though the decoder processes the codewords separately.\n\nEBLOCK_R is the defined error-block representation. Setting the sync header to 11 is one way to produce it. On decoding, the indication is propagated toward the MAC so the affected data is not treated as a valid frame.\n\nThe applicable stateless-decoder rules also account for descrambler error extension by marking the following 257-bit block, which becomes four 66-bit blocks. These rules have evolved in the referenced 802.3df/dj material; apply the definition for the relevant PCS and revision rather than assuming every rate has the same marking scope.",
+            params: { all: [["Clause 119 pair", "mark both codewords' reconstructed blocks"], ["Representation", "EBLOCK_R; can use sync header 11"], ["Applicable extension", "next 257-bit block = four 66-bit blocks"], ["Check", "PCS, decoder definition and specification revision"]] },
             quiz: [
               {
-                q: "One of two interleaved codewords is uncorrectable. What gets marked?",
+                q: "In the Clause 119 pair, one codeword is detected as uncorrectable. What gets marked?",
                 opts: ["Only the failed codeword", "Both codewords' blocks", "Only the parity symbols", "The whole alignment marker period"],
                 a: 1,
-                why: "The two codewords were interleaved, so the damage cannot be cleanly attributed. Both are marked bad.",
+                why: "Clause 119 specifies marking both codewords' reconstructed blocks. Interleaving does not prevent the decoder from evaluating each codeword separately.",
               },
               {
-                q: "Why must four extra 66-bit blocks be marked with the stateless decoder?",
+                q: "Why do the applicable stateless-decoder rules extend marking into the next 257-bit block?",
                 opts: ["To pad the codeword", "Descrambler error propagation contaminates the next transcoded block", "To trigger a link reset", "Because the FEC parity spans them"],
                 a: 1,
                 why: "Self-synchronous descrambling carries the error forward into the next 257-bit block, which expands into four 66-bit blocks.",
@@ -595,10 +595,10 @@ export const DATA: Record<string, StackNode> = {
             ],
           },
           {
-            id: "pcs-decode-principle", name: "Lose frames, never corrupt them",
+            id: "pcs-decode-principle", name: "Propagating detected errors",
             body:
-              "An Ethernet link is permitted to lose frames. It is not permitted to deliver a corrupted frame as though it were good, because everything above will trust it. The error block is how an uncorrectable FEC event becomes an FCS failure at the MAC instead of wrong data in application memory.\n\nThis principle explains design choices throughout the stack that otherwise look excessively cautious, and it connects directly to the decoder mis-detection bound under FEC.",
-            params: { all: [["Permitted", "frame loss"], ["Not permitted", "silent corruption"], ["Mechanism", "error block into FCS failure"], ["Related", "decoder mis-detection bound, under FEC"]] },
+              "When the PHY detects damage it cannot correct, it must propagate an error indication rather than silently present the affected data as good. The receiving MAC can then reject invalid frames using those indications and its frame checks. Losing a frame lets higher layers recover; accepting wrong data as valid can be harder to detect.\n\nThis is the purpose of the PCS error-marking rules. It is a reliability requirement, not a guarantee that undetected corruption is mathematically impossible. FEC miscorrection and CRC collisions remain part of the error-detection analysis.",
+            params: { all: [["Detected unrecoverable errors", "propagate an indication for rejection"], ["Residual risks", "FEC miscorrection and CRC collisions"], ["MAC checks", "frame validity and FCS"], ["Related", "decoder detection expectation, under FEC"]] },
           },
         ],
       },
@@ -607,15 +607,15 @@ export const DATA: Record<string, StackNode> = {
 
   /* ------------------------------------------------------------------ FEC */
   fec: {
-    id: "fec", name: "RS-FEC", alias: "commonly called KP4; plus an Inner FEC at 200G per lane", zone: "coding", written: true,
+    id: "fec", name: "RS-FEC", alias: "KP4; applicable optical paths add inner FEC", zone: "coding", written: true,
     clause: { "400G": "Clause 119", "800G": "Clause 172", "1.6T": "Clause 175, plus Clause 177 Inner FEC (draft)" },
     face: { "400G": "RS(544,514)", "800G": "RS(544,514)", "1.6T": "outer + inner" },
-    summary: "Mandatory error correction. The reason these links work.",
+    summary: "Adds parity so the receiver can correct errors before reconstructing frames.",
     intro:
-      "Forward error correction is not a robustness feature at these rates. It is load-bearing. The channel delivers a raw error rate that would make the link useless, and FEC converts it into something where frame loss is rare. Remove it and the link does not degrade, it stops.\n\nThe workhorse is [[RS(544,514)]], universally called KP4: Reed-Solomon over ten-bit symbols, correcting up to fifteen symbol errors per codeword. The name comes from 802.3bj clause naming rather than anything descriptive, which is why nobody derives it from first principles.\n\nAt 200G per lane the single-code arithmetic stops working. The link is a chain of an electrical channel, an optical channel and another electrical channel, and one end-to-end Reed-Solomon code cannot absorb the sum. P802.3dj's answer is a [[concatenated FEC]]: an inner Hamming code close to the optics, and the outer Reed-Solomon code still spanning the whole path. That is the largest architectural change in this stack between 800G and 1.6T.",
+      "Forward error correction (FEC) adds parity at the transmitter so the receiver can repair some channel errors without retransmission. It is a required part of the BASE-R PHY designs covered here. Their error budgets are specified with FEC present.\n\nThe outer code is [[RS(544,514)]], commonly called KP4. Each codeword has 514 message symbols and 30 parity symbols, with ten bits per symbol. The decoder is required to correct any combination of up to 15 erroneous symbols in a codeword. More errors exceed that guaranteed correction capacity.\n\nSome 200G-per-lane optical paths in the referenced P802.3dj architecture add an inner code around the optical segment. This [[concatenated FEC]] works with the outer Reed-Solomon code. The need and arrangement depend on the PHY and its operating mode, rather than on the aggregate MAC rate alone. Start with Codeword anatomy, then use the interleaving and decoding lessons to follow how errors consume correction capacity.",
     terms: {
       "RS(544,514)": "544 ten-bit symbols per codeword, 514 message and 30 parity, correcting up to 15 symbol errors. Known industrially as KP4.",
-      "concatenated FEC": "Two codes in series, an inner code near the channel and an outer code spanning the whole link, so each handles the error statistics it suits.",
+      "concatenated FEC": "An outer code protects a broader path while an inner code protects a segment within it. Residual inner-code errors are presented to the outer decoder.",
     },
     params: {
       "400G": [
@@ -634,9 +634,9 @@ export const DATA: Record<string, StackNode> = {
       ],
       "1.6T": [
         ["Outer", "RS(544,514) based", { draft: true }],
-        ["Inner", "Hamming(128,120), 200G/lane IM-DD optics", { draft: true }],
+        ["Inner", "Hamming(128,120) on applicable 200G/lane optical paths", { draft: true }],
         ["Inner FEC clause", "177", { draft: true }],
-        ["Architecture", "concatenated (Type 2)", { draft: true }],
+        ["Referenced optical arrangement", "concatenated (Type 2); check PMD and mode", { draft: true }],
       ],
     },
     subs: [
@@ -645,39 +645,26 @@ export const DATA: Record<string, StackNode> = {
         clause: { "400G": "Clause 119", "800G": "Clause 172", "1.6T": "Clause 175 (draft)" },
         summary: "Symbols, parity, and correction capacity.",
         intro:
-          "A codeword is 544 symbols, each ten bits, so 5,440 bits in total. Of the 544, 514 carry message and 30 carry parity, and the decoder corrects up to fifteen symbol errors.\n\nThe crucial subtlety is that correction is counted in symbols, not bits. A symbol is wrong if any of its ten bits is wrong, so one bit error and ten bit errors in the same symbol cost exactly the same: one of your fifteen. That single fact drives nearly every other decision in the sublayer.",
+          "RS(544,514) describes a codeword of 544 symbols containing 514 message symbols. Each symbol is ten bits, so a codeword occupies 5440 bits: 5140 bits of message and 300 bits of parity. The 30 parity symbols support correction of any combination of up to 15 symbol errors.\n\nA symbol counts as erroneous if any of its ten bits is wrong. One wrong bit and several wrong bits within the same symbol both consume one symbol of correction capacity. To assess a burst, count how many symbols it touches within each codeword, rather than only counting erroneous bits.",
         params: { all: [["Codeword", "544 symbols, 5,440 bits"], ["Message", "514 symbols, 5,140 bits"], ["Parity", "30 symbols"], ["Symbol", "10 bits, GF(2^10)"], ["Corrects", "t = 15 symbols"], ["Counted in", "symbols, never bits"]] },
         sections: [
           {
             id: "fec-cw-gf", name: "Symbols and GF(2^10)",
             body:
-              "Reed-Solomon works on symbols from a finite field. A ten-bit symbol gives 1,024 field elements, which bounds the codeword at 1,023 symbols, comfortably above the 544 used. Ten bits is a compromise: wider symbols tolerate longer bursts per symbol error but make decoder arithmetic costlier.\n\nThe fit upward is deliberate. A 5,140-bit message is both 514 ten-bit symbols and twenty 257-bit transcoded blocks. When candidate codes are evaluated for new rates, 'message size corresponds to an integer number of 257-bit blocks' is an explicit construction rule, alongside 'the codeword spreads evenly across 4, 8 and 16 physical lanes'.",
+              "The ten-bit symbols are elements of GF(2¹⁰), a finite field with 1024 elements. A conventional Reed-Solomon construction over this field can have up to 1023 symbols; the Ethernet code uses a shortened length of 544. The field arithmetic lets the decoder use the parity relationships to locate and correct erroneous symbols.\n\nThe message length also fits the PCS accounting: 514 × 10 = 5140 bits, equal in length to 20 × 257 bits. This size relationship connects the Reed-Solomon message to the transcoded stream. It does not imply that the code operates on 257-bit symbols.",
             params: { all: [["Field", "GF(2^10)"], ["Elements", "1,024"], ["Max codeword", "1,023 symbols"], ["Used", "544"], ["Construction rule", "message = whole number of 257-bit blocks"], ["Construction rule", "codeword spreads evenly over 4, 8, 16 lanes"]] },
           },
           {
             id: "fec-cw-budget", name: "The fifteen-symbol budget",
             body:
-              "Because the symbol is the unit of damage, where a burst lands matters more than how long it is. Forty consecutive corrupted bits falling inside four symbols cost four of fifteen. The same forty bits spread across twenty symbols cost twenty, and the codeword fails. Identical damage, opposite outcome, decided entirely by how the bits were distributed.\n\nEverything about interleaving, multiplexing granularity and the 200G-per-lane changes follows from this paragraph.",
-            params: { all: [["Unit of damage", "the symbol"], ["Concentrated burst", "cheap"], ["Spread burst", "expensive"], ["Budget", "15 symbols per codeword"]] },
-            quiz: [
-              {
-                q: "A 40-bit burst lands inside four symbols. How much of the budget is spent?",
-                opts: ["40 of 15", "4 of 15", "1 of 15", "It is uncorrectable"],
-                a: 1,
-                why: "Four damaged symbols cost four, regardless of how many bits inside them were wrong.",
-              },
-              {
-                q: "The same 40-bit burst is spread across twenty symbols. Now what?",
-                opts: ["Still 4 of 15", "20 of 15, so uncorrectable", "Still correctable with margin", "Depends on the scrambler"],
-                a: 1,
-                why: "Twenty damaged symbols exceeds the fifteen-symbol capacity and the codeword fails, on identical bit damage.",
-              },
-            ],
+              "Assume 40 erroneous bits lie within four complete ten-bit symbols in one codeword. They consume four of its 15 guaranteed correctable symbol errors. If 40 erroneous bits instead touch 20 different symbols in that codeword, they exceed the guaranteed correction capacity.\n\nThe bit-error count is the same, but the decoder sees a different symbol-error count. Interleaving and PMA multiplexing affect where a channel burst lands. Also check codeword boundaries: each codeword has its own 15-symbol capacity. Beyond that limit, successful correction is not guaranteed and the decoder must detect failures as required by its specification.",
+            params: { all: [["Correction unit", "ten-bit symbol"], ["40 erroneous bits in four symbols", "four symbol errors"], ["40 erroneous bits touching twenty symbols", "twenty symbol errors, beyond guaranteed capacity"], ["Guaranteed capacity", "up to 15 erroneous symbols per codeword"]] },
+            quiz: [{"q":"Forty erroneous bits touch twenty symbols in one RS(544,514) codeword. What follows?","opts":["They are guaranteed correctable","They exceed the guaranteed 15-symbol correction capacity","Only the bit count matters","Parity is unaffected"],"a":1,"why":"Twenty erroneous symbols exceed the guaranteed capacity. Beyond fifteen, successful correction is not guaranteed; the outcome and failure detection depend on the error pattern and decoder requirements."}],
           },
           {
             id: "fec-cw-mttfpa", name: "Detection, not just correction",
             body:
-              "A link may drop frames but must not deliver a corrupted frame that passes the 32-bit FCS, because upper layers will trust it. The risk is not a decoder that fails - it is a decoder that **miscorrects**, emitting a confidently wrong codeword instead of reporting failure.\n\nSo the standard requires two things of the decoder. It shall correct any combination of up to fifteen symbol errors, and it shall **indicate when an errored codeword was not corrected**. The probability that it fails to flag a codeword carrying t+1 errors is **not expected to exceed 10⁻¹⁶**, and the same limit is expected to hold for t+2, t+3 and beyond.\n\nThat number is the concrete form of the false-packet-acceptance argument. Design choices in these clauses that look excessively cautious usually trace back to it. It also explains why inner-code miscorrection is called out as highly undesirable in the 200G-per-lane work: an inner code that miscorrects hands clean-looking garbage to the outer decoder.",
+              "A decoder can report that it could not correct a codeword, or it can miscorrect: choose a different valid codeword and output wrong message data. Reported failures can be marked for rejection. Miscorrection is harder to handle because the output appears valid to the next stage.\n\nClause 119 requires correction of any combination of up to t = 15 symbol errors and indication of uncorrected codewords. It states that the probability of failing to indicate a codeword with t + 1 errors as uncorrected is not expected to exceed 10⁻¹⁶, with that expectation also applying to larger error counts. This is a decoder mis-detection expectation under the clause's conditions, not a universal probability for a corrupted Ethernet frame to be accepted.\n\nThe MAC's FCS supplies another error check, but is not an absolute guarantee against silent corruption. Both decoder detection and frame validation contribute to the link's reliability.",
             params: { all: [["Must correct", "up to t = 15 symbol errors"], ["Must also", "indicate uncorrected codewords"], ["Mis-detection bound", "not expected to exceed 10^-16"], ["Also expected for", "t+2, t+3, and beyond"], ["Why it matters", "a miscorrected codeword can pass the FCS"]] },
             quiz: [
               {
@@ -696,7 +683,7 @@ export const DATA: Record<string, StackNode> = {
         clause: { "400G": "Clause 119", "800G": "Clause 172, 173", "1.6T": "Clause 176 (draft)" },
         summary: "How codeword symbols map onto lanes, and why 200G per lane changed it.",
         intro:
-          "Interleaving decides which lane carries which part of which codeword. Given that correction is counted in symbols, the mapping determines how channel damage converts into consumed budget - a performance decision, not packaging.\n\nAt 400G two codewords are interleaved on a 10-bit basis and dealt to the lanes one symbol at a time. Below the PCS, the PMA has historically done plain bit multiplexing to reach narrower interfaces.",
+          "Interleaving specifies how symbols from different codewords are mixed before transmission. In the 400G PCS, two codewords are interleaved in ten-bit symbols and distributed onto logical lanes. The receiver reverses that mapping before decoding.\n\nThe PMA then maps logical lanes onto the serial interface. Bit multiplexing and symbol multiplexing use different units, which changes how a burst on one serial lane is spread across Reed-Solomon symbols and codewords. Since correction capacity is counted per codeword, the error distribution can change performance even when the total number of wrong bits stays the same.\n\nThe 200G-per-lane PMA in the referenced Clause 176 material uses symbol multiplexing. It is a PMA mapping choice, separate from the Reed-Solomon encoder and its message length.",
         params: {
           "400G": [["Codewords", "2, interleaved on a 10-bit basis"], ["To lanes", "one 10-bit symbol at a time, ascending"], ["Below", "bit multiplexing in the PMA"]],
           "800G": [["Codewords", "4"], ["Below", "32:8 restricted bit-level multiplexing (Clause 173)"]],
@@ -706,13 +693,13 @@ export const DATA: Record<string, StackNode> = {
           {
             id: "fec-il-tension", name: "Two opposing pressures",
             body:
-              "Spreading a codeword across all lanes means no single lane failure destroys a codeword by itself: damage is shared between the interleaved codewords, and shared damage is more likely to stay inside two fifteen-symbol budgets than to exhaust one. Concentrating damage means a burst consumes fewer symbols. These pull in opposite directions, and each generation re-strikes the balance for its channel.\n\nThere is a related rule worth knowing: if one codeword of an interleaved pair is uncorrectable, the other is marked bad as well. So the sharing helps up to a point and then stops helping abruptly.",
-            params: { all: [["Spread", "no single lane destroys a codeword alone"], ["Concentrate", "bursts consume fewer symbols"], ["Coupled failure", "one uncorrectable codeword marks its partner too"]] },
+              "Interleaving can spread a short error event between codewords, leaving fewer erroneous symbols in each. Preserving symbol boundaries can also keep several erroneous bits within one Reed-Solomon symbol. Both effects matter, and the complete PCS/PMA mapping determines which occurs for a particular burst.\n\nThis does not make a failed physical lane correctable. A persistent lane failure can damage far more symbols than the code can repair. For the Clause 119 interleaved pair, a detected uncorrectable codeword also causes both codewords' reconstructed blocks to be marked bad under the PCS rules.",
+            params: {"all":[["Spread","a short event can affect fewer symbols per codeword"],["Concentrate","preserving symbol boundaries can reduce the symbol-error count"],["Clause 119 pair","a detected uncorrectable codeword causes both partners' blocks to be marked"]]},
           },
           {
             id: "fec-il-sym", name: "Symbol multiplexing at 200G per lane",
             body:
-              "Bit multiplexing spreads a burst across multiple symbols; symbol multiplexing keeps it inside fewer. Analysis presented to the task force showed 4:1 bit multiplexing already carries a larger coding-gain penalty for burst errors than 2:1 or symbol multiplexing, and that going to 8:1 for 200G per lane would degrade it further.\n\nThe response was a symbol-multiplexing PMA, adopted in March 2023 and specified in Clause 176, used by 200GBASE-R, 400GBASE-R, 800GBASE-R and 1.6TBASE-R whenever the AUIs or PMDs run at 200G per lane. Note that this is a **PMA** change. It is not a change to how the PCS forms its lanes.",
+              "Bit multiplexing takes individual bits from several input lanes in turn. After receive demultiplexing, a serial burst can therefore touch many different Reed-Solomon symbols. Symbol multiplexing preserves larger symbol-aligned units, so the same type of burst can be concentrated into fewer erroneous symbols.\n\nTask-force comparisons for 200G-per-lane links found burst-error penalties increasing with the bit-multiplexing ratio under the studied channel and receiver models. That motivated the symbol-multiplexing PMA in Clause 176. It is the relevant PMA definition and signaling generation, not simply a change in the total Ethernet rate, that selects this mapping.",
             params: { "1.6T": [["Mechanism", "symbol multiplexing in the PMA", { draft: true }], ["Clause", "176", { draft: true }], ["Adopted", "March 2023 plenary", { draft: true }], ["Applies to", "200G, 400G, 800G and 1.6T at 200G/lane", { draft: true }]] },
             quiz: [
               {
@@ -731,7 +718,7 @@ export const DATA: Record<string, StackNode> = {
         clause: { "400G": "Clause 119, 120", "800G": "Clause 172", "1.6T": "Clause 175 (draft)" },
         summary: "Pre-FEC BER, frame loss ratio, and where margin actually lives.",
         intro:
-          "The decoder reassembles each codeword, computes syndromes from the parity, and if fifteen or fewer symbols are wrong it locates and repairs them. The relationship between input and output error rate is steep: a modest improvement in pre-FEC BER produces an enormous improvement downstream, right up until the input exceeds capacity, at which point performance collapses over a very small range of channel quality.",
+          "The Reed-Solomon decoder receives a reconstructed codeword and evaluates its parity relationships. If no more than 15 symbols are erroneous, it must locate and correct them. For larger error counts, correction is not guaranteed and failure detection becomes essential.\n\nDecode performance depends on the distribution of errors among symbols and codewords. Many isolated events can be corrected, while a concentrated burst can overwhelm a codeword at the same average bit error ratio (BER).\n\nAs channel quality deteriorates, the uncorrectable-codeword rate can rise sharply. This is often called the FEC cliff. Pre-FEC measurements and corrected-error distributions help estimate margin before post-FEC frame loss becomes visible.",
         params: {
           "400G": [["Pre-FEC BER limit", "< 2.4 x 10^-4"], ["Gives FLR", "< 1.7 x 10^-12, 64-octet frames, min IPG"], ["Complete PHY allowance", "6.2 x 10^-11"], ["Measured over", "8192 codewords (one AM period)"]],
           "800G": [["FLR", "3.4 x 10^-12"], ["hi_ser window", "8192 codewords per 400G flow, OR'd"]],
@@ -741,56 +728,38 @@ export const DATA: Record<string, StackNode> = {
           {
             id: "fec-dec-budget", name: "The error budget, split up",
             body:
-              "At 100G per lane the budget is explicit and worth memorising, because it tells you who is allowed to contribute what. The total presented to the end-to-end FEC is **2.8 × 10⁻⁴** or lower, made up of a **2.4 × 10⁻⁴** target for the PMD link and **1 × 10⁻⁵** for each AUI.\n\nThat asymmetry is the point: the optics are allowed to be an order of magnitude worse than the electrical interfaces, because the optics are the expensive part. When someone argues about an electrical channel spec, this is the budget they are arguing over.\n\nAt 200G per lane the same accounting no longer closes, which is what motivates the inner code.",
-            params: { all: [["Total to end-to-end FEC", "2.8 x 10^-4 or lower"], ["PMD link target", "2.4 x 10^-4"], ["Each AUI", "1 x 10^-5"], ["Applies to", "200G, 400G, 800G at 100G per lane"]] },
-            quiz: [
-              {
-                q: "Why is the PMD allowed a far worse BER than each AUI?",
-                opts: ["Optics are more reliable", "The optics are the expensive part, so the budget favours them", "AUIs have no FEC", "It is an arbitrary split"],
-                a: 1,
-                why: "The allocation gives the optical link roughly an order of magnitude more error budget than each electrical interface, because relaxing the optics saves the most cost.",
-              },
-            ],
+              "For the referenced 100G-per-lane end-to-end architecture, the total pre-FEC BER allowance is up to 2.8 × 10⁻⁴. The optical PMD link has an allocation of 2.4 × 10⁻⁴, with 1 × 10⁻⁵ allocated to each specified AUI contribution. Identify the applicable reference configuration and observation points before adding interface contributions.\n\nThese are design allocations for that architecture, not interchangeable pass/fail numbers for every PHY. An average BER alone also does not describe error burstiness, which affects FEC performance. The referenced 200G-per-lane optical arrangements have different requirements and may include inner FEC.",
+            params: {"all":[["Referenced total pre-FEC allocation","2.8 x 10^-4 or lower"],["Optical PMD allocation","2.4 x 10^-4"],["Specified AUI contribution","1 x 10^-5"],["Scope","the referenced 100G-per-lane end-to-end architecture"]]},
+            quiz: [{"q":"Can the optical PMD's BER allocation be used as the pass limit for an AUI?","opts":["Yes, all segments share one limit","No, use the allocation for that interface and reference configuration","Yes, if the MAC rate is unchanged","Only when no frames are lost"],"a":1,"why":"The reference architecture assigns different contributions to optical and electrical segments. The applicable specification defines the observation point and limit; a shared outer code does not make those limits interchangeable."}],
           },
           {
             id: "fec-dec-cliff", name: "Why the cliff matters",
             body:
-              "Frame loss ratio after FEC is either negligible or catastrophic, with very little in between. A link reporting zero loss can be one small degradation away from failing, and nothing downstream will warn you.\n\nSo margin is discussed in pre-FEC terms. The useful readings are pre-FEC BER and the per-lane symbol error counts carried through the alignment markers. The healthy-looking metric is the uninformative one.",
-            params: { all: [["Post-FEC FLR", "negligible, then catastrophic"], ["Tells you about margin", "almost nothing"], ["Watch instead", "pre-FEC BER, per-lane symbol counts"]] },
-            quiz: [
-              {
-                q: "A link reports zero frame loss. What does that say about margin?",
-                opts: ["It has healthy margin", "Almost nothing, because loss stays negligible until the cliff", "It is at the BER target", "FEC is disabled"],
-                a: 1,
-                why: "Only pre-FEC BER and per-lane counters reveal how close the link is to the edge.",
-              },
-            ],
+              "A receiver can correct errors continuously while reporting no lost frames. That does not reveal how much additional degradation it could tolerate. As the error distribution moves beyond the decoder's capacity, frame loss can increase rapidly.\n\nUse pre-FEC BER, corrected-symbol and codeword counts, and the distribution of errors per codeword to assess margin. Signal-quality and lane-status measurements provide additional context. A finite observation with zero post-FEC errors establishes only that no errors were seen during that interval.",
+            params: {"all":[["Post-FEC frame loss","can rise sharply as errors exceed correction capacity"],["Zero observed loss","does not establish spare margin"],["Useful measurements","pre-FEC BER, corrected-error distributions, signal and lane status"]]},
+            quiz: [{"q":"A link reports zero frame loss during a measurement. What does that establish?","opts":["It has healthy margin","No losses were observed in that interval, but spare margin is not established","It is exactly at the BER target","FEC is disabled"],"a":1,"why":"FEC can repair errors while leaving no post-FEC loss. Use pre-FEC and corrected-error measurements, with signal and lane status, to assess how much degradation the link might tolerate."}],
           },
           {
             id: "fec-dec-monitor", name: "Counters and hi_ser",
             body:
-              "The standard defines counters for corrected codewords, uncorrected codewords, and symbol errors, plus bins counting codewords by how many symbol errors they contained. The bins are the interesting ones: they show the shape of the error distribution, not just its magnitude, and a distribution creeping rightward is an early warning.\n\nThere is also a high-symbol-error-rate indicator, `hi_ser`, computed over a window of 8192 codewords at 400G - which is exactly one alignment marker period, so no separate counter is needed to time it. At 800G the same window is applied per 400G flow and the two results are OR'd together.",
+              "Corrected-codeword counts show how often FEC repairs data. Uncorrected-codeword counts show detected failures. Symbol-error counts and histogram bins show how heavily codewords are loaded with errors, which can reveal a changing distribution even when frame loss remains low. The available counters and their definitions depend on the PHY.\n\nFor 400GBASE-R, the high-symbol-error-rate indicator, hi_ser, uses an 8192-codeword window. The referenced 800G design evaluates the corresponding window per 400G-equivalent flow and combines the indications. Read counter units, observation intervals and reset behavior before comparing measurements.",
             params: { all: [["Counters", "corrected CW, uncorrected CW, symbol errors"], ["Bins", "codewords by symbol-error count"], ["hi_ser window (400G)", "8192 codewords"], ["Convenient because", "that equals one AM period"], ["800G", "per flow, results OR'd"]] },
           },
         ],
       },
 
       {
-        id: "fec-concat", name: "Concatenated FEC", alias: "inner and outer codes at 200G per lane", dir: "both", written: true,
+        id: "fec-concat", name: "Concatenated FEC", alias: "inner and outer codes on applicable optical paths", dir: "both", written: true,
         clause: { "400G": "not applicable", "800G": "not applicable at 100G/lane", "1.6T": "Clause 177 (draft)" },
         summary: "The P802.3dj inner-plus-outer arrangement.",
         intro:
-          "A 200G-per-lane link is not one channel. It is a chain: an electrical channel from host to module, an optical channel, and another electrical channel at the far end. The task force compared three arrangements explicitly, and the names are worth learning because they appear throughout the drafts.\n\n**Type 1, end-to-end**: a single FEC spans both AUIs and the PMD link. This is what 200GBASE-R, 400GBASE-R and 800GBASE-R use at 100G per lane.\n\n**Type 2, concatenated**: the outer FEC still spans everything, with an additional inner FEC covering just the PMD link. This is the 200G-per-lane answer.\n\n**Type 3, terminated or segmented**: different FECs are dedicated to the AUIs and to the PMD link, each decoded and re-encoded at the boundary.",
-        params: {
-          "1.6T": [["Inner code", "Hamming(128,120)", { draft: true }], ["Built from", "Hamming(127,120) plus one extended parity bit", { draft: true }], ["Inner payload", "120 bits = 12 RS symbols", { draft: true }], ["Interleaver", "convolutional, 12-way RS interleaved", { draft: true }], ["Decoding", "soft-decision supported", { draft: true }], ["Clause", "177", { draft: true }]],
-          "800G": [["At 100G per lane", "end-to-end, Type 1"], ["At 200G per lane", "concatenated, as for 1.6T", { draft: true }]],
-          "400G": [["Applicable", "no; single end-to-end RS(544,514)"]],
-        },
+          "An optical link can include an electrical AUI from the host to a module, an optical segment, and an electrical AUI at the receiving end. FEC architectures differ in which parts of this path each code protects. The task-force material uses three useful categories.\n\nType 1, end-to-end, has one code spanning the path. Type 2, concatenated, keeps that outer code and adds an inner code around the optical segment. Type 3, terminated or segmented, decodes and re-encodes at segment boundaries, allowing each segment to use its own correction.\n\nThe referenced 100G-per-lane BASE-R optical architecture uses end-to-end Reed-Solomon FEC. The Clause 177 inner-code arrangement in P802.3dj adds protection for applicable 200G-per-lane optical PHYs. Check the specific PMD and operating mode; 200G electrical lanes alone do not imply an inner optical code.",
+        params: {"1.6T":[["Referenced inner code","Hamming(128,120)",{"draft":true}],["Inner input","120 bits = 12 RS symbols",{"draft":true}],["Placement","applicable 200G-per-lane optical PHYs and modes",{"draft":true}],["Clause","177",{"draft":true}]],"800G":[["Referenced 100G-per-lane architecture","Type 1, end-to-end"],["200G-per-lane optical paths","check the PMD and inner-FEC mode",{"draft":true}]],"400G":[["Referenced 100G-per-lane architecture","end-to-end RS(544,514)"],["200G-per-lane optical paths","check the PMD and inner-FEC mode",{"draft":true}]]},
         sections: [
           {
             id: "fec-cc-inner", name: "The inner code",
             body:
-              "The adopted inner code is **Hamming(128,120)**, constructed from the Hamming(127,120) code by adding one extended parity bit. It sits nearest the optical channel and its job is statistical rather than heroic: clean up the dense errors so what reaches the outer decoder looks more like what Reed-Solomon was designed for.\n\nBeing close to the channel it must be low latency and low power, which rules out anything elaborate - hence a short Hamming code rather than a second Reed-Solomon stage.\n\nThe standard also supports **soft-decision decoding** of the inner code. Ordinarily a PAM4 receive symbol takes one of four values; to feed a soft-decision decoder, the received symbol may instead take an implementation-dependent set of more than four values, carrying confidence information rather than a hard decision. That extra information is where much of the coding gain comes from.",
+              "The referenced inner code is extended Hamming(128,120): 120 input bits become a 128-bit codeword. It is formed from Hamming(127,120) with an additional parity bit. The short code adds protection around the optical segment while the outer Reed-Solomon code continues to protect the broader path.\n\nThe Clause 177 material describes soft-decision decoding. Instead of supplying only a hard decision among four PAM4 levels, the receive interface supplies finer-resolution information about the received symbol. The decoder uses that information to choose the most likely codeword; the resolution and implementation are not defined by a single universal bit width.\n\nInner-code performance affects the error distribution seen by the outer decoder. Interleaving is therefore part of the arrangement, rather than an optional detail that can be omitted from its analysis.",
             params: { "1.6T": [["Code", "Hamming(128,120)", { draft: true }], ["Base", "Hamming(127,120) + extended parity bit", { draft: true }], ["Placement", "nearest the optical channel", { draft: true }], ["Constraints", "low latency, low power", { draft: true }], ["Soft decision", "rx symbol may take more than four values", { draft: true }]] },
             quiz: [
               {
@@ -804,7 +773,7 @@ export const DATA: Record<string, StackNode> = {
           {
             id: "fec-cc-interleave", name: "Twelve symbols from twelve codewords",
             body:
-              "This is the detail that makes the concatenation work, and it is easy to miss. The inner Hamming code's 120-bit payload is exactly **twelve ten-bit Reed-Solomon symbols**. A convolutional interleaver ahead of it guarantees that those twelve symbols come from **twelve different RS codewords**.\n\nThe reason is the failure mode. If an inner codeword is overwhelmed, the damage it passes on is spread across twelve different outer codewords, costing each of them one symbol out of fifteen, rather than costing one codeword twelve of its fifteen. The interleaver converts a concentrated inner failure into twelve cheap outer failures.\n\nNote this is the opposite pressure from the symbol-multiplexing argument elsewhere. Concentration is good when the outer code sees the burst directly; dispersion is good when an inner codeword has already failed as a unit. Both are true, at different points in the chain.",
+              "The inner code's 120-bit input contains twelve ten-bit Reed-Solomon symbols. The referenced convolutional interleaver arranges for them to come from twelve different outer codewords.\n\nIf a single inner codeword leaves its entire input payload wrong, that event can damage one symbol in each of those twelve outer codewords, rather than twelve symbols in one. This reduces the concentration of that event at the outer decoder. It does not guarantee recovery: other inner failures or electrical-channel errors can consume the remaining capacity.\n\nFollow the mapping at each point. Keeping a serial burst within fewer RS symbols and spreading one inner-code failure across outer codewords address different error patterns in different parts of the path.",
             params: { "1.6T": [["Inner payload", "120 bits = 12 RS symbols", { draft: true }], ["Guarantee", "the 12 symbols come from 12 different RS codewords", { draft: true }], ["Mechanism", "convolutional interleaver, 3 delay lines", { draft: true }], ["Input", "output of the Clause 176 SM-PMA", { draft: true }], ["Effect", "an inner failure costs 12 codewords one symbol each", { draft: true }]] },
             quiz: [
               {
@@ -818,16 +787,9 @@ export const DATA: Record<string, StackNode> = {
           {
             id: "fec-cc-seg", name: "Concatenated versus terminated",
             body:
-              "Terminated, or segmented, FEC decodes and re-encodes at an intermediate point. Each segment is independently corrected, which contains errors per hop but adds latency at every termination and means an uncorrected segment error is re-encoded as apparently clean data for the next hop.\n\nConcatenated FEC layers inner and outer codes over the same end-to-end data, so the outer code still sees the whole path and can clean up what the inner code missed.\n\nBoth terms appear throughout the 802.3df and 802.3dj material, along with 'end-to-end'. Conflating them makes those discussions very hard to follow.",
+              "Segmented FEC decodes data at an intermediate boundary and then encodes it for the next segment. Each decoder sees its own segment's errors, and each termination adds processing delay. If residual wrong data is re-encoded, the next decoder may receive a valid codeword carrying that wrong data. Detected failures therefore need defined error propagation across the boundary.\n\nConcatenated FEC keeps an outer code over the broader path while an inner code protects a segment within it. The outer decoder can correct residual inner-code errors that fit within its capacity.\n\nWhen reading a block diagram, locate every encoder and decoder and trace the span protected by each code. Two FEC blocks in a diagram do not by themselves establish whether the architecture is segmented or concatenated.",
             params: { all: [["End-to-end (Type 1)", "one FEC over AUIs and PMD"], ["Concatenated (Type 2)", "outer over everything, inner over the PMD link"], ["Terminated (Type 3)", "separate FECs, re-encoded at boundaries"], ["Terminated hazard", "uncorrected errors re-encoded as clean"]] },
-            quiz: [
-              {
-                q: "What is the main hazard of terminating FEC at an intermediate point?",
-                opts: ["Reduced reach", "An uncorrected error is re-encoded as apparently clean data", "Alignment markers break", "More lanes are needed"],
-                a: 1,
-                why: "Re-encoding after a failed correction hides the damage from the next decoder, which sees a valid codeword carrying wrong data.",
-              },
-            ],
+            quiz: [{"q":"Why does an intermediate FEC termination need defined error propagation?","opts":["It always reduces reach","Residual wrong data can be re-encoded into a valid next-segment codeword","Alignment markers cannot cross it","It doubles the lane count"],"a":1,"why":"Re-encoding residual wrong data does not expose the earlier damage to the next decoder's parity checks. Detected failures must be signalled across the boundary according to the architecture's rules."}],
           },
         ],
       },
@@ -843,7 +805,7 @@ export const DATA: Record<string, StackNode> = {
     face: { "400G": "4 or 8 lanes", "800G": "8 or 4 lanes", "1.6T": "8 or 16 lanes" },
     summary: "Maps PCS lanes onto physical lanes and drives the serial signal.",
     intro:
-      "The PMA does two jobs that are easy to confuse. It **multiplexes** - folding however many lanes the PCS produced onto however many the interface has - and it **signals**, which means the transmitter mapping, the receive equaliser, and clock recovery. Most of what engineers mean by 'the SerDes' lives in the second half.\n\nThe multiplexing has changed shape across generations. At 100G per lane and below the PMA does bit multiplexing: 2:1 for early 100GbE, and 32:8 restricted bit-level multiplexing for 800G in Clause 173. At 200G per lane that stopped being good enough, and Clause 176 defines a **symbol-multiplexing PMA**, adopted in March 2023 and used by 200GBASE-R, 400GBASE-R, 800GBASE-R and 1.6TBASE-R whenever the AUIs or PMDs run at 200G per lane.\n\nThe signalling is [[PAM4]] throughout, and the three pages that follow - level mapping, precoding, and equalisation - are really one argument about burst errors seen from three angles.",
+      "The Physical Medium Attachment (PMA) maps the PCS lane structure onto a specified serial interface. On transmit it multiplexes logical streams as needed. On receive it recovers and demultiplexes them for the PCS. Serial signal processing, including timing recovery and the relevant PAM4 mapping, is also part of the PMA definitions.\n\nThe multiplexing unit matters to FEC. Earlier definitions use bit multiplexing; the referenced 200G-per-lane PMA in Clause 176 uses symbol multiplexing to control how burst errors map into Reed-Solomon symbols. The interface's lane count and generation determine which PMA mapping applies.\n\nThe following lessons separate three ideas: representing data with [[PAM4]] levels, handling channel impairments with equalisation and precoding, and mapping logical lanes to physical lanes. These are related functions, but they solve different problems.",
     terms: {
       "PAM4": "Four-level pulse amplitude modulation: two bits per symbol, so a 106.25 Gb/s lane runs at 53.125 GBd. Halving the baud rate for a given bit rate costs signal-to-noise ratio, because the four levels must fit in the same amplitude range.",
     },
@@ -858,7 +820,7 @@ export const DATA: Record<string, StackNode> = {
         clause: { "400G": "Clause 120", "800G": "Clause 173", "1.6T": "Clause 176 (draft)" },
         summary: "Two bits per symbol, and what it costs.",
         intro:
-          "NRZ sends one bit per symbol using two levels. PAM4 sends two bits per symbol using four. For a given bit rate that halves the baud rate, which is what makes 200 Gb/s on a single lane achievable with electronics and optics that top out near 106 GBd.\n\nThe cost is signal-to-noise ratio, and it is large. The four levels have to fit inside the same amplitude range the two levels used, so the spacing between adjacent levels is a third of the NRZ spacing. That works out to a detection penalty of about **9.5 dB** relative to NRZ - a figure worth remembering, because it is the reason FEC went from optional to mandatory at these rates. PAM4 did not make links slightly worse; it made them unusable without strong error correction, and the industry accepted that trade because the alternative was doubling the baud rate.\n\nEverything else in this sublayer is damage control for that decision.",
+          "PAM4 represents two bits with one of four amplitude levels. NRZ represents one bit with one of two levels. For the same coded bit rate, PAM4 therefore needs half the symbol rate, or baud rate. A 106.25 Gb/s PAM4 lane runs at 53.125 GBd.\n\nWith equally spaced levels over the same peak-to-peak amplitude range, adjacent PAM4 levels are one-third as far apart as the two NRZ levels. The receiver has less separation between decision thresholds. The corresponding idealized noise-margin penalty is 20 log₁₀(3) ≈ 9.5 dB; it is not a complete comparison of every practical NRZ and PAM4 link.\n\nPAM4 reduces the bandwidth needed for a given bit rate, but places stronger demands on signal quality, equalisation and error correction. The actual baud rate also includes the overhead of the selected coding and FEC arrangement. A 200G-class electrical lane and a 200G-class optical lane with inner FEC need not run at the same baud rate.",
         params: { all: [["Levels", "4"], ["Bits per symbol", "2"], ["Baud rate for 106.25 Gb/s", "53.125 GBd"], ["Baud rate for 212.5 Gb/s", "106.25 GBd"], ["Detection penalty vs NRZ", "about 9.5 dB"], ["Consequence", "FEC becomes mandatory, not optional"]] },
         quiz: [
           {
@@ -871,39 +833,32 @@ export const DATA: Record<string, StackNode> = {
       },
 
       {
-        id: "pma-gray", name: "Gray coding", alias: "one level error, one bit error", dir: "both", written: true,
+        id: "pma-gray", name: "Gray coding", alias: "adjacent-level errors change one bit", dir: "both", written: true,
         clause: { "400G": "Clause 120", "800G": "Clause 173", "1.6T": "Clause 176 (draft)" },
         summary: "Mapping bit pairs to levels so neighbours differ by one bit.",
         intro:
-          "Two bits have to be mapped onto four levels, and the mapping is a free choice. Gray coding picks the one where adjacent levels differ in exactly one bit position.\n\nThe reason is the shape of the errors. Noise moves a symbol to an adjacent level far more often than it moves it two levels, so almost every symbol error is a neighbour error. Under Gray coding a neighbour error produces exactly **one** wrong bit. Under a naive binary mapping some neighbour pairs differ in both bits, so the same physical event would produce two.\n\nThis matters more than it sounds, because of how FEC counts. Halving the bits damaged per symbol error directly improves what the Reed-Solomon decoder sees, for no hardware cost at all - it is purely a choice of which bit pattern labels which level.",
-        params: { all: [["Mapping", "adjacent levels differ in one bit"], ["Typical error", "a neighbour-level error"], ["Result", "one bit error per symbol error"], ["Naive mapping", "some neighbour errors would flip two bits"], ["Cost", "none"]] },
-        quiz: [
-          {
-            q: "Why is Gray coding worth doing when it costs nothing and adds nothing?",
-            opts: ["It improves the eye opening", "It halves the bits damaged by the most common kind of symbol error", "It removes DC content", "It is required for clock recovery"],
-            a: 1,
-            why: "Neighbour-level errors dominate, and Gray coding makes each one cost a single bit instead of two. It is a free improvement in what FEC has to absorb.",
-          },
-        ],
+          "Gray coding labels the four PAM4 levels so neighboring levels differ in one bit. One possible low-to-high labeling is 00, 01, 11, 10. This example illustrates the adjacency rule; use the defined mapping for the relevant PMA.\n\nWhen noise causes a nearest-neighbor level decision error, Gray coding produces one wrong bit. A binary labeling can produce two wrong bits for some adjacent-level errors. Gray coding therefore reduces the bit-error impact of those decisions.\n\nReed-Solomon correction is counted in ten-bit symbols, not PAM4 bit pairs. If both wrong bits would fall within one RS symbol, reducing them to one does not change the RS symbol-error count. The effect on FEC depends on the bit-to-symbol mapping and error distribution.",
+        params: {"all":[["Mapping","adjacent levels differ in one bit"],["Nearest-neighbor decision error","one bit changes"],["Binary mapping comparison","some adjacent transitions change two bits"],["RS symbol count","depends on which ten-bit symbols those errors touch"]]},
+        quiz: [{"q":"What does Gray coding guarantee for a nearest-neighbor PAM4 decision error?","opts":["A larger eye opening","Only one of the two mapped bits changes","No FEC symbol error","Perfect DC balance"],"a":1,"why":"Adjacent levels have labels differing in one bit. This reduces bit damage for those transitions, but does not necessarily halve Reed-Solomon symbol errors: one or two wrong bits within the same ten-bit symbol still count as one erroneous symbol."}],
       },
 
       {
-        id: "pma-eq", name: "Equalisation and error bursts", alias: "CTLE, DFE, and why DFE bites", dir: "rx", written: true,
+        id: "pma-eq", name: "Equalisation and error bursts", alias: "CTLE, FFE and DFE error propagation", dir: "rx", written: true,
         clause: { "400G": "Clause 120", "800G": "Clause 173", "1.6T": "Clause 176 (draft)" },
-        summary: "Undoing channel loss, and manufacturing bursts in the process.",
+        summary: "Reduce inter-symbol interference and understand DFE error propagation.",
         intro:
-          "A high-loss channel smears each symbol into the ones after it. Equalisers undo that. Continuous-time linear equalisation boosts high frequencies before slicing; feed-forward equalisation applies a filter; and **decision feedback equalisation** subtracts the estimated interference caused by symbols that have already been decided.\n\nThat last one has a trap built into its name. DFE subtracts based on *decisions*, so if a decision was wrong, it subtracts the wrong thing and makes the next decision more likely to be wrong too. A single error becomes a burst.\n\nThe arithmetic is unpleasantly concrete. For a one-tap DFE with a tap coefficient of 1, a wrong decision gives roughly a **3/4 probability** that the next symbol is also wrong, so the probability of k consecutive errors goes as **(3/4)ᵏ**. Bursts tend to show a characteristic alternating pattern and terminate when the equalised signal falls out of range. Tap weights are bounded by the standard - 802.3cd limits the first tap to 0.7 and the rest to 0.2 - precisely to keep this behaviour in a range the FEC can absorb.\n\nSo a significant share of the burstiness that drove the interleaving and multiplexing decisions in the FEC block is not the channel. It is the receiver's own equaliser.",
-        params: { all: [["CTLE", "boosts high frequencies before slicing"], ["FFE", "filter applied to the received signal"], ["DFE", "subtracts interference using previous decisions"], ["DFE failure mode", "a wrong decision corrupts the next"], ["1-tap DFE, coefficient 1", "about 3/4 chance the next symbol errors too"], ["k consecutive errors", "probability about (3/4)^k"], ["802.3cd tap limits", "first tap 0.7, taps 2 to 12 limited to 0.2"]] },
+          "A channel spreads a transmitted symbol's energy over time, allowing it to interfere with neighboring symbols. Equalisation reduces this inter-symbol interference. CTLE shapes the analog frequency response, FFE applies a weighted feed-forward filter, and DFE subtracts estimated interference from previously decided symbols.\n\nDFE relies on those earlier decisions being correct. A wrong decision can produce an incorrect subtraction and increase the chance of another error. This feedback can turn one initial decision error into a longer error event.\n\nIn a simplified one-tap PAM4 DFE model with coefficient 1, the continuation probability can approach 3/4. That is a model result, not a universal burst probability. Reference-receiver tap constraints, such as those in IEEE 802.3cd, belong to a particular specification and should not be treated as limits on every implementation.\n\nWhen investigating bursts, examine receiver behavior as well as the physical channel. Error propagation can change the error distribution that FEC sees.",
+        params: {"all":[["CTLE","analog frequency-response shaping"],["FFE","weighted feed-forward filtering"],["DFE","uses earlier decisions to subtract estimated interference"],["Error propagation","a wrong earlier decision can promote subsequent errors"],["Simplified one-tap model, coefficient 1","continuation probability can approach 3/4"],["Model burst of length L","continuation factor (3/4)^(L-1); not a universal link probability"],["Reference tap constraints","specific to the applicable receiver model, not all implementations"]]},
         quiz: [
           {
-            q: "Why does DFE produce bursts rather than isolated errors?",
-            opts: ["It amplifies noise", "It subtracts based on previous decisions, so a wrong decision corrupts the next", "It runs slower than the data", "It has no feedback"],
+            q: "How can DFE turn one decision error into a longer event?",
+            opts: ["It removes all noise", "Its subtraction uses earlier decisions, so a wrong decision can promote subsequent errors", "It changes the MAC rate", "It has no feedback"],
             a: 1,
-            why: "The feedback loop is fed by decisions. One wrong decision feeds a wrong correction into the next symbol, which is how a single error propagates.",
+            why: "An incorrect earlier decision gives an incorrect interference estimate. That can increase later error probability; it does not mean every initial error must become a burst.",
           },
           {
-            q: "A burst of four consecutive symbol errors is observed. Where should you look first?",
-            opts: ["The MAC", "The receive equaliser, before blaming the channel", "The alignment markers", "The scrambler polynomial"],
+            q: "Which possible burst source should not be ruled out just because it is inside the receiver?",
+            opts: ["The MAC addresses", "DFE decision-error propagation", "The nominal MAC frame size", "The EtherType"],
             a: 1,
             why: "DFE error propagation is a well-characterised burst source inside the receiver. Channel events and equaliser behaviour produce similar signatures, so the equaliser is not a safe thing to rule out.",
           },
@@ -913,9 +868,9 @@ export const DATA: Record<string, StackNode> = {
       {
         id: "pma-precode", name: "Precoding", alias: "1/(1+D) mod 4", dir: "both", written: true,
         clause: { "400G": "Clause 120.5.7.2", "800G": "Clause 173.5.7.2", "1.6T": "Clause 176.9.1.2 (draft)" },
-        summary: "A transmitter-side trick that shortens DFE bursts.",
+        summary: "A defined PAM4 transformation that can limit DFE error propagation.",
         intro:
-          "Precoding is a small transformation applied at the transmitter - **1/(1+D) mod 4**, first defined for PAM4 in 802.3cd - and undone at the receiver. Its purpose is narrow and specific: to break up the error bursts that DFE error propagation creates.\n\nThe status is worth noting because it is unusual. Precoding is **mandatory to implement** in the transmitter but **optional to use**: the link can enable or disable it depending on the receiver architecture and how badly that receiver propagates errors. So every compliant transmitter has the machinery, and whether it is switched on is a property of the pairing rather than of either end alone.\n\nIn P802.3dj, precoding appears for CR, KR, C2C and C2M links, and is one of the options a chip-to-module link training session can negotiate. It is also referenced for optical transmitters where a burst-error-prone receiver is in play.",
+          "PAM4 precoding applies the defined 1/(1+D) mod 4 transformation at the transmitter, with the corresponding inverse at the receiver. It changes the relationship between consecutive symbols so some DFE error-propagation patterns produce fewer errors after the inverse operation.\n\nIts benefit depends on the receiver and the error pattern. Precoding can help with long propagated bursts, but can increase the number of errors from isolated events. It should therefore be understood together with the relevant receiver model and FEC mapping.\n\nThe referenced PMA specifications distinguish the capability to implement precoding from whether it is enabled on a link. The applicable clause and configuration or training procedure define that choice. The P802.3dj material includes negotiation of precoding for the relevant electrical interfaces; it is not an option inferred from the optical lane count.",
         params: {
           "400G": [["Function", "1/(1+D) mod 4"], ["First defined in", "802.3cd, 120.5.7.2"], ["Implementation", "mandatory in the transmitter"], ["Use", "optional, configurable per link"], ["Purpose", "shorten DFE error propagation bursts"]],
           "800G": [["Function", "1/(1+D) mod 4"], ["Clause", "173.5.7.2"]],
@@ -937,7 +892,7 @@ export const DATA: Record<string, StackNode> = {
         clause: { "400G": "Clause 120.5.2", "800G": "Clause 173", "1.6T": "Clause 176 (draft)" },
         summary: "Folding PCS lanes onto physical lanes, two different ways.",
         intro:
-          "The PMA takes n lanes in and produces m lanes out. How it interleaves them turns out to matter for error performance, which is why this apparently mechanical function has been redesigned at 200G per lane.\n\n**Bit multiplexing** takes bits from the input lanes in turn. It is simple and it is what earlier generations use - 2:1 for 100GbE in Clause 120.5.2, and 32:8 restricted bit-level multiplexing for 800G in Clause 173. Its drawback is that a burst on one physical lane is scattered across several FEC symbols, and since Reed-Solomon counts damage in symbols, scattering is expensive.\n\n**Symbol multiplexing** keeps Reed-Solomon symbols intact across the multiplexing boundary, so a channel burst stays inside fewer of them. Analysis presented to the task force showed the bit-multiplexing penalty grows with the ratio - 4:1 is worse than 2:1, and 8:1 for 200G per lane would be worse still. Clause 176 defines the symbol-multiplexing PMA that resulted, with 1.6T variants including 16:8 and 16:16.\n\nThe thing to hold onto: this is a **PMA** change. The PCS above forms its lanes the same way regardless.",
+          "Lane multiplexing changes the number of serial streams carrying the data. For example, a PMA can map several lower-rate logical streams onto fewer higher-rate interface lanes. The receive PMA reverses the specified mapping.\n\nBit multiplexing selects individual bits from its input streams. Symbol multiplexing preserves the defined symbol-aligned units. This distinction affects whether a burst on a serial lane spreads across many Reed-Solomon symbols or remains within fewer of them.\n\nClause 173 defines the referenced 800G 32:8 restricted bit-level mapping. Clause 176 defines the symbol-multiplexing PMA used for the relevant 200G-per-lane interfaces, including the referenced 1.6T 16:8 and 16:16 variants. These PMA variants describe mappings; they are not a substitute for a confirmed PCS lane count.",
         params: {
           "400G": [["Scheme", "bit multiplexing"], ["100GbE example", "2:1, Clause 120.5.2"]],
           "800G": [["Scheme", "32:8 restricted bit-level"], ["Clause", "173"]],
@@ -947,11 +902,11 @@ export const DATA: Record<string, StackNode> = {
 
       outline("pma-cdr", "Clock and data recovery", "CDR", "Clause 120", "Extracting timing from the data itself. Not yet researched."),
       {
-        id: "pma-skew", name: "Skew and the skew budget", alias: "who is allowed to spend what", dir: "both", written: true,
+        id: "pma-skew", name: "Skew and the skew budget", alias: "relative lane delay and its allowed variation", dir: "both", written: true,
         clause: { "400G": "Clause 116, 120", "800G": "Clause 116", "1.6T": "Clause 174 (draft)" },
         summary: "Six numbered points along the link, each with an allowance.",
         intro:
-          "Skew is the arrival-time spread between lanes carrying one logical stream, and it is budgeted rather than merely limited. The standard defines numbered **skew points**, SP1 through SP6, at defined places along the link, and gives the maximum cumulative skew permitted at each. A second table does the same for skew **variation**, which is the part that changes with time, temperature and voltage and therefore cannot be calibrated out.\n\nThe structure matters more than any single number. Because the limits are cumulative and positional, each component vendor knows exactly how much of the total they may contribute, and the receiver knows how deep its deskew buffer must be. It is an interoperability contract expressed as a table.\n\nOne useful rule from the standard: if the summary table and the individual sublayer clause disagree, the **sublayer clause governs**.",
+          "Skew is the difference in arrival time between lanes carrying corresponding parts of a stream. The receive PCS removes that difference with deskew buffering. To make implementations interoperable, the specification limits how much skew the complete path can introduce.\n\nThe referenced 400G model defines skew points SP1 through SP6 and gives a maximum cumulative skew at each point. A separate allowance covers skew variation, the change in relative delay over time and operating conditions. The table below belongs to that reference model, not to every 400G or higher-rate PHY.\n\nCumulative limits describe the total at a point. To understand a segment's contribution, compare the relevant limits and check the individual sublayer's requirements. Where the summary table and the applicable sublayer clause disagree, the sublayer clause governs.",
         params: {
           "400G": [
             ["SP1, PCS and TX PMA output", "29 ns"],
@@ -970,8 +925,8 @@ export const DATA: Record<string, StackNode> = {
           {
             id: "pma-skew-read", name: "Reading the budget",
             body:
-              "The values are **cumulative**, not per-component. 29 ns at SP1 is the total permitted by the time the signal leaves the transmit PMA; 54 ns at SP3 is the total permitted by the time it reaches the medium. So the amount any one stage may add is the difference between its point and the previous one.\n\nThe largest single allocation is the medium - from 54 ns to 134 ns, so 80 ns for the fibre itself. That reflects physics rather than generosity: parallel fibres in a cable have different effective lengths, and skew in parallel fibre depends partly on how the cable is bent. A task-force proposal cited figures as high as roughly 45 ps per metre for heavily bent parallel fibre, though that is a bounding case rather than a specification value.\n\nThe last row is worth noting: 180 ns at the PCS receive, beyond the 160 ns at SP6. That extra allowance covers skew generated inside the receiving device itself, after the signal has crossed the pins.",
-            params: { all: [["Values are", "cumulative totals, not per-stage"], ["Per-stage allowance", "the difference between adjacent points"], ["Largest allocation", "the medium, 54 ns to 134 ns"], ["Bent parallel fibre", "up to roughly 45 ps/m (proposal figure)"], ["Beyond SP6", "180 ns, covering the receiving device's own skew"]] },
+              "The example limits are cumulative. At SP1 the maximum is 29 ns; at SP3 it is 54 ns. These describe the allowed accumulated skew at those points, rather than a separate 29 ns and 54 ns contribution from two components.\n\nBetween the reference points around the medium, the limits increase from 54 ns to 134 ns, a difference of 80 ns. Different fibre path lengths and propagation delays can contribute to this spread. Use the individual clauses to check how the allowances apply to a particular implementation.\n\nThe PCS receive limit is 180 ns, beyond the 160 ns at SP6. The receiver therefore needs to accommodate skew introduced inside the receiving device as well as skew already present at its input.",
+            params: { all: [["Values","cumulative limits in the referenced 400G model"], ["Between SP3 and SP4","134 - 54 = 80 ns"], ["Segment requirements","check the individual sublayer clauses"], ["PCS receive limit","180 ns, including receiving-device skew"]] },
             quiz: [
               {
                 q: "SP3 is 54 ns and SP4 is 134 ns. What does that tell you?",
@@ -984,8 +939,8 @@ export const DATA: Record<string, StackNode> = {
           {
             id: "pma-skew-variation", name: "Skew versus skew variation",
             body:
-              "Two tables, two different problems. **Skew** is the static spread, and a receiver can measure it once at alignment and buffer it out. **Skew variation** is how much that spread moves afterwards, as temperature, voltage and time drift.\n\nVariation is the harder constraint even though its numbers are much smaller, because it cannot be calibrated away. A receiver that deskews perfectly at link-up and then drifts will lose alignment, so the deskew mechanism has to track rather than merely acquire. This is why test equipment vendors sell dynamic skew measurement as a distinct capability from static skew: the failure it catches appears only after the link is up and looking healthy.",
-            params: { all: [["Skew", "static spread; measured once and buffered out"], ["Skew variation", "drift with time, voltage, temperature"], ["Why variation is harder", "it cannot be calibrated out at link-up"], ["Consequence", "deskew must track, not just acquire"]] },
+              "Skew describes the relative lane delay at a given time. Skew variation describes how that delay changes, for example with temperature or supply conditions.\n\nThe receiver can measure and buffer out an initial offset, but it also needs to tolerate permitted changes after alignment. A buffer sized only for the observed initial skew may be insufficient if the delay later moves.\n\nCheck both the absolute skew allowance and the variation allowance for the selected interface. A small observed offset at link-up does not establish compliance across operating conditions.",
+            params: { all: [["Skew", "relative lane delay at a given time"], ["Skew variation", "change in relative delay over time and conditions"], ["Initial measurement", "does not establish behavior across operating conditions"], ["Receiver requirement", "tolerate the specified skew and variation allowances"]] },
           },
         ],
       },
@@ -997,9 +952,9 @@ export const DATA: Record<string, StackNode> = {
     id: "pmd", name: "PMD", alias: "Physical Medium Dependent", zone: "signal", written: true,
     clause: { "400G": "Clause 121-124", "800G": "Clause 124; 802.3df", "1.6T": "Clauses 180-183 (draft)" },
     face: { "400G": "DR4, FR8, LR8", "800G": "DR8, DR4, FR4", "1.6T": "DR8, DR8-2" },
-    summary: "The optics and copper drivers. Where reach is decided.",
+    summary: "Defines signaling and medium-specific requirements for the selected PHY.",
     intro:
-      "The PMD is what changes when you change media. Everything above it is deliberately insulated from that choice, which is why one switch ASIC drives a DR4 module or an FR4 module with identical logic.\n\nThere are really only two optical strategies, and every PHY name is one or the other. **Parallel** optics give each lane its own fibre, one wavelength per fibre, which needs simple optics and a lot of strands. **WDM** optics put every lane on a single fibre pair as separate wavelengths, which needs more complex optics and far fewer strands. That is the entire trade, and which side wins depends on something no datasheet knows: whether you already own the fibre.\n\nThe naming conventions are learnable, with one recent exception that breaks them - see the page on reading a PHY name.",
+      "The Physical Medium Dependent (PMD) sublayer defines how the signal is transmitted and received over a particular medium. Its requirements depend on the link type, including optical fibre, copper cable or backplane. The PCS can support several PMDs through compatible PMA mappings.\n\nFor the optical families discussed here, parallel optics use a separate path for each lane, while wavelength-division multiplexing (WDM) combines lanes at different wavelengths onto a shared fibre. For example, DR4 uses four fibre pairs; FR4 carries four wavelengths over one pair. Other optical arrangements exist, so read the specific PMD definition rather than extending this rule to every Ethernet name.\n\nThe PHY name identifies a standardized link type, but it is not a complete specification. Confirm reach, fibre type, lane mapping, FEC and the relevant optical or electrical requirements when selecting an interface.",
     params: {
       "400G": [
         ["From 802.3bs-2017", "400GBASE-DR4, FR8, LR8, SR16"],
@@ -1028,27 +983,27 @@ export const DATA: Record<string, StackNode> = {
         clause: { all: "Clause 1.4, and the PMD clauses" },
         summary: "Rate, media class, lane count, and a reach suffix.",
         intro:
-          "A PHY name is four pieces of information stuck together, and once you can read it you can infer most of a module's properties without a datasheet.\n\nTake **1.6TBASE-DR8-2**. The rate is 1.6 Tb/s. BASE means baseband signalling. **DR** is the media class - parallel single-mode, one wavelength per fibre. **8** is the number of lanes, and for a parallel PMD that means eight fibre pairs. The trailing **-2** means two kilometres rather than the 500 m the class would otherwise imply.\n\nThe media letters are the part worth memorising: **D** for parallel single-mode, **F** and **L** and **E** for progressively longer single-mode reaches, **S** and **V** for multimode, **C** for copper cable assemblies, **K** for backplane.",
+          "A PHY name identifies its nominal rate and a particular medium-dependent link type. In 1.6TBASE-DR8-2, 1.6T is the MAC rate and BASE indicates baseband operation. DR8 identifies the parallel single-mode family with eight optical lanes; the -2 variant has a two-kilometre reach. These are names from the referenced P802.3dj material.\n\nFor this parallel PMD, eight optical lanes use eight fibre pairs, or sixteen strands. That does not establish the electrical lane count between the host and module; the AUI name describes that interface separately.\n\nUseful families include DR for the parallel single-mode examples here, FR/LR/ER for single-mode families with different reaches, SR/VR for multimode, CR for copper cable assemblies, and KR for backplane links. The letters provide a starting point, while the complete name and specification establish the actual reach and arrangement.",
         params: { all: [["Rate prefix", "200G, 400G, 800G, 1.6T"], ["BASE", "baseband"], ["D", "parallel single-mode, one wavelength per fibre"], ["F / L / E", "single-mode at increasing reach"], ["S / V", "multimode, short and very short"], ["C", "copper cable assembly"], ["K", "backplane"], ["Trailing number", "lane count"], ["Trailing -2", "the 2 km variant"]] },
         sections: [
           {
             id: "pmd-naming-break", name: "Where the convention breaks",
             body:
-              "The scheme used to be tidy: DR meant 500 m and FR meant 2 km. Then 802.3dj adopted an objective for 500 m over four WDM wavelengths on a single fibre, and named the result **800GBASE-FR4-500**. So FR no longer implies 2 km, and a reach suffix now appears on a name whose class already implied a reach.\n\nThis was raised formally during ballot, along with the observation that the 2 km family had become confusing in its own right: 200GBASE-FR1, 400GBASE-DR2-2, 800GBASE-DR4-2 and 1.6TBASE-DR8-2 are all 2 km PHYs with three different naming patterns between them. The resolution renamed 200GBASE-FR1 to **200GBASE-DR1-2** for consistency.\n\nThe lesson is practical rather than pedantic: read the reach from the specification, not from the letters, on anything newer than 100G per lane.",
+              "A familiar family name does not always imply the same reach at every rate. The referenced 800GBASE-FR4-500 uses four WDM wavelengths over one fibre pair with a 500 m reach, even though FR4 is commonly associated with two kilometres. The -500 suffix distinguishes that variant.\n\nThe P802.3dj material also renamed the two-kilometre single-lane 200G example from FR1 to DR1-2. When comparing older presentations with later draft material, check both the revision and the complete PHY name. Use the specification's reach rather than relying only on the media letters.",
             params: { all: [["Old rule", "DR = 500 m, FR = 2 km"], ["Broken by", "800GBASE-FR4-500, a 500 m WDM PHY"], ["Also confusing", "the 2 km family used three patterns"], ["Ballot resolution", "200GBASE-FR1 renamed 200GBASE-DR1-2"], ["Practical advice", "check the spec, not the letters"]] },
             quiz: [
               {
                 q: "What reach does 800GBASE-FR4-500 have?",
                 opts: ["2 km, because FR means 2 km", "500 m, as the suffix says", "40 km", "100 m"],
                 a: 1,
-                why: "This PHY is the reason the convention broke. FR no longer implies 2 km; the -500 suffix is authoritative.",
+                why: "The complete name identifies the 500 m variant. A familiar family abbreviation alone is not enough to determine reach.",
               },
             ],
           },
           {
             id: "pmd-naming-fibre", name: "Counting strands",
             body:
-              "For a parallel PMD the lane count is also a fibre count. Each lane needs a strand in each direction, so an eight-lane parallel PHY such as 1.6TBASE-DR8 occupies sixteen strands. A four-lane parallel PHY occupies eight.\n\nFor a WDM PMD the lane count tells you the number of wavelengths, not the number of fibres. Every WDM part - FR4, FR8, LR4, LR8 - carries all its lanes on a single fibre pair, so it is two strands regardless of the number in the name.\n\nThis is the single most common source of surprise when a cabling plant is sized for one generation and reused for the next: moving from a four-lane parallel part to an eight-lane parallel part doubles the strand count and can change the connector, which is a cabling project rather than a transceiver swap.",
+              "For the parallel DR examples here, each optical lane uses one strand in each direction. DR4 therefore uses four pairs, or eight strands. DR8 uses eight pairs, or sixteen strands.\n\nFor the WDM FR4 and LR4 examples, four optical wavelengths share one fibre in each direction. Those links use two strands, not eight. The numeral counts optical lanes or wavelengths in that PMD, rather than directly specifying a universal strand count.\n\nWhen planning cabling, check the PMD arrangement, connector and polarity together. Moving from DR4 to DR8 changes the number of paths required; changing from DR4 to FR4 changes how those paths are carried.",
             params: { all: [["Parallel (DR)", "2 strands per lane"], ["DR4", "8 strands"], ["DR8", "16 strands"], ["WDM (FR, LR)", "2 strands total, lanes are wavelengths"], ["Implication", "lane count growth can be a cabling project"]] },
             quiz: [
               {
@@ -1065,16 +1020,16 @@ export const DATA: Record<string, StackNode> = {
       {
         id: "pmd-tdecq", name: "TDECQ", alias: "transmitter and dispersion eye closure quaternary", dir: "tx", written: true,
         clause: { all: "specified per PMD clause; introduced in 802.3bs" },
-        summary: "The primary quality metric for a PAM4 optical transmitter.",
+        summary: "A reference-receiver measurement of PAM4 optical transmitter penalty.",
         intro:
-          "TDECQ is how a PAM4 optical transmitter is graded. It is a **power penalty**: how much extra optical power this transmitter needs, compared with an ideal one, to reach the target symbol error ratio. A lower number is a better transmitter, and it is quoted in dB.\n\nIt was developed in 802.3bs and refined in later amendments, replacing the older eye-mask and transmitter dispersion penalty tests. Those tests stopped being adequate once links used strong equalisation and mandatory FEC: a waveform can look poor against a mask and still perform well after the receiver's equaliser, so a metric was needed that accounts for what the receiver will actually do.\n\nThe most common misreading is to treat a TDECQ figure as an error rate. It is not. It is a measure of eye-opening quality relative to an ideal transmitter, expressed as the power you would have to add to compensate.",
+          "TDECQ, or transmitter and dispersion eye closure quaternary, evaluates a PAM4 optical transmitter against a specified reference-receiver model. It is expressed as a power penalty in dB relative to an ideal signal at the target symbol error ratio. A lower penalty indicates a better result under that test.\n\nThe measurement includes the prescribed waveform processing and reference equalisation. This matters because an equaliser can recover some impairments that make an unprocessed eye diagram look poor. TDECQ therefore gives more information than simply checking whether the waveform fits an eye mask.\n\nTDECQ is not a measured operational bit error ratio or a guarantee of complete link performance. Interpret it with the applicable PMD's optical modulation amplitude, dispersion, receiver and other compliance requirements.",
         params: { all: [["Full name", "transmitter and dispersion eye closure quaternary"], ["Type of metric", "optical power penalty, in dB"], ["Measured against", "target symbol error ratio"], ["Introduced in", "802.3bs; refined in later amendments"], ["Replaces", "eye mask and TDP"], ["Lower is", "better"], ["Not", "a bit error rate"]] },
         sections: [
           {
             id: "pmd-tdecq-how", name: "How it is measured",
             body:
-              "The measurement is taken from an eye diagram, but not with a mask. Two vertical histograms are taken across the eye, centred at **0.45 and 0.55 unit intervals**, each spanning all four PAM4 levels. The noise captured in those histograms is compared with what an ideal receiver would see, and the difference in dB is the penalty.\n\nTwo details distinguish it from the older TDP test. It uses **symbol** error ratio rather than bit error ratio, because each PAM4 symbol carries two bits. And instead of comparing against a physical reference transmitter, a **virtual** reference is constructed mathematically from the measured optical modulation amplitude of the device under test - which removes the need for a golden transmitter in every test lab.\n\nThe reference receiver includes an equaliser, so the result naturally separates into penalties the equaliser can remove and penalties it cannot. Low-pass filtering of the waveform mostly lands in the equalisable part; amplitude noise, compression and eye skew mostly land in the part that cannot be equalised away.",
-            params: { all: [["Sampling points", "0.45 and 0.55 unit intervals"], ["Histograms", "vertical, spanning all four levels"], ["Compared with", "an ideal reference receiver"], ["Error metric", "symbol error ratio, not BER"], ["Reference transmitter", "virtual, built from measured OMA"], ["Reference receiver", "includes an equaliser"]] },
+              "The test captures a specified optical pattern and applies the prescribed reference filtering and equalisation. It then evaluates sample distributions at two positions separated by 0.1 unit intervals (UI), where one UI is a symbol period. Older descriptions give nominal positions of 0.45 and 0.55 UI; the allowed timing optimization is defined by the relevant PMD and revision.\n\nThe calculation determines the noise margin consistent with the target symbol error ratio and compares it with an ideal reference derived using the measured outer optical modulation amplitude. Instrument noise and the specified equaliser behavior are part of the method. The result is the penalty reported in dB.\n\nThis is a conceptual overview, not a lab procedure. Pattern, bandwidth, tap constraints, histogram placement and dispersion conditions must come from the applicable measurement clause.",
+            params: {"all":[["Sample-position separation","0.1 UI"],["Older nominal positions","0.45 and 0.55 UI; allowed timing optimization is specification-dependent"],["Histograms","sample distributions across the PAM4 levels"],["Error metric","target symbol error ratio, not operational BER"],["Ideal reference","derived using measured outer OMA"],["Receiver model","specified filtering and equalisation"]]},
             quiz: [
               {
                 q: "Why does TDECQ use symbol error ratio rather than bit error ratio?",
@@ -1087,7 +1042,7 @@ export const DATA: Record<string, StackNode> = {
                 opts: ["Yes, one of the tests is broken", "No - TDECQ accounts for the receiver's equaliser, which a static mask cannot",
                        "Yes, masks are stricter by definition", "No, because they measure different wavelengths"],
                 a: 1,
-                why: "That mismatch is exactly why TDECQ replaced the mask. Impairments a reference equaliser can remove should not condemn a transmitter that will be used with an equalising receiver.",
+                why: "The tests evaluate the waveform differently. TDECQ includes specified reference processing and equalisation; meeting that metric does not waive other requirements in the applicable PMD specification.",
               },
             ],
           },
@@ -1097,9 +1052,9 @@ export const DATA: Record<string, StackNode> = {
       {
         id: "pmd-dr", name: "Parallel single-mode: DR", alias: "one wavelength per fibre", dir: "both", written: true,
         clause: { "400G": "Clause 124", "800G": "Clause 124", "1.6T": "Clause 180, 182 (draft)" },
-        summary: "Simple optics, more fibre. The datacentre volume choice.",
+        summary: "Parallel single-mode optical lanes, each with its own fibre pair.",
         intro:
-          "A DR PMD gives every lane its own fibre pair and uses a single wavelength on each. The optics are as simple as they can be - no multiplexer, no demultiplexer, no per-wavelength wavelength control - which is what makes them cheap to build at volume.\n\nThe cost is strands. DR4 is eight, DR8 is sixteen, and the connector grows with them.\n\nDR is also the family with the most consistent 500 m target, and the 2 km variants are spelled with a trailing -2: 400GBASE-DR4-2, 800GBASE-DR8-2, 1.6TBASE-DR8-2. All of 1.6T's standardised optical PMDs are DR: there is no WDM 1.6T PHY among the 802.3dj objectives.",
+          "The DR PMDs discussed here carry each optical lane over its own fibre pair, with one wavelength per fibre. They do not need a WDM multiplexer to combine lanes onto one strand. The tradeoff is more fibre paths and a suitable multi-fibre connection.\n\nDR4 uses eight strands and DR8 uses sixteen. Confirm connector and polarity requirements as well as strand count. A module's electrical AUI may have a different number of lanes from its optical DR interface.\n\nThe referenced 1.6T optical objectives cover DR8 at 500 m and DR8-2 at two kilometres. They do not include a 1.6T WDM PMD. This statement describes the source set used here, rather than predicting all future 1.6T optical standards.",
         params: {
           "400G": [["Type", "400GBASE-DR4"], ["Lanes", "4"], ["Strands", "8"], ["2 km variant", "400GBASE-DR4-2"]],
           "800G": [["Types", "800GBASE-DR8 (100G/lane), 800GBASE-DR4 (200G/lane)"], ["Strands", "16 for DR8, 8 for DR4"], ["2 km variants", "DR8-2, DR4-2"]],
@@ -1110,9 +1065,9 @@ export const DATA: Record<string, StackNode> = {
       {
         id: "pmd-fr", name: "Wavelength multiplexed: FR and LR", alias: "lanes as colours on one fibre pair", dir: "both", written: true,
         clause: { "400G": "Clause 122", "800G": "Clause 183 (draft)", "1.6T": "none defined" },
-        summary: "More complex optics, two strands, longer reach.",
+        summary: "Several optical wavelengths sharing one fibre pair.",
         intro:
-          "A WDM PMD carries every lane as a different wavelength on a single fibre pair. That needs a multiplexer and demultiplexer and tighter wavelength control, so the optics cost more - and it needs only two strands no matter how many lanes the name implies.\n\nThis family also covers the longer reaches. FR is the shorter of the two traditionally, LR longer, and ER longer still.\n\nWorth noting for the 1.6T column: there is no WDM 1.6T PHY in the 802.3dj objectives. At 1.6T the standardised optical options are parallel only.",
+          "Wavelength-division multiplexing (WDM) carries several optical lanes at different wavelengths over the same fibre. A multiplexer combines them at the transmitter and a demultiplexer separates them at the receiver. The FR4 and LR4 examples use one fibre pair for four wavelengths.\n\nThis reduces strand count compared with a four-lane parallel interface, but adds wavelength-specific optical requirements. Reach depends on the complete PMD definition: FR, LR and ER identify families, and suffixes can distinguish variants such as FR4-500.\n\nThe referenced P802.3dj 1.6T optical objectives are parallel DR8 and DR8-2. A WDM option shown for another rate should not be assumed to exist at 1.6T.",
         params: {
           "400G": [["802.3bs types", "400GBASE-FR8, LR8"], ["Strands", "2"], ["Lanes carried as", "wavelengths"]],
           "800G": [["dj types", "800GBASE-FR4-500, FR4, LR4", { draft: true }], ["Strands", "2", { draft: true }]],
@@ -1120,8 +1075,8 @@ export const DATA: Record<string, StackNode> = {
         },
       },
 
-      outline("pmd-cr", "Copper and backplane: CR and KR", "twinax and backplane", "Clause 178, 179", "Passive copper and its reach wall. Not yet researched."),
-      outline("pmd-sr", "Multimode: SR and VR", "short reach", "Clause 138, 167; 802.3cm, db", "Where multimode still pays. Not yet researched."),
+      outline("pmd-cr", "Copper and backplane: CR and KR", "twinax and backplane", "Clause 178, 179", "Copper cable and backplane channel requirements. Not yet researched."),
+      outline("pmd-sr", "Multimode: SR and VR", "short reach", "Clause 138, 167; 802.3cm, db", "Multimode optical interfaces and their reach requirements. Not yet researched."),
     ],
   },
 
@@ -1130,12 +1085,12 @@ export const DATA: Record<string, StackNode> = {
     id: "medium", name: "Medium", alias: "fibre, copper, backplane", zone: "signal", written: true,
     clause: { "400G": "Clause 121-124", "800G": "Clause 124; 802.3df", "1.6T": "Clauses 180-183 (draft)" },
     face: { all: "SMF, MMF, twinax" },
-    summary: "The physical channel every other decision reacts to.",
+    summary: "The fibre, cable or backplane channel that carries the signal.",
     intro:
-      "The medium is not really a sublayer - it is the thing the sublayers above are compensating for. Every decision you have read about on the way down this stack exists because of some property of a piece of glass or copper.\n\nThe practical question at these rates is rarely 'will it work' and more often 'how many strands does it take, and do I already have them'. That arithmetic is covered under the PMD pages.\n\nFibre types, loss and dispersion budgets, and copper insertion loss are not yet researched here.",
+      "The medium carries the transmitted signal between endpoints. It can be optical fibre, a copper cable assembly or a backplane channel. It is shown below the PMD because the medium and the PMD requirements must be compatible.\n\nCheck the selected link's fibre or cable type, reach, connector arrangement and channel budget. Optical loss and dispersion, or electrical loss and reflections, influence the received signal and the error distribution. Lane-to-lane delay also affects deskew requirements.\n\nThe pages below are outlines. Detailed single-mode, multimode and twinax channel budgets are not covered here yet; use the applicable PMD and channel specification for those values.",
     params: { all: [["Single-mode", "DR, FR, LR, ER classes"], ["Multimode", "SR, VR classes"], ["Twinax copper", "CR"], ["Backplane", "KR"]] },
     subs: [
-      outline("medium-smf", "Single-mode fibre", "SMF", "per PMD clause", "Loss, dispersion, and why reach is cheap here. Not yet researched."),
+      outline("medium-smf", "Single-mode fibre", "SMF", "per PMD clause", "Optical loss, dispersion and reach budgets. Not yet researched."),
       outline("medium-mmf", "Multimode fibre", "MMF", "802.3cm, 802.3db", "Modal bandwidth as the limiter. Not yet researched."),
       outline("medium-twinax", "Twinax copper", "direct attach", "Clause 179", "Insertion loss against length. Not yet researched."),
     ],
@@ -1148,7 +1103,7 @@ export const DATA: Record<string, StackNode> = {
     face: { "400G": "400GAUI-8 / -2", "800G": "800GAUI-8 / -4", "1.6T": "1.6TAUI-16 / -8" },
     summary: "The electrical lanes between ASIC and module.",
     intro:
-      "AUI is where most 800G and 1.6T confusion lives, because the electrical lane count and the optical lane count need not match - and the AUI name tells you the electrical one.\n\nThe naming is arithmetic: the suffix is the number of electrical lanes. **1.6TAUI-16** is sixteen lanes at 100G each; **1.6TAUI-8** is eight lanes at 200G each. Same rate, same prefix, different SerDes generation. An 800G port might be 800GAUI-8 into a module that is optically 800GBASE-DR8, or 800GAUI-4 into one that is 800GBASE-DR4 - and reading a part number correctly means knowing which number you are looking at.\n\nEvery AUI comes in two flavours with different budgets: **C2C** (chip to chip, across a board) and **C2M** (chip to module, ending at a connector). The error budget is tight: each AUI is allowed **1 × 10⁻⁵** at 100G per lane, against 2.4 × 10⁻⁴ for the whole optical link.",
+      "An Attachment Unit Interface (AUI) is an electrical interface between PHY components. It can connect chips or a host chip and a module. Its lane count describes the electrical interface, which may differ from the PMD's optical lane count.\n\nFor example, 1.6TAUI-16 carries the nominal 1.6 Tb/s rate over sixteen 100G-class electrical lanes, while 1.6TAUI-8 uses eight 200G-class lanes. Those class labels are shares of the MAC rate; coded serial rates are higher. A module can use a PMA mapping between its AUI and optical interface.\n\nC2C means chip to chip and C2M means chip to module. Their channel definitions and compliance points differ. The next lessons explain those boundaries, channel assessment with COM, and electrical link training.",
     params: {
       "400G": [["dj type", "400GAUI-2 (2 x 200G)", { draft: true }], ["Earlier", "400GAUI-8, 400GAUI-4"], ["Flavours", "C2C and C2M"], ["Error budget", "1 x 10^-5 per AUI at 100G/lane"]],
       "800G": [["802.3df", "800GAUI-8 (8 x 100G)"], ["802.3dj", "800GAUI-4 (4 x 200G)", { draft: true }], ["Flavours", "C2C and C2M"]],
@@ -1160,36 +1115,28 @@ export const DATA: Record<string, StackNode> = {
         clause: { "400G": "Annex 120E, 120F", "800G": "df annexes", "1.6T": "Annex 176D (draft)" },
         summary: "Two channels, two budgets, two sets of compliance points.",
         intro:
-          "A C2C channel runs between two devices on a board, and both ends are under one designer's control. A C2M channel runs from a host device to a pluggable module and stops at a connector - so the host is designed by one company, the module by another, and neither has seen the other's half.\n\nThat difference is the whole reason the two are specified separately. C2M needs the budget explicitly split at the connector, with compliance points defined either side, so a compliant host and a compliant module interoperate without either vendor testing against the other. In 802.3dj the C2M specifications live in Annex 176D.\n\nThe practical consequence for anyone debugging: a C2M problem is a shared-boundary problem, and the first useful question is which side of the connector owns the loss.",
-        params: { all: [["C2C", "device to device on a board, one owner"], ["C2M", "host to pluggable module, two owners"], ["Why split", "the budget must be divided at the connector"], ["dj C2M annex", "176D"], ["Debug question", "which side of the connector owns the loss"]] },
-        quiz: [
-          {
-            q: "Why are C2C and C2M specified separately?",
-            opts: ["C2M runs faster", "C2M crosses a vendor boundary at a connector, so the budget must be split explicitly",
-                   "C2C has no FEC", "C2M is optical"],
-            a: 1,
-            why: "Host and module come from different vendors who never test against each other, so each needs its own half of a divided budget with defined compliance points.",
-          },
-        ],
+          "A chip-to-chip (C2C) interface connects two chips, often across a board. A chip-to-module (C2M) interface connects the host chip to a module through the host board and module connector. These are interface categories, not assumptions about whether the components come from one vendor.\n\nC2M specifications define host and module requirements at reference or compliance points around the connector. This gives each side a measurable target so compatible implementations can interoperate. Annex 176D contains the referenced P802.3dj C2M definition.\n\nWhen diagnosing a C2M channel, identify the measurement point and the portion of the channel under test. Host loss, connector behavior and module response should be compared with their corresponding requirements, rather than combined into an unspecified end-to-end number.",
+        params: {"all":[["C2C","chip-to-chip electrical interface"],["C2M","host-to-module electrical interface through a connector"],["Compliance split","defined host and module reference points"],["Referenced dj C2M annex","176D"],["Diagnosis","compare each channel portion with its applicable requirements"]]},
+        quiz: [{"q":"Why does a C2M specification define separate host and module compliance points?","opts":["C2M is necessarily faster","To give each side measurable requirements for the connector interface","C2C has no FEC","C2M carries light"],"a":1,"why":"Defined reference points let host and module implementations be assessed against compatible requirements. Their vendors need not be different, and interoperability testing can still be required."}],
       },
 
       {
         id: "aui-budget", name: "Channel Operating Margin", alias: "COM", dir: "both", written: true,
         clause: { "400G": "Annex 93A", "800G": "Annex 93A", "1.6T": "Annex 178A (draft)" },
-        summary: "One number in dB that says whether a channel is good enough.",
+        summary: "Assess an electrical channel using a specified transmitter and receiver model.",
         intro:
-          "COM is the modern way an electrical channel is qualified. It is a figure of merit in dB computed from the channel's scattering parameters together with the specified behaviour of a reference transmitter and receiver - including the transmitter's equaliser and the receiver's equalisation and sensitivity. A channel passes if its COM exceeds a threshold, which in practice sits in the **2 to 3 dB** range, with the exact value given by the relevant specification.\n\nIt was introduced in **802.3bj** in 2014 and is specified in **Annex 93A**. Unusually for a standard, the reference implementation is published as code, which is what made it stick: everyone computes the same number the same way.\n\nWhat COM replaced is the interesting part.",
+          "Channel Operating Margin (COM) is a calculated electrical-channel figure of merit in dB. It combines measured or modeled channel scattering parameters with a specified reference transmitter and receiver, including equalisation and noise assumptions.\n\nThe calculation estimates margin against the required error performance under that model. A channel must meet the threshold and other requirements of its applicable specification. Thresholds around two to three dB occur in the referenced examples, but are not a universal COM limit.\n\nCOM was introduced in IEEE 802.3bj and is defined through reference algorithms such as Annex 93A. Use the required algorithm version, settings and channel data when comparing results. A passing COM result is evidence under the reference model, not a measurement of every possible real receiver.",
         params: { all: [["What it is", "a figure of merit in dB"], ["Computed from", "channel S-parameters plus reference TX and RX behaviour"], ["Pass criterion", "COM above a threshold, typically 2 to 3 dB"], ["Introduced in", "802.3bj, 2014"], ["Specified in", "Annex 93A"], ["dj backplane use", "Annex 178A"], ["Statistical basis", "linear time-invariant assumptions"]] },
         sections: [
           {
             id: "aui-budget-why", name: "Why it replaced hard limits",
             body:
-              "The older approach set rigid frequency-domain limits - insertion loss, insertion loss deviation, crosstalk - each with its own hard pass/fail line. The problem was that those limits could not trade against one another. A channel with unusually low loss can comfortably tolerate more crosstalk, but under hard limits it fails the crosstalk line anyway. The result was systematic overdesign: channels built to satisfy every limit independently rather than to work.\n\nCOM makes the trade explicit by rolling the impairments into one statistical calculation. It also folds in things the old frequency-domain parameters ignored entirely: losses inside the IC, package reflections, IC-related jitter, and a lumped noise term for everything else. And because the reference transmitter and receiver equalisation are specified as part of the algorithm, two vendors computing COM on the same channel get the same answer - which the old approach never guaranteed, since it left reference equalisation undefined.",
-            params: { all: [["Old approach", "independent hard limits per parameter"], ["Problem", "no trade-offs, so systematic overdesign"], ["COM adds", "IC loss, package reflections, IC jitter, lumped noise"], ["COM fixes", "undefined reference equalisation"], ["Result", "repeatable qualification across vendors"]] },
+              "Independent loss and crosstalk limits assess impairments separately. A channel with low loss may tolerate more crosstalk under a particular receiver model, but that tradeoff is not captured by checking each limit alone.\n\nCOM combines the specified impairments, package effects, equalisation and noise into one calculation. This permits some channel tradeoffs to be evaluated against a common reference model. It does not eliminate all other compliance limits.\n\nReproducibility requires more than using the name COM. Two results are comparable only when the reference algorithm, configuration and channel inputs agree.",
+            params: { all: [["Independent limits", "assess each impairment separately"], ["COM model", "combines specified channel, package, noise and equalisation effects"], ["Benefit", "evaluate some impairment tradeoffs under a common model"], ["Reproducibility", "match algorithm version, configuration and channel inputs"], ["Other limits", "still apply where specified"]] },
             quiz: [
               {
                 q: "What was the main shortcoming of hard frequency-domain limits?",
-                opts: ["They were too lenient", "They allowed no trade-off between impairments, forcing overdesign",
+                opts: ["They were always too lenient", "They could not express combined impairment tradeoffs under a receiver model",
                        "They could not be measured", "They ignored insertion loss"],
                 a: 1,
                 why: "A low-loss channel can afford more crosstalk, but independent limits cannot express that, so designers had to satisfy every limit separately.",
@@ -1204,7 +1151,7 @@ export const DATA: Record<string, StackNode> = {
         clause: { "400G": "Clause 72, 802.3ck", "800G": "802.3ck-era training", "1.6T": "Annex 176A (draft)" },
         summary: "The receiver tells the transmitter how to pre-distort.",
         intro:
-          "On an electrical link, the receiver is the only party that knows what the channel did to the signal. Link training is the mechanism by which it tells the transmitter to adjust - a negotiation over the link itself, before data flows, in which the receiver requests changes to the transmitter's equaliser coefficients and the transmitter reports back.\n\nThis is distinct from autonegotiation. Autonegotiation selects *what* to run; training tunes *how well* it runs, and does not change the rate or the PHY type.\n\nIn 802.3dj, electrical link training is specified in **Annex 176A**, and **precoding** is one of the options a session can negotiate - which fits the pattern from the PMA pages, where precoding is mandatory to implement and optional to use. Training is where that option actually gets exercised.\n\nThe detailed state machines and frame formats are not researched here.",
+          "Electrical link training lets the receiver request changes to the peer's transmitter equalisation. The transmitter adjusts defined coefficients and reports its response while the link exchanges training information. This helps adapt the signal to the particular channel.\n\nAutonegotiation and training have different roles. Where supported, autonegotiation selects compatible advertised capabilities and the operating mode. Training then adjusts the transmitter for that mode; it does not independently choose a new Ethernet rate.\n\nThe referenced P802.3dj electrical training procedure is in Annex 176A and includes options such as precoding for the applicable interfaces. Detailed message formats and state machines are outside this lesson. Confirm whether the selected CR, KR or AUI interface supports or requires training.",
         params: {
           "400G": [["Purpose", "tune transmitter equalisation to this channel"], ["Direction of control", "the receiver requests, the transmitter adjusts"], ["Not the same as", "autonegotiation"]],
           "800G": [["Purpose", "as above"]],
@@ -1226,41 +1173,19 @@ export const DATA: Record<string, StackNode> = {
     id: "retimer", name: "Retimed or Linear", alias: "module DSP versus linear drive", zone: "signal", written: true, group: "iface",
     clause: { all: "industry practice; not an IEEE distinction" },
     face: { all: "DSP, LPO or LRO" },
-    summary: "Whether the module re-clocks the signal or just amplifies it.",
+    summary: "Compare module retiming with linear transmit and receive paths.",
     intro:
-      "A **retimed** module contains a DSP that recovers the data, cleans it up and re-transmits it. A **linear** module does not: it amplifies, and leaves the equalisation work to the host ASIC's SerDes. The optical and electrical specifications do not change; what changes is which side of the connector does the signal processing.\n\nThis is industry terminology, not IEEE terminology. There is no clause that defines LPO. But it matters to this page because it decides where the burden lands - and the AUI and COM pages are where that burden is measured.\n\nThe motivation is power. A retimed 800G module can draw around 17 W; fill a 64-port switch with them and the optics alone exceed a kilowatt before the switch ASIC draws anything. Removing the DSP is reported to cut module power by roughly 40 to 50 percent, with typical figures around 8 to 12 W against 18 to 22 W retimed. These are vendor figures, not specification values.",
-    params: { all: [
-      ["Retimed", "module DSP recovers and regenerates the data"],
-      ["Linear (LPO)", "no DSP; host SerDes does the work"],
-      ["LRO", "linear on the receive path only"],
-      ["Retimed 800G module", "around 17 W", { industry: true }],
-      ["LPO power saving", "roughly 40 to 50 percent", { industry: true }],
-      ["Typical LPO module", "8 to 12 W versus 18 to 22 W retimed", { industry: true }],
-      ["Standards basis", "none; MSA and industry practice"],
-    ] },
+      "A retimed optical module recovers timing and regenerates the signal within the module. A module DSP can also provide equalisation and other processing. Linear pluggable optics (LPO) avoid module retiming on the transmit and receive paths, placing more of the end-to-end signal-processing responsibility on the host and analog optical path.\n\nLinear receive optics (LRO) use a linear receive path while retaining processing on the transmit side. LPO, LRO and retimed describe implementations; they are separate from the Ethernet MAC rate, PMD name and mechanical form factor.\n\nRemoving retiming can reduce module power and processing delay. The result depends on the host, module, reach and operating conditions, so compare specific implementations rather than treating a quoted wattage or percentage saving as a standard requirement. Linear-interface agreements also have their own specifications; an ordinary retimed C2M compliance result should not automatically be applied to an LPO pairing.",
+    params: {"all":[["Retimed","module recovers timing and regenerates the signal"],["LPO","linear transmit and receive paths without module retiming"],["LRO","linear receive path with transmit-side processing"],["Power and latency","compare specific implementations and total system requirements"],["Specification basis","linear-interface MSA agreements and applicable optical requirements"]]},
     subs: [
       {
-        id: "retimer-lpo", name: "What you give up", alias: "the linear trade", dir: "both", written: true,
+        id: "retimer-lpo", name: "Evaluating a linear link", alias: "host, module and channel requirements", dir: "both", written: true,
         clause: { all: "industry practice" },
-        summary: "Power and latency saved, reach and interoperability spent.",
+        summary: "Check the complete path when comparing power, latency and interoperability.",
         intro:
-          "Removing the DSP saves power and removes the latency that retiming adds, which is why linear optics get attention in AI fabrics where both matter.\n\nThe costs are real and they land on the host. Without a module DSP, the host board's signal integrity has to be good enough on its own, so the electrical channel requirements tighten. Reach is reduced. And because performance now depends on the pairing of a specific host with a specific module rather than on each independently meeting a spec, **interoperability becomes a qualification exercise** - exactly the property that C2M specifications were designed to avoid.\n\nThe common industry guidance is to stay retimed beyond a few hundred metres, in multi-vendor environments where every pairing cannot be qualified, and anywhere dispersion management matters. There is also a view that at 200G per lane, linear receive-only designs may prove more deployable than fully linear ones.",
-        params: { all: [
-          ["Gains", "lower power, lower latency"],
-          ["Costs", "reduced reach, tighter host signal integrity"],
-          ["Biggest cost", "interoperability becomes per-pairing qualification"],
-          ["Guidance", "stay retimed for longer reach and multi-vendor fleets", { industry: true }],
-          ["At 200G per lane", "LRO may be more deployable than full LPO", { industry: true }],
-        ] },
-        quiz: [
-          {
-            q: "Why is LPO an interoperability concern rather than just a power choice?",
-            opts: ["It uses a different connector", "Performance depends on the specific host-module pairing rather than each meeting a spec independently",
-                   "It is not standardised at the optical level", "It requires a different FEC"],
-            a: 1,
-            why: "With no module DSP, the host's signal integrity and the module's optics have to work together, so a compliant host and a compliant module are no longer sufficient on their own.",
-          },
-        ],
+          "In a linear optical link, the host receiver must handle impairments accumulated through the electrical and optical path without a module receive retimer regenerating the data. The host capabilities, module behavior and channel therefore need to be assessed together.\n\nCompare the selected linear-interface specification and qualification results with the intended host, module, fibre reach and operating conditions. Do not assume a fixed reach reduction or a universal distance at which retiming becomes necessary. Receiver design and the relevant budgets determine what is supported.\n\nA useful comparison includes total system power, latency, pre-FEC error behavior and interoperability evidence. Module power alone can omit additional work performed by the host. LRO offers a different division of processing from fully linear LPO; neither is universally preferable for every 200G-per-lane link.",
+        params: {"all":[["Possible benefits","lower module power and processing delay"],["Assessment scope","host, module, electrical channel and optical path"],["Interoperability","use compatible linear-interface specifications and qualification evidence"],["Reach","specific to the implementation and applicable budgets"],["Power comparison","include any additional host processing"]]},
+        quiz: [{"q":"What should be checked before using a host and module for LPO?","opts":["Only the connector shape","Their compatible linear-interface requirements and complete-link qualification","Only the module power label","Whether FEC has been removed"],"a":1,"why":"Ordinary retimed-interface compliance is not a substitute for the requirements of a linear link. Linear-interface specifications exist, and qualification must cover the intended host, module, channel and operating conditions."}],
       },
     ],
   },
@@ -1270,7 +1195,7 @@ export const DATA: Record<string, StackNode> = {
     face: { "400G": "QSFP-DD, OSFP", "800G": "QSFP-DD, OSFP", "1.6T": "OSFP-XD, OSFP1600" },
     summary: "Mechanical and thermal envelopes, defined outside IEEE.",
     intro:
-      "Form factors are **MSA** territory, not 802.3. IEEE defines the PMD and the electrical interface; the multi-source agreement groups define the cage, the connector, the thermal envelope and the management interface. IEEE liaises with them - there is correspondence on record between the task force and the MSA groups - but you will not find OSFP in the standard.\n\nThey belong on this page anyway, because the mechanical envelope constrains what the standard can assume. A form factor decides how many electrical lanes reach the module and how many watts it may dissipate, and those two numbers bound which PMDs are physically deployable.\n\nThe rule connecting them is simple: the lane count in the AUI name has to be a number of lanes the cage actually carries.",
+      "A form factor specifies the physical and electrical module interface: dimensions, connector pinout, lane capacity and related thermal requirements. Multi-source agreement (MSA) groups define pluggable families such as QSFP-DD and OSFP. IEEE 802.3 defines the Ethernet interfaces and PMDs; it does not define these module envelopes.\n\nManagement is specified separately through agreements such as OIF's Common Management Interface Specification (CMIS). A complete module selection therefore involves more than a PHY name: form factor, electrical interface, management support and cooling must also match the host.\n\nThe AUI lane count has to be supported by the host and module connection. The form factor's lane capacity does not by itself tell you the optical lane count, reach or Ethernet rate of a particular module.",
     params: { all: [
       ["Defined by", "MSA groups, plus OIF CMIS for management"],
       ["IEEE role", "liaison only; not in the standard"],
@@ -1280,35 +1205,13 @@ export const DATA: Record<string, StackNode> = {
     ] },
     subs: [
       {
-        id: "form-lanes", name: "Lanes and the 1.6T split", alias: "why there are three answers", dir: "both", written: true,
+        id: "form-lanes", name: "Lanes and the 1.6T split", alias: "electrical lane capacity and module compatibility", dir: "both", written: true,
         clause: { all: "MSA" },
         summary: "Eight lanes, sixteen lanes, and a compatibility choice.",
         intro:
-          "OSFP carries **eight** electrical lanes. OSFP-XD doubles that to **sixteen**, which is what lets it reach 1.6T with 16 lanes of 100G - and leaves headroom for 3.2T later with 16 lanes of 200G. The two are deliberately **not** mechanically compatible, and the XD cages carry keying features specifically to stop someone inserting an OSFP module into an XD port.\n\nThat gives 1.6T more than one home, and the choice is about thermal headroom and ecosystem rather than bandwidth. A 1.6T module can be eight lanes of 200G in an OSFP-class cage, or sixteen lanes of 100G in OSFP-XD. A QSFP-DD-lineage option exists too, and is attractive where port density and reuse of the existing QSFP ecosystem matter more than power headroom.\n\nThis is the practical reason the AUI page insists that the electrical lane count and the optical lane count are separate facts. 1.6TAUI-8 and 1.6TAUI-16 are not two ways of saying the same thing - they are two different cages, two different SerDes generations, and two different procurement decisions.",
-        params: { all: [
-          ["OSFP", "8 electrical lanes", { industry: true }],
-          ["OSFP-XD", "16 electrical lanes", { industry: true }],
-          ["OSFP-XD at 16 x 100G", "1.6T", { industry: true }],
-          ["OSFP-XD at 16 x 200G", "3.2T, future", { industry: true }],
-          ["Compatibility", "XD is not OSFP-compatible; cages are keyed to prevent mis-insertion", { industry: true }],
-          ["Maps to", "1.6TAUI-16 and 1.6TAUI-8 respectively"],
-        ] },
-        quiz: [
-          {
-            q: "Why do OSFP-XD cages include keying features?",
-            opts: ["To improve grounding", "To physically prevent an incompatible OSFP module being inserted",
-                   "To identify the vendor", "To lock the module in place"],
-            a: 1,
-            why: "OSFP-XD is not mechanically compatible with OSFP, so the cages are keyed to stop a module being inserted into a port that cannot drive it correctly.",
-          },
-          {
-            q: "A 1.6T port is specified as 1.6TAUI-16. What does that tell you about the module?",
-            opts: ["It uses 16 optical fibres", "It presents sixteen electrical lanes at 100G each",
-                   "It is a coherent module", "It must be OSFP"],
-            a: 1,
-            why: "The AUI suffix counts electrical lanes. Sixteen lanes at 100G implies the wider cage, and says nothing directly about the optical lane count.",
-          },
-        ],
+          "OSFP provides eight high-speed electrical lanes. OSFP-XD provides sixteen and has a different mechanical and electrical interface. The specifications include keying to prevent an incompatible module from being inserted into the wrong port.\n\nAt nominal 200G per electrical lane, eight lanes support a 1.6T interface. Sixteen nominal 100G lanes also support 1.6T, using a wider electrical interface such as OSFP-XD. The OSFP MSA describes sixteen 200G lanes as a path to 3.2T; that arithmetic is form-factor capacity, not proof of a particular Ethernet PMD.\n\nAn AUI name such as 1.6TAUI-8 or 1.6TAUI-16 identifies the electrical interface. It does not prescribe a cage by itself or establish the optical lane arrangement. Check the host's supported form factor, lane generation and thermal limits alongside the module specification.",
+        params: {"all":[["OSFP electrical capacity","8 lanes",{"industry":true}],["OSFP-XD electrical capacity","16 lanes",{"industry":true}],["Eight nominal 200G lanes","1.6T electrical capacity",{"industry":true}],["Sixteen nominal 100G lanes","1.6T electrical capacity",{"industry":true}],["Sixteen nominal 200G lanes","3.2T capacity, not proof of a standardized Ethernet PMD",{"industry":true}],["AUI suffix","-8 or -16 counts electrical lanes, not optical lanes"],["Compatibility","check connector, keying, supported lane generation and cooling",{"industry":true}]]},
+        quiz: [{"q":"Why do OSFP-XD cages include keying features?","opts":["To increase Ethernet speed","To prevent incompatible modules being inserted","To identify the vendor","To select the optical wavelength"],"a":1,"why":"OSFP and OSFP-XD have different module interfaces. Keying protects against incompatible insertion; it does not establish a module's optical capabilities."},{"q":"What does 1.6TAUI-16 identify?","opts":["Sixteen optical fibres","Sixteen electrical lanes carrying a nominal 1.6T aggregate rate","A coherent optical interface","A particular cage prescribed by IEEE"],"a":1,"why":"The suffix counts electrical lanes. Their nominal share is 100G each, with a higher coded serial rate. The name alone does not prescribe a form factor or optical lane count."}],
       },
       outline("form-cpo", "Co-packaged optics", "CPO", "industry", "Removing the pluggable boundary entirely. Not yet researched."),
     ],
@@ -1319,27 +1222,19 @@ export const DATA: Record<string, StackNode> = {
     id: "macsec", name: "MACsec", alias: "IEEE 802.1AE, above the MAC", zone: "framing", written: true, group: "aside",
     clause: { all: "IEEE 802.1AE (not 802.3)" },
     face: { all: "above the MAC" },
-    summary: "Link-layer encryption. Not a stage in the PHY pipeline.",
+    summary: "Protects Ethernet traffic above the MAC using IEEE 802.1AE.",
     intro:
-      "MACsec is drawn to one side deliberately. It is a sublayer above the MAC, not a stage in the PHY pipeline, and putting it in the main column would teach the wrong layering.\n\nIt is also a different standard from a different working group: IEEE 802.1AE, not 802.3. It provides confidentiality, integrity and authenticity on a point-to-point link, frame by frame, and it is a link-layer mechanism rather than an end-to-end one - each hop decrypts and re-encrypts.\n\nIts relevance to this page is arithmetic. MACsec makes every frame bigger, and frame size is what determines how much of your headline rate becomes payload.",
-    params: { all: [["Standard", "IEEE 802.1AE"], ["Position", "above the MAC"], ["Scope", "point to point, per hop"], ["Adds", "a SecTAG before the payload and an ICV after it"], ["Key agreement", "MKA, defined in 802.1X"]] },
+      "MACsec, defined by IEEE 802.1AE, protects Ethernet traffic above the MAC. It provides data integrity and origin authentication, with confidentiality when encryption is enabled. It is shown beside the stack because it is not a stage of PCS, FEC or PMA processing.\n\nProtection applies between MACsec peers. Those peers can be adjacent devices; the secured path is not necessarily an application-to-application path. A network device terminating one secured association and forwarding into another verifies and protects traffic at that boundary.\n\nMACsec adds protocol fields and an integrity check to transmitted frames. Those extra octets affect frame-size and goodput calculations. Key agreement is handled separately by MKA in IEEE 802.1X.",
+    params: {"all":[["Standard","IEEE 802.1AE"],["Position","above the MAC"],["Scope","between MACsec peers"],["Added fields","MACsec EtherType, SecTAG and ICV"],["Key agreement","MKA in IEEE 802.1X"]]},
     subs: [
       {
         id: "macsec-frame", name: "What encryption adds to a frame", alias: "SecTAG and ICV", dir: "both", written: true,
         clause: { all: "IEEE 802.1AE" },
-        summary: "Between 16 and 32 extra octets per frame.",
+        summary: "Account for the security header and integrity-check overhead.",
         intro:
-          "MACsec inserts a **SecTAG** - a protocol header identifying the key in use and providing replay protection - and appends an **integrity check value** after the payload.\n\nNeither field is a fixed size. The SecTAG is 8 to 16 octets: 16 when the optional secure channel identifier is encoded, 8 when it is omitted. The ICV is 8 to 16 octets depending on the cipher suite, and is 16 for the common GCM-AES suites. So the overhead per frame runs from about 16 octets at the lean end to **32 octets** in the usual configuration.\n\nThat is a fixed cost per frame, not per octet, which means it hurts small frames far more than large ones. On a stream of 64-octet frames, 32 extra octets is a very large proportional addition; on 1500-octet frames it is close to noise. If you have read the goodput page under the MAC, this is the same argument with a different constant.",
-        params: { all: [["SecTAG", "8 to 16 octets"], ["SecTAG is 16 when", "the secure channel identifier is encoded"], ["ICV", "8 to 16 octets, cipher-suite dependent"], ["ICV with GCM-AES", "16 octets"], ["Typical total", "32 octets per frame"], ["Cost shape", "fixed per frame, so worst on small frames"]] },
-        quiz: [
-          {
-            q: "Why does MACsec overhead hurt small frames disproportionately?",
-            opts: ["Encryption is slower on small frames", "The overhead is a fixed number of octets per frame, not a percentage",
-                   "Small frames need more keys", "The ICV grows as frames shrink"],
-            a: 1,
-            why: "A fixed addition of roughly 32 octets is half again on a 64-octet frame and about two percent on a 1500-octet frame.",
-          },
-        ],
+          "MACsec adds its EtherType, a security tag (SecTAG), and an integrity check value (ICV). The SecTAG carries information such as the association number and packet number, and can include a secure channel identifier (SCI). The packet number supports replay checking.\n\nThe SecTAG itself is six octets without SCI or fourteen with the eight-octet SCI. Including the two-octet MACsec EtherType, the added header is eight or sixteen octets. With the 16-octet ICV used by the common GCM-AES suites, those fields add 24 or 32 octets respectively. Other cipher-suite definitions can have different ICV requirements. Additional padding and encapsulation rules must be included when calculating the size of a specific frame.\n\nA fixed addition matters proportionally more for short frames. Adding 32 octets is 50 percent of a 64-octet frame, but about two percent of a 1518-octet frame. For a throughput calculation, also include preamble/SFD, average gap, and any other headers.",
+        params: {"all":[["SecTAG excluding EtherType","6 octets without SCI, 14 with SCI"],["MACsec EtherType","2 octets"],["Added header including EtherType","8 or 16 octets"],["Common GCM-AES ICV","16 octets"],["These fields' total","24 or 32 octets; include any required padding separately"],["Size impact","fixed additions occupy a larger fraction of shorter frames"]]},
+        quiz: [{"q":"Why do fixed MACsec fields occupy a larger fraction of short frames?","opts":["Short frames require more keys","The same number of added octets is divided by a smaller original frame size","The ICV grows as frames shrink","Encryption changes the lane count"],"a":1,"why":"For example, 32 added octets are 50 percent of 64 octets and about two percent of 1518. Actual occupancy also includes padding, other encapsulation, preamble/SFD and average gap."}],
       },
     ],
   },
@@ -1347,50 +1242,34 @@ export const DATA: Record<string, StackNode> = {
     id: "ptp", name: "Time Synchronization", alias: "Clause 90 TimeSync, cross-cutting", zone: "framing", written: true, group: "aside",
     clause: { "400G": "Clause 90", "800G": "Clause 90", "1.6T": "Clause 90, with 175.6 and 177.7 (draft)" },
     face: { all: "a reference point" },
-    summary: "Not a block. A timestamping reference point inside the PHY.",
+    summary: "Relates a timestamp reference plane to the delay through the PHY.",
     intro:
-      "Time sync is not a sublayer. It defines a point in the PHY at which timestamps are taken, and requires known and bounded latency between that point and the medium. Each sublayer that adds delay has to report it.\n\nOne confirmed detail shows how this bites at 1.6T. Clause 175.6 requires the 1.6TBASE-R PCS to report transmit and receive path data delays as if the measurement point sits **at the start of the set of four interleaved FEC codewords**, with maximum and minimum values in nanoseconds and optionally sub-nanoseconds. The Inner FEC has its own delay figures and needed its own TimeSync MDIO registers added during ballot - a concrete example of a new sublayer creating new timing obligations.",
-    params: {
-      "400G": [["Mechanism", "Clause 90 reference point"], ["Needs", "known, bounded PHY latency"]],
-      "800G": [["Mechanism", "Clause 90 reference point"]],
-      "1.6T": [["PCS reporting", "175.6, at the start of four interleaved codewords", { draft: true }], ["Values", "max and min, ns and sub-ns", { draft: true }], ["Inner FEC", "own delay figures and TimeSync registers", { draft: true }], ["Described in", "Clause 90.7"]],
-    },
+      "Time synchronization needs a consistent definition of when a packet crosses a reference plane. Processing inside the PHY can delay that event relative to where an implementation records a timestamp. Clause 90 TimeSync provides mechanisms for relating timing to the relevant PHY reference.\n\nThe applicable sublayers report transmit and receive path data delays, including minimum and maximum values. This lets a system account for known processing delay and assess its uncertainty. The mechanism is shown alongside the data path rather than as another coding stage.\n\nThe referenced 1.6T PCS delay definition uses the start of a set of interleaved FEC codewords as a reporting reference. The inner FEC has its own delay reporting. That reference wording should not be used to infer a total 1.6T codeword count, which is not confirmed here.",
+    params: {"400G":[["Mechanism","Clause 90 reference point"],["Needs","known, bounded PHY delay"]],"800G":[["Mechanism","Clause 90 reference point"]],"1.6T":[["PCS reporting","175.6, at the specified interleaved-codeword reference",{"draft":true}],["Values","maximum and minimum path data delay",{"draft":true}],["Inner FEC","separate delay reporting",{"draft":true}],["Mechanism","Clause 90.7"]]},
     subs: [
       {
-        id: "ptp-ref", name: "Why every sublayer must declare its delay", alias: "path data delay", dir: "both", written: true,
+        id: "ptp-ref", name: "Path delay and timestamp accuracy", alias: "path data delay", dir: "both", written: true,
         clause: { "400G": "Clause 90.7", "800G": "Clause 90.7", "1.6T": "Clause 90.7, with 175.6 and 177 (draft)" },
-        summary: "Timestamps are taken at a reference point, so everything below it must have known delay.",
+        summary: "Use delay bounds to relate timestamps to a defined reference plane.",
         intro:
-          "Timestamping needs a known reference point and a known delay from that point to the wire. So each sublayer is required to report its transmit and receive **path data delay**, with maximum and minimum values, and the mechanism for that reporting is described in Clause 90.7.\n\nThe maximum and minimum matter more than any single figure. A large but perfectly known delay can be subtracted out. A delay that varies between the two bounds cannot, and the spread is what limits achievable accuracy - which is why a sublayer with low but uncertain latency can be worse for timing than one with high, stable latency.\n\n1.6T shows how this ripples. Clause 175.6 requires the PCS to report its delays as though measured at the start of the set of interleaved FEC codewords, in nanoseconds and optionally sub-nanoseconds. And because 802.3dj adds an **Inner FEC** - a new sublayer in the path - that sublayer needed its own delay figures and its own TimeSync MDIO registers, which were added during ballot. Every new block in the stack creates a new timing obligation.",
+          "A timestamp is useful only if its reference event is defined. The PHY's path data delay relates that event to processing elsewhere in the implementation. Clause 90.7 describes the reporting mechanism used by the applicable sublayers.\n\nA stable, accurately known delay can be compensated. Variation or uncertainty leaves a timing error unless the implementation can measure or track it. Minimum and maximum delay values describe an allowance; their spread contributes to the accuracy analysis alongside clock, calibration and timestamping errors.\n\nThe referenced P802.3dj PCS and inner-FEC definitions add their respective delay-reporting requirements. Use the specified transmit and receive reference points for each function rather than adding arbitrary processing-latency estimates to a timestamp.",
         params: {
-          "400G": [["Reporting mechanism", "Clause 90.7 path data delay"], ["Reported as", "maximum and minimum"], ["Why both bounds", "the spread limits achievable accuracy"]],
+          "400G": [["Reporting mechanism", "Clause 90.7 path data delay"], ["Reported as", "maximum and minimum"], ["Why both bounds", "the spread contributes to the timing uncertainty budget"]],
           "800G": [["Reporting mechanism", "Clause 90.7"]],
           "1.6T": [["PCS reporting", "175.6, at the start of the interleaved FEC codewords", { draft: true }], ["Units", "nanoseconds, optionally sub-nanoseconds", { draft: true }], ["Inner FEC", "own delay figures and TimeSync registers, added in ballot", { draft: true }]],
         },
-        quiz: [
-          {
-            q: "Which is worse for timing accuracy?",
-            opts: ["A large but precisely known delay", "A small delay with a wide range between its maximum and minimum",
-                   "Any delay above 100 ns", "They are equivalent"],
-            a: 1,
-            why: "A known delay can be compensated exactly. Uncertainty cannot, so the spread between the reported bounds is what limits accuracy.",
-          },
-        ],
+        quiz: [{"q":"With other timing errors unchanged, which PHY delay is harder to compensate accurately?","opts":["A stable delay measured accurately","A delay whose variation is not measured or tracked","Any delay above 100 ns","Both always have the same effect"],"a":1,"why":"A stable known delay can be compensated. Untracked variation leaves uncertainty; reported delay bounds contribute to the accuracy budget alongside clock, calibration and timestamping errors."}],
       },
     ],
   },
   autoneg: {
-    id: "autoneg", name: "Autoneg and Link Training", alias: "copper and backplane, not optics", zone: "signal", written: true, group: "aside",
+    id: "autoneg", name: "Autoneg and Link Training", alias: "electrical capability exchange and training", zone: "signal", written: true, group: "aside",
     clause: { "400G": "Clause 73", "800G": "Clause 73", "1.6T": "Clause 73; Annex 176A (draft)" },
     face: { all: "copper and backplane" },
-    summary: "Mostly a copper concern. Optical links do not negotiate.",
+    summary: "Select electrical-link capabilities and tune supported interfaces.",
     intro:
-      "A common beginner surprise: there is no autonegotiation on optical 400G and above. You plug in a module and it either matches or it does not. Clause 73 autonegotiation applies to backplanes and copper cable assemblies, and the electrical-lane equivalent is link training, which tunes the transmitter and equaliser rather than selecting a rate.\n\nIn P802.3dj, electrical link training is specified in Annex 176A, and precoding is one of the options a C2M training session can negotiate.\n\nThe mechanics of both are not yet researched.",
-    params: {
-      "400G": [["Clause 73", "backplane and copper only"], ["Optical", "no negotiation"], ["Electrical lanes", "link training"]],
-      "800G": [["Clause 73", "copper and backplane"]],
-      "1.6T": [["Link training", "Annex 176A", { draft: true }], ["Applies to", "CR, KR, C2C and C2M", { draft: true }], ["Negotiable option", "precoding", { draft: true }]],
-    },
+      "Autonegotiation exchanges advertised capabilities so link partners can select a compatible operating mode. Clause 73 applies to the relevant backplane and copper cable interfaces. The optical PMDs covered here do not use that procedure to negotiate their optical Ethernet rate; the host and modules need compatible configuration.\n\nElectrical link training is a separate process. It adjusts transmitter equalisation for a selected mode and can exchange defined options such as precoding. The referenced P802.3dj procedure is in Annex 176A and also covers relevant electrical interfaces associated with modules.\n\nAn optical module can therefore have training or configuration on its electrical host interface without the optical PMD performing Clause 73 autonegotiation. The Link training lesson introduces that distinction; detailed Clause 73 state machines remain an outline.",
+    params: {"400G":[["Clause 73 scope here","relevant copper and backplane interfaces"],["Optical PMDs here","do not perform Clause 73 optical-rate negotiation"],["Electrical link training","a separate procedure for supported interfaces"]],"800G":[["Clause 73 scope here","relevant copper and backplane interfaces"]],"1.6T":[["Referenced training procedure","Annex 176A",{"draft":true}],["Interfaces","applicable CR, KR, C2C and C2M definitions",{"draft":true}],["Options","check defined precoding capability and enable exchange",{"draft":true}]]},
     subs: [
       outline("an-cl73", "Clause 73 autonegotiation", "copper and backplane", "Clause 73", "What is actually negotiated, and where. Not yet researched."),
       outline("an-training", "Link training", "see the AUI block", "Annex 176A", "Written up under AUI, where the channel budgets live."),

@@ -32,14 +32,14 @@ function StartHere({ rate, dir }: { rate: Rate; dir: Dir }) {
             rate +
             " in the " +
             (dir === "tx" ? "transmit" : "receive") +
-            " direction. The block structure barely changes between 400G, 800G and 1.6T. What changes is the arithmetic, so switch rates and watch the lane counts, clause numbers and parameters on the block faces move."}
+            " direction. Start with MAC and follow the frame toward the medium for TX, or start at the medium and follow recovery toward MAC for RX. Switching rates changes the interface counts and reference parameters; the selected PHY and lane generation also determine the coding and mapping rules."}
         </p>
         <p>
-          The banded column is the PHY data path in order. The group on the left is not part of that path: MACsec sits above the MAC,
-          time sync is a reference point rather than a stage, and autonegotiation and link training apply to electrical backplane and copper links, not optical PMDs. They are drawn
-          aside so the layering stays honest.
+          The main column runs from MAC through the PHY to the medium. FEC is shown separately for teaching, although the relevant PCS definitions include its processing.
+          The side blocks describe related functions: MACsec operates above MAC, and TimeSync relates timestamps to a reference plane.
+          Clause 73 autonegotiation applies here to electrical backplane and copper links, not optical PMDs. Electrical link training is separate and can also apply to a module's host interface.
         </p>
-        <p>Clicking drills in, at every level, until there is nothing left inside. At that point the canvas becomes the diagram.</p>
+        <p>Select a block for its overview, then open its lessons for the mechanism, examples and self-checks. The walkthrough follows one simplified data path; the reference pages explain where PHY-specific rules differ.</p>
       </div>
       <Heading>This rate</Heading>
       <table className="params">
@@ -47,7 +47,7 @@ function StartHere({ rate, dir }: { rate: Rate; dir: Dir }) {
           {[
             ["Standard", meta.std],
             ["Typical lanes", meta.lanes],
-            ["Status", meta.draft ? "draft, numbers may move" : "published"],
+            ["Status", meta.draft ? "P802.3dj draft; check revision" : "published reference; P802.3dj extensions remain draft"],
           ].map((r, i) => (
             <tr key={i}>
               <td className="k">{r[0]}</td>

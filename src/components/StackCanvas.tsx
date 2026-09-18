@@ -7,9 +7,14 @@ import { useC, useZones } from "../theme/ThemeContext";
 import { fitProps } from "./fit";
 
 /* lane count annotated on the connectors between sublayers */
-function laneLabel(id: string, rate: Rate, gen: LaneGen): string | null {
-  if (id === "pcs" || id === "fec") return PCS_LANES[rate] ? PCS_LANES[rate] + " PCS lanes" : null;
-  if (id === "pma" || id === "pmd") return laneInfo(rate, gen).phys + " physical lanes";
+function laneLabel(from: string, to: string, rate: Rate, gen: LaneGen): string | null {
+  const boundary = [from, to].sort().join(":");
+  if (boundary === "fec:pcs" || boundary === "fec:pma") {
+    return PCS_LANES[rate] ? PCS_LANES[rate] + " PCS lanes" : null;
+  }
+  if (boundary === "pma:pmd" || boundary === "medium:pmd") {
+    return laneInfo(rate, gen).phys + " physical lanes";
+  }
   return null;
 }
 
@@ -111,7 +116,7 @@ export default function StackCanvas({ rate, dir, gen, onOpen, complete }: Props)
       {order.slice(0, -1).map((id, i) => {
         const y = yOf[id] + BH;
         const x = BX + BW / 2;
-        const ll = laneLabel(order[i + 1], rate, gen);
+        const ll = laneLabel(id, order[i + 1], rate, gen);
         return (
           <g key={"c" + id}>
             <line x1={x} y1={y} x2={x} y2={y + GAP - 7} stroke={C.rule} strokeWidth="1" />

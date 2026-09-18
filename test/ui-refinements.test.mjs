@@ -94,6 +94,17 @@ test("stack canvas gives lane labels breathing room and a consistent side-label 
   assert.match(canvas, /x=\{IFACE_X \+ 11\} y=\{y \+ 22\} fill=\{C.dim\} fontSize="12"/);
 });
 
+test("stack canvas labels lane domains on the correct sublayer boundaries", async () => {
+  const canvas = await source("src/components/StackCanvas.tsx");
+
+  assert.match(canvas, /function laneLabel\(from: string, to: string, rate: Rate, gen: LaneGen\)/);
+  assert.match(canvas, /const boundary = \[from, to\]\.sort\(\)\.join\(":"\)/);
+  assert.match(canvas, /boundary === "fec:pcs" \|\| boundary === "fec:pma"/);
+  assert.match(canvas, /boundary === "pma:pmd" \|\| boundary === "medium:pmd"/);
+  assert.match(canvas, /laneLabel\(id, order\[i \+ 1\], rate, gen\)/);
+  assert.doesNotMatch(canvas, /laneLabel\(order\[i \+ 1\], rate, gen\)/);
+});
+
 test("side labels use title case and the opening copy distinguishes electrical from optical links", async () => {
   const stack = await source("src/data/stack.ts");
   const panel = await source("src/components/ContentPanel.tsx");
@@ -153,7 +164,7 @@ test("goodput copy uses frame occupancy", async () => {
 
   assert.match(header, /"Step Through"/);
   assert.match(visuals, /title: "Minimum-frame occupancy"/);
-  assert.match(visuals, /caption: "84 octets on the wire carry 46 octets of payload/);
+  assert.match(visuals, /caption: "A minimum untagged frame occupies 84 octet times/);
   assert.match(stack, /\["Payload fraction", "46 \/ 84, about 55 percent"\]/);
   assert.match(stack, /\["Payload fraction", "about 97\.5 percent"\]/);
 });

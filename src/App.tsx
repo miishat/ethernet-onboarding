@@ -201,17 +201,17 @@ function StepperSidePanel() {
       </h2>
       <div className="prose" style={{ marginTop: 12 }}>
         <p>
-          Watch one frame's payload transform as it descends the stack - from MAC octets, through encoding and forward error
-          correction, out onto physical lanes and finally into PAM4 symbols on the wire.
+          Follow how Ethernet frame data and interface control are encoded, protected by FEC, and mapped onto serial lanes.
+          The drawings illustrate transformations rather than simulate a complete PHY.
         </p>
         <p>
-          Each step shows the payload in the shape it takes at that sublayer, with the arithmetic for the current rate. Use the
+          Each step explains the representation and gives a scoped example or reference parameter. Use the
           <strong> Next</strong> and <strong>Back</strong> controls, the progress ticks, or the <strong>← →</strong> arrow keys.
-          Switch the rate in the header to see the lane counts and baud change under the same block structure.
+          Switch rate and lane generation to compare electrical interface counts. Optical signaling and inner FEC depend on the selected PMD, which this simplified walkthrough does not select.
         </p>
         <p>
-          Switch <strong>direction</strong> to <strong>RX</strong> to run it the other way - the receiver undoing each stage and, at
-          the FEC step, repairing the errors the channel introduced. That correction is the reason the parity was added on the way down.
+          Switch <strong>direction</strong> to <strong>RX</strong> to follow recovery, outer FEC decoding and frame validation.
+          Applicable optical inner decoding occurs earlier in that path. Each code has a finite correction capacity; detected failures must be propagated for rejection.
         </p>
       </div>
     </div>

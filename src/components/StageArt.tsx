@@ -96,15 +96,15 @@ export default function StageArt({ stage, rate, gen }: { stage: Stage; rate: Rat
       if (isDam)
         cells.push(<text key={"x" + i} x={20 + i * cw + (cw - 2) / 2} y={y + bh / 2 + 4} textAnchor="middle" fill={C.bad} fontSize="11" fontFamily={C.mono}>{"×"}</text>);
     }
-    cells.push(<text key="rl" x={20} y={y - 6} fill={C.faint} fontSize="10" fontFamily={C.mono}>received codeword — {dam.length} symbols damaged in the channel</text>);
+    cells.push(<text key="rl" x={20} y={y - 6} fill={C.faint} fontSize="10" fontFamily={C.mono}>example codeword: {dam.length} erroneous symbols</text>);
     /* the fifteen-symbol correction budget */
     const my = y + bh + 20, mw = 13;
     for (let k = 0; k < 15; k++)
       cells.push(<rect key={"m" + k} x={20 + k * (mw + 4)} y={my} width={mw} height={12} rx={2}
         fill={k < dam.length ? C.signal : "none"} stroke={k < dam.length ? C.signal : C.rule} strokeWidth="0.9" />);
     cells.push(<text key="mt" x={20 + 15 * (mw + 4) + 12} y={my + 10} fill={C.good} fontSize="11" fontFamily={C.mono}>
-      {dam.length + " of 15 spent — codeword recovered"}</text>);
-    cells.push(<text key="bt" x={20} y={my + 34} fill={C.faint} fontSize="10" fontFamily={C.mono}>every damaged symbol repaired; the frame above never sees the errors</text>);
+      {dam.length + " of 15 correctable: recovered"}</text>);
+    cells.push(<text key="bt" x={20} y={my + 34} fill={C.faint} fontSize="10" fontFamily={C.mono}>this example is within correction capacity; cells are schematic</text>);
   }
 
   if (s === "lanes" || s === "phys") {
@@ -124,7 +124,7 @@ export default function StageArt({ stage, rate, gen }: { stage: Stage; rate: Rat
     const lastBottom = top + (rows - 1) * (rh + gap) + rh;
     cells.push(<text key="t" x={20} y={top + rh - 2} fill={C.faint} fontSize="10" fontFamily={C.mono}>lane 0</text>);
     cells.push(<text key="t2" x={20} y={lastBottom} fill={C.faint} fontSize="10" fontFamily={C.mono}>{"lane " + (rows - 1)}</text>);
-    cells.push(<text key="t3" x={548} y={(top + lastBottom) / 2 + 4} fill={s === "phys" ? C.signal : C.dim} fontSize="11" fontFamily={C.mono}>{n}</text>);
+    cells.push(<text key="t3" x={548} y={(top + lastBottom) / 2 + 4} fill={s === "phys" ? C.signal : C.dim} fontSize="11" fontFamily={C.mono}>{s === "lanes" && !PCS_LANES[rate] ? "example" : n}</text>);
     H = Math.max(150, lastBottom + 14);
   }
 
