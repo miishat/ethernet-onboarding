@@ -56,11 +56,11 @@ function StartHere({ rate, dir }: { rate: Rate; dir: Dir }) {
           ))}
         </tbody>
       </table>
-      <Heading>Written so far</Heading>
+      <Heading>Coverage and references</Heading>
       <p className="prose" style={{ color: "var(--dim)", maxWidth: "68ch", lineHeight: 1.65 }}>
-        Every block is written and navigable, across all rates and both directions. PCS and RS-FEC go deepest - three levels,
-        with diagrams and self-checks. A few sub-pages are still outlines: clock and data recovery, the copper and multimode
-        PMDs, the three medium pages, co-packaged optics, and Clause 73 autonegotiation.
+        Every listed lesson has written content. PCS and RS-FEC go deepest, with diagrams and self-checks.
+        Reference tables distinguish published designs, draft work and industry examples. A rate alone does not
+        identify a PMD or its channel limits; use the selected interface and specification revision for qualification.
       </p>
     </div>
   );
