@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "profileId": "400gbase-dr4-tx-v1",
+  "targetEdition": "IEEE Std 802.3-2022",
+  "status": "verification-blocked",
+  "retrievedOn": "2026-09-20",
+  "fixtures": [],
+  "candidateSources": [
+    {
+      "id": "ieee-df-172a-rs-candidate",
+      "sourceUrl": "https://www.ieee802.org/3/publication/df/Annex_172A_Table_172A-3_to_Table_172A-6.txt",
+      "edition": "IEEE Std 802.3df-2024",
+      "clause": "Annex 172A",
+      "tables": ["172A-3", "172A-4", "172A-5", "172A-6"],
+      "retrievedOn": "2026-09-20",
+      "inputState": {
+        "sourceLabels": "RS(544,514) codewords A and B for 800GBASE-R flows 0 and 1",
+        "inputSourceId": "ieee-df-172a-input-candidate",
+        "status": "unverified",
+        "unresolved": "Input distribution, bit-to-symbol packing, GF basis and polynomial, roots, coefficient direction and parity order must be checked against both 802.3df-2024 and 802.3-2022. No teaching seed equivalence asserted."
+      },
+      "encoding": "Raw ASCII source with headings and hexadecimal rows; transmission bit order unverified",
+      "byteLength": 5792,
+      "sha256": "50df65c0b52a9ce1aa398766507efd244b6b184c91d4b00ff617254cb253b7a0",
+      "hashScope": "Exact HTTP response body bytes, including labels and line endings",
+      "verificationScope": "Source integrity only; quarantined candidate for a shared RS primitive, not a 400G fixture or proof of 800G support",
+      "status": "quarantined"
+    },
+    {
+      "id": "ieee-df-172a-input-candidate",
+      "sourceUrl": "https://www.ieee802.org/3/publication/df/Annex_172A_Table_172A-1_and_Table_172A-2.txt",
+      "edition": "IEEE Std 802.3df-2024",
+      "clause": "Annex 172A",
+      "tables": ["172A-1", "172A-2"],
+      "retrievedOn": "2026-09-20",
+      "inputState": {
+        "sourceLabels": "Example tx_scrambled_am with alignment marker group for 800GBASE-R PCS flows 0 and 1",
+        "status": "unverified",
+        "unresolved": "Initial scrambler/marker state, phase, row serialization and relation to the RS example require normative verification. This is not an output of DEFAULT_FRAME or DEFAULT_STREAM."
+      },
+      "encoding": "Raw ASCII source with headings and hexadecimal rows; row padding and transmission bit order unverified",
+      "byteLength": 5526,
+      "sha256": "ee44d9397b60f9ded36e7f2984a88a71a80f88ea6c999b7a854d45084fe463e7",
+      "hashScope": "Exact HTTP response body bytes, including labels and line endings",
+      "verificationScope": "Source integrity only; quarantined input companion for future RS convention verification",
+      "status": "quarantined"
+    }
+  ],
+  "blockedBy": [
+    "mac-frame-fcs",
+    "rs-cdmii-placement",
+    "encode66-control-tables",
+    "transcode257-order",
+    "bit-serialization",
+    "scrambler-recurrence",
+    "am-values-status-pad",
+    "am-schedule-idle-compensation",
+    "pre-fec-distribution",
+    "rs-field-roots-parity",
+    "codeword-interleave",
+    "pma-16-to-4",
+    "pam4-dibit-gray-precoding",
+    "independent-vectors"
+  ],
+  "independentReference": {
+    "status": "not-implemented",
+    "reason": "A reference implementation cannot certify unknown rules. No independently reviewed Python results are available for this profile."
+  }
+}
