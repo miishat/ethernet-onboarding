@@ -68,9 +68,9 @@ The candidate batch is 40 257-bit blocks, or 10,280 bits, producing two 514-symb
 ## Required contracts and materials
 
 1. Complete the S1 Reading Room or licensed-copy line check for Clauses 49, 82, 117, 119.2.4.1-119.2.4.7, 120.5.2, 124 and Annex 119A. Record edition, page, line and retrieval date.
-2. Define `RateMatchPolicy`: eligible Idle encodings, selection strategy, maximum deferral, frame-boundary handling, AM cadence/phase relationship, deletion trace and policy fixtures. It is implementation-owned even after the IEEE line check.
-3. Define `PmaMappingProfile`: provenance and fixture hash; scope/boundary; 16:4 geometry; ordered bit-level mux schedules and phases; boundary bit indexing; PMD/MDI/fiber maps; polarity-transform stage; dibit order/significance; complete PAM4 map/normalization; precoder mode/state/reset; and training/scrambler boundary.
-4. Admit one independent nonzero 400G fixture only after it records MAC/CDMII input, 66b/257b outputs, preceding scrambler state, AM state/phase, rate-match deletion trace, FEC messages, codewords, PCS lanes, and any selected PMA/PAM4 trace.
+2. Define `RateMatchPolicy`: eligible Idle encodings, selection strategy, maximum deferral, frame-boundary handling and AM cadence/phase relationship. Each deletion must be a typed ledger entry with original word/octet/bit position and Idle encoding; selected policy ID and reason; and marker-reservation group, insertion offset, FEC-pair index and boundary context. Carry that ledger through `PreparedStream`, `MarkerPlan` and `MarkerResult`; derive any removed-Idle count only for display. It is implementation-owned even after the IEEE line check.
+3. Define `PmaMappingProfile`: provenance and fixture hash; scope/boundary; 16:4 geometry; an ordered bit-level mux schedule for each PMD lane with `periodBits`, full source-PCSL schedule, initial phase and deterministic phase advance from an absolute output-bit index; boundary bit indexing; PMD/MDI/fiber maps; polarity-transform stage; dibit order/significance; complete PAM4 map/normalization; precoder mode/state/reset; and training/scrambler boundary. Preserve the absolute mux phase across chunks and windows.
+4. Admit one independent nonzero 400G fixture only after it records MAC/CDMII input, 66b/257b outputs, preceding scrambler state, AM state/phase, complete rate-match ledger, FEC messages, codewords, PCS lanes, and any selected PMA/PAM4 trace including absolute mux phase.
 
 ## Task guidance
 

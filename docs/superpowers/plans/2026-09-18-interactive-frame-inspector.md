@@ -121,7 +121,7 @@ If the branch exists, inspect its owning worktree and resume it instead of force
 
 **Files:** Create `docs/inspector-profile.md`, `src/inspector/types.ts`, `profiles.ts`, `defaults.ts`, `engine/referenceTables.ts`, `test/fixtures/inspector/manifest.json`, `test/inspector-profile.test.ts`.
 
-**Interfaces:** Produces `PROFILE`, `DEFAULT_FRAME`, `DEFAULT_STREAM`, and the shared types below. `getProfileSupport(rate, dir, gen)` returns `{supported:boolean; reason:string}`; it only returns true for 400G/TX/100G-per-lane under the named profile.
+**Interfaces:** Produces `PROFILE`, `DEFAULT_FRAME`, `DEFAULT_STREAM`, and the shared types below. `getProfileSupport(rate, dir, gen)` returns `{supported:boolean; reason:string}`. Until every verification gate in this plan passes, it returns `supported: false` for every tuple, including 400G/TX/100G-per-lane. Only a later fully verified implementation may make that intended tuple true; every other tuple remains unsupported.
 
 ```ts
 export type InspectorStage = 'mac' | 'encode66' | 'transcode257' |
@@ -172,7 +172,7 @@ export interface InspectorRun {
 - [ ] Write failing capability tests, including RX and 800G/1.6T rejection. Run `npx vitest run test/inspector-profile.test.ts` and confirm failure is missing implementation.
 
 ```ts
-expect(getProfileSupport('400G','tx','100').supported).toBe(true);
+expect(getProfileSupport('400G','tx','100').supported).toBe(false);
 expect(getProfileSupport('400G','rx','100').supported).toBe(false);
 expect(getProfileSupport('800G','tx','100').supported).toBe(false);
 expect(getProfileSupport('1.6T','tx','200').supported).toBe(false);
@@ -314,9 +314,11 @@ for (const vector of pcsVectors) {
 
 **Files:** Create `engine/scramble.ts`, `markers.ts`, `test/inspector-scramble-markers.test.ts`; extend reference script, tables, and fixtures.
 
-**Interfaces:** `scramble(bits:Uint8Array, seedHex:string):{bits:Uint8Array; finalSeedHex:string}`; `prepareStream(frame:MacFrame, config:StreamConfig):PreparedStream`; `insertMarkers(scrambled:Uint8Array, plan:MarkerPlan, config:StreamConfig):MarkerResult`. Add `MarkerPlan={insertionBitOffsets:readonly number[]; removedIdleOctets:number; finalPhase:number}`, `PreparedStream={words:readonly InterfaceWord[]; markerPlan:MarkerPlan}`, and `MarkerResult={bits:Uint8Array; markers:readonly {bitOffset:number;bitLength:number}[]; removedIdleOctets:number; finalPhase:number}`. Offsets in MarkerPlan are positions in the scrambled stream before any marker insertion, in ascending order. Marker insertion consumes already scrambled bits and a precomputed plan; it cannot infer deletable idle locations from scrambled bits.
+**Interfaces:** `scramble(bits:Uint8Array, seedHex:string):{bits:Uint8Array; finalSeedHex:string}`; `prepareStream(frame:MacFrame, config:StreamConfig):PreparedStream`; `insertMarkers(scrambled:Uint8Array, plan:MarkerPlan, config:StreamConfig):MarkerResult`.
 
-- [ ] Freeze scrambler vectors including zero input, varied input, and chunk boundaries; marker vectors cover before/at/after insertion, final phase, pad sequence, status bits, and compensation by idle removal. Write:
+Add `RateMatchPolicy={id:string; eligibleIdleEncodings:readonly IdleEncoding[]; selectionStrategy:string; maximumDeferralBlocks:number; frameBoundaryRule:string}` and `RateMatchDeletion={originalPosition:{wordIndex:number;octetIndex:number;bitOffset:number}; encoding:IdleEncoding; policyId:string; reason:'alignment-marker-reservation'|'trailing-fec-completion'; markerReservation:{groupIndex:number;insertionBitOffset:number;fecPairIndex:number;boundary:'before-fec-pair'|'trailing-completion'}}`, where `IdleEncoding={octets:Uint8Array;controlMask:number}`. Add `MarkerPlan={insertionBitOffsets:readonly number[]; rateMatchLedger:readonly RateMatchDeletion[]; finalPhase:number}`, `PreparedStream={words:readonly InterfaceWord[]; markerPlan:MarkerPlan; rateMatchLedger:readonly RateMatchDeletion[]}`, and `MarkerResult={bits:Uint8Array; markers:readonly {bitOffset:number;bitLength:number}[]; rateMatchLedger:readonly RateMatchDeletion[]; finalPhase:number}`. The ledger, not a `removedIdleOctets` aggregate, is the authoritative record. An aggregate count may be derived only for display. Offsets in `MarkerPlan` are positions in the scrambled stream before insertion, in ascending order. Marker insertion consumes already scrambled bits and a precomputed plan; it cannot infer deletable Idle locations from scrambled bits.
+
+- [ ] Freeze scrambler vectors including zero input, varied input, and chunk boundaries; marker vectors cover before/at/after insertion, final phase, pad sequence, status bits, and every `RateMatchDeletion` field. Include more than one eligible Idle and assert the selected original position/encoding, policy/reason and marker-reservation boundary, not only a deletion count. Write:
 
 ```ts
 const result = scramble(Uint8Array.from(scrambleVector.input), scrambleVector.seedHex);
@@ -354,7 +356,7 @@ expect(() => encodeRs544(new Uint16Array(513))).toThrow(/514/);
 
 **Files:** Create `engine/pma.ts`, `pam4.ts`, `test/inspector-pma-pam4.test.ts`; extend reference tables/script/fixtures.
 
-**Interfaces:** Define `PmaMappingProfile` with provenance and fixture hash; scope and PMA/PMD boundary; 16:4 geometry; every PMD lane's ordered bit-level PCS schedule and initial phase; boundary bit indexing; PMD-to-MDI and MDI-to-fiber maps; polarity transform and its stage; dibit order/significance; complete PAM4 labels and normalized-level map; precoder mode/state/reset; and PMA-training/PCS-scrambler boundary. Only after a profile is supplied may `mapPhysicalLanes(pcs:readonly Uint16Array[], profile:PmaMappingProfile):readonly Uint8Array[]` and `mapPam4(bits:Uint8Array, profile:PmaMappingProfile):{symbols:Uint8Array; normalizedLevels:Int8Array}` be implemented. Never silently reset state per displayed page.
+**Interfaces:** Define `PmaMuxSchedule={pmdLane:number;unit:'bit';periodBits:number;sourcePcsLaneByPhase:readonly number[];initialPhase:number;phaseAdvance:'(initialPhase + absoluteOutputBit) mod periodBits'}` and `PmaMappingProfile` with provenance and fixture hash; scope and PMA/PMD boundary; 16:4 geometry; one `PmaMuxSchedule` per PMD lane; boundary bit indexing; PMD-to-MDI and MDI-to-fiber maps; polarity transform and its stage; dibit order/significance; complete PAM4 labels and normalized-level map; precoder mode/state/reset; and PMA-training/PCS-scrambler boundary. `sourcePcsLaneByPhase.length` must equal `periodBits`; `absoluteOutputBit` is carried across chunks and windows, so rendering a later range never resets mux phase. Only after a profile is supplied may `mapPhysicalLanes(pcs:readonly Uint16Array[], profile:PmaMappingProfile):readonly Uint8Array[]` and `mapPam4(bits:Uint8Array, profile:PmaMappingProfile):{symbols:Uint8Array; normalizedLevels:Int8Array}` be implemented. Never silently reset state per displayed page.
 
 - [ ] Write exact physical-lane and PAM4 fixture comparisons, including all four dibits and boundaries between PCS symbols. Verify the chosen precoding rule or its documented absence for this exact PMD. Expected symbol labels and normalized levels come from that convention, not an arbitrary gray-code example.
 
@@ -366,8 +368,8 @@ expect(Array.from(pam.symbols)).toEqual(vector.lane0Symbols);
 expect(Array.from(pam.normalizedLevels)).toEqual(vector.lane0Levels);
 ```
 
-- [ ] Do not begin implementation until a `PmaMappingProfile` and independent vectors are supplied. IEEE does not define one universal 16-to-4 implementation sequence in the evidence available to this project. A generic round-robin fold is not an acceptable substitute. When supplied, convert coded bits to the specified dibits and labels in time order and preserve intermediate outputs before any precoder.
-- [ ] Verify total bit conservation, independent lane ordering, and complete fixture equality. Label sample index as symbol index, optionally convert to time using the fixed profile baud. Never label normalized levels in volts or present an ideal level plot as an eye diagram.
+- [ ] Do not begin implementation until a `PmaMappingProfile` and independent vectors are supplied. IEEE does not define one universal 16-to-4 implementation sequence in the evidence available to this project. A generic round-robin fold is not an acceptable substitute. When supplied, convert coded bits to the specified dibits and labels in time order, preserve intermediate outputs before any precoder, and advance each PMD schedule from its absolute output-bit position.
+- [ ] Verify total bit conservation, independent lane ordering, complete fixture equality and phase continuity. Compare a later window against the same absolute slice of a complete PMD output, including a boundary that crosses `periodBits`; it must not restart at `initialPhase`. Label sample index as symbol index, optionally convert to time using the fixed profile baud. Never label normalized levels in volts or present an ideal level plot as an eye diagram.
 - [ ] Run `npx vitest run test/inspector-pma-pam4.test.ts` and upstream tests; commit `feat: calculate physical lane and PAM4 symbol outputs`.
 
 ## Task 10: Compose one reproducible run with honest provenance
