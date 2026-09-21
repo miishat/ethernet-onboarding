@@ -192,7 +192,9 @@ export default function App() {
         setGen={(g) => navigate({ gen: g }, "replace")}
         stepping={isFrame}
         toggleStep={() => navigate({ view: isFrame ? "stack" : "frame" }, "push")}
-        openInspector={() => navigate((current) => openInspector({ ...current, view: "stack", stepIndex: 0 }), "push")}
+        openInspector={() => navigate((current) => openInspector(
+          current.view === "frame" ? current : { ...current, view: "stack", stepIndex: 0 },
+        ), "push")}
         read={visited.size}
         total={TRACKABLE}
         catalog={catalog}

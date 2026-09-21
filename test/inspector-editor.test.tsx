@@ -83,6 +83,18 @@ describe("frame inspector", () => {
     expect(window.location.search).toContain("step=5");
   });
 
+  it("preserves a walkthrough stage when the header opens the inspector", async () => {
+    window.history.replaceState({}, "", "/?view=frame&step=5");
+    const user = userEvent.setup();
+    renderApp();
+    await user.click(screen.getByRole("button", { name: "Open inspector" }));
+
+    expect(screen.getByRole("region", { name: "Unavailable calculation" }).textContent).toMatch(/Calculation not available yet/);
+    await user.click(screen.getByRole("button", { name: "Return to learning" }));
+    expect(window.location.search).toContain("view=frame");
+    expect(window.location.search).toContain("step=5");
+  });
+
   it("changes field details when payload and FCS bytes are selected", async () => {
     const user = userEvent.setup();
     render(<FrameInspector stage="mac" onStageChange={vi.fn()} onExit={vi.fn()} draft={DEFAULT_FRAME} onDraftChange={vi.fn()} mac={defaultMac()} onApply={vi.fn()} />);
