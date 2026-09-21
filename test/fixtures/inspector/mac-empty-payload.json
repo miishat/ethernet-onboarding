@@ -1,0 +1,4 @@
+{
+  "provenance": "Generated independently with Python 3 zlib.crc32 over DA || SA || EtherType || 46 zero pad octets, then serialized FCS little-endian.",
+  "frameHex": "02000000000202000000000188B5000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000005D7BF4CB"
+}
