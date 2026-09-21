@@ -22,6 +22,19 @@ describe("GF(2^10) arithmetic", () => {
     expect(gfMultiply(512, 2)).toBe(9);
   });
 
+  it("uses alpha = 2 as a primitive element of multiplicative order 1023", () => {
+    const seen = new Set<number>();
+    let value = 1;
+    for (let exponent = 0; exponent < 1023; exponent += 1) {
+      expect(value).toBeGreaterThan(0);
+      expect(seen.has(value)).toBe(false);
+      seen.add(value);
+      value = gfMultiply(value, 2);
+    }
+    expect(seen.size).toBe(1023);
+    expect(value).toBe(1);
+  });
+
   it.each([[-1, 1], [1024, 1], [1, -1], [1, 1024], [1.5, 2]])(
     "rejects GF values outside 0 through 1023: %p, %p",
     (left, right) => {
