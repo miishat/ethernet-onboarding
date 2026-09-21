@@ -5,6 +5,11 @@ import { nodeAt, kidsOf, pathTo, descendantIds, TRACKABLE } from "./data/tree";
 import { useUrlNavigation } from "./navigation/useUrlNavigation";
 import { documentTitle } from "./navigation/documentTitle";
 import { closeInspector } from "./inspector/stageMap";
+import { DEFAULT_FRAME } from "./inspector/defaults";
+import { buildMacFrame } from "./inspector/engine/mac";
+import { parseFrame } from "./inspector/engine/validation";
+import type { FrameDraft, FrameInput, MacFrame } from "./inspector/types";
+import FrameInspector from "./components/FrameInspector";
 import { buildTopicCatalog } from "./search/topicCatalog";
 import { parseRecentTopics, recordRecentTopic, RECENT_TOPICS_KEY } from "./search/recentTopics";
 import Header from "./components/Header";
@@ -19,6 +24,11 @@ export default function App() {
   const { rate, dir, gen, path, stepIndex } = navigation;
   const isFrame = navigation.view === "frame";
   const [visited, setVisited] = useState<Set<string>>(() => new Set());
+  const [draft, setDraft] = useState<FrameDraft>({ ...DEFAULT_FRAME });
+  const [mac, setMac] = useState<MacFrame | null>(() => {
+    const parsed = parseFrame(DEFAULT_FRAME);
+    return parsed.ok ? buildMacFrame(parsed.value) : null;
+  });
   const catalog = useMemo(() => buildTopicCatalog(), []);
   const [recent, setRecent] = useState<string[][]>(() => {
     try {
@@ -181,6 +191,7 @@ export default function App() {
         setGen={(g) => navigate({ gen: g }, "replace")}
         stepping={isFrame}
         toggleStep={() => navigate({ view: isFrame ? "stack" : "frame" }, "push")}
+        openInspector={() => navigate({ view: "inspector", inspectorStage: "mac", inspectorReturn: "stack" }, "push")}
         read={visited.size}
         total={TRACKABLE}
         catalog={catalog}
@@ -189,11 +200,15 @@ export default function App() {
       />
 
       {navigation.view === "inspector" ? (
-        <main><h1>Frame inspector</h1>
-          <button onClick={() => navigate(closeInspector(navigation), "push")}>
-            Return to learning
-          </button>
-        </main>
+        <FrameInspector
+          stage={navigation.inspectorStage}
+          onStageChange={(inspectorStage) => navigate({ inspectorStage }, "push")}
+          onExit={() => navigate(closeInspector(navigation), "push")}
+          draft={draft}
+          onDraftChange={setDraft}
+          mac={mac}
+          onApply={(input: FrameInput) => setMac(buildMacFrame(input))}
+        />
       ) : isFrame ? walkthrough : stack}
 
       <footer className={"footer" + (isFrame ? " footer--step" : "")}>

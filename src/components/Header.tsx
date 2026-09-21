@@ -15,6 +15,7 @@ interface Props {
   setGen: (g: LaneGen) => void;
   stepping: boolean;
   toggleStep: () => void;
+  openInspector: () => void;
   read: number;
   total: number;
   catalog: TopicEntry[];
@@ -22,7 +23,7 @@ interface Props {
   onSelectTopic: (path: string[]) => void;
 }
 
-export default function Header({ rate, setRate, dir, setDir, gen, setGen, stepping, toggleStep, read, total, catalog, recent, onSelectTopic }: Props) {
+export default function Header({ rate, setRate, dir, setDir, gen, setGen, stepping, toggleStep, openInspector, read, total, catalog, recent, onSelectTopic }: Props) {
   return (
     <header className="header">
       <div className="header__inner">
@@ -83,6 +84,10 @@ export default function Header({ rate, setRate, dir, setDir, gen, setGen, steppi
           <button className="btn btn--ghost-signal" data-on={stepping} onClick={toggleStep}>
             {stepping ? "Close" : "Step Through"}
           </button>
+        </div>
+        <div>
+          <div className="control-label">MAC inspector</div>
+          <button className="btn btn--ghost-signal" onClick={openInspector}>Open inspector</button>
         </div>
         <div>
           <div className="control-label">Progress</div>
