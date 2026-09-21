@@ -1,7 +1,19 @@
+import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { gfMultiply } from "../src/inspector/engine/gf1024";
 import { encodeRs544 } from "../src/inspector/engine/rs544";
 import rsVector from "./fixtures/inspector/rs544-standalone-polynomial-v1.json";
+
+/** UTF-8 SHA-256 of JSON.stringify({message, codeword}) with those key names in that order. */
+function canonicalArtifactBytes(): Uint8Array {
+  return new TextEncoder().encode(JSON.stringify({ message: rsVector.message, codeword: rsVector.codeword }));
+}
+
+function sha256(bytes: Uint8Array): string {
+  return createHash("sha256").update(bytes).digest("hex");
+}
 
 describe("GF(2^10) arithmetic", () => {
   it("uses the primitive polynomial x^10 + x^3 + 1", () => {
@@ -19,6 +31,12 @@ describe("GF(2^10) arithmetic", () => {
 });
 
 describe("standalone RS(544,514)", () => {
+  it("locks the fixture artifact and reference-script provenance", () => {
+    expect(sha256(canonicalArtifactBytes())).toBe(rsVector.artifactSha256);
+    const referencePath = fileURLToPath(new URL("../scripts/rs544-reference.py", import.meta.url));
+    expect(sha256(readFileSync(referencePath))).toBe(rsVector.reference.sha256);
+  });
+
   it("matches the independently generated nonzero systematic codeword", () => {
     const codeword = encodeRs544(Uint16Array.from(rsVector.message));
     expect(Array.from(codeword)).toEqual(rsVector.codeword);

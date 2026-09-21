@@ -12,6 +12,14 @@
     "clause": "Annex A, pages 36-38",
     "conventions": "GF(2^10), primitive polynomial x^10 + x^3 + 1, generator roots alpha^0 through alpha^29, systematic [514 data symbols, 30 parity symbols] order. This is a standalone codeword, not an Ethernet stream."
   },
+  "review": {
+    "reviewer": "/root/task8a_review_light",
+    "reviewedRange": "7eff8ee..cf2f893",
+    "reviewedOn": "2026-09-21",
+    "method": "Separate read-only GF arithmetic checked the field reduction, generator roots alpha^0 through alpha^29, systematic ordering, and evaluated the frozen codeword at all 30 generator roots.",
+    "result": "Passed. The codeword and standalone arithmetic conventions were found correct.",
+    "scope": "Internal repository review. No external implementation or Ethernet profile result is claimed."
+  },
   "message": [
     19,
     92,

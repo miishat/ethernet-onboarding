@@ -14,7 +14,7 @@
       "inputState": "514 deterministic nonzero GF(2^10) symbols: symbol[i] = (73*i + 19) mod 1024.",
       "encoding": "Systematic standalone codeword: 514 message symbols followed by 30 parity symbols. No Ethernet packing, distribution, interleave, or lane mapping is represented.",
       "sha256": "97c170acb976375dd0bad722dce2e2eeeb789c39789084445f4e16742c003d46",
-      "verificationScope": "Independent Python shift-and-reduce multiplication and polynomial long division, reviewed against Annex A field, root, and systematic conventions. Source script revision standalone-rs544-reference-v1, SHA-256 083dc7677840434f252ecc39552885e79446994191eff3c27864a73777c14028."
+      "verificationScope": "Repository-local Python shift-and-reduce multiplication and polynomial long division. Internal reviewer /root/task8a_review_light reviewed 7eff8ee..cf2f893 on 2026-09-21 with separate read-only GF arithmetic, checking reduction, roots alpha^0 through alpha^29, systematic order, and all 30 root evaluations. Source script revision standalone-rs544-reference-v1, SHA-256 083dc7677840434f252ecc39552885e79446994191eff3c27864a73777c14028. No external implementation or Ethernet profile result is claimed."
     }
   ],
   "candidateSources": [
