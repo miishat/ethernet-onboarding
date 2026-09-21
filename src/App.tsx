@@ -4,7 +4,7 @@ import { DATA } from "./data/stack";
 import { nodeAt, kidsOf, pathTo, descendantIds, TRACKABLE } from "./data/tree";
 import { useUrlNavigation } from "./navigation/useUrlNavigation";
 import { documentTitle } from "./navigation/documentTitle";
-import { closeInspector } from "./inspector/stageMap";
+import { closeInspector, openInspector } from "./inspector/stageMap";
 import { DEFAULT_FRAME } from "./inspector/defaults";
 import { buildMacFrame } from "./inspector/engine/mac";
 import { parseFrame } from "./inspector/engine/validation";
@@ -139,6 +139,7 @@ export default function App() {
             if (p.length) markRead(p[p.length - 1]);
             navigate({ path: p, view: "stack" }, "push");
           }}
+          onOpenInspector={() => navigate((current) => openInspector(current), "push")}
         />
       </section>
     </main>
@@ -191,7 +192,7 @@ export default function App() {
         setGen={(g) => navigate({ gen: g }, "replace")}
         stepping={isFrame}
         toggleStep={() => navigate({ view: isFrame ? "stack" : "frame" }, "push")}
-        openInspector={() => navigate({ view: "inspector", inspectorStage: "mac", inspectorReturn: "stack" }, "push")}
+        openInspector={() => navigate((current) => openInspector({ ...current, view: "stack", stepIndex: 0 }), "push")}
         read={visited.size}
         total={TRACKABLE}
         catalog={catalog}

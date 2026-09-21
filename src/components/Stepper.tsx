@@ -15,6 +15,7 @@ export default function Stepper({
   onIndexChange,
   onExit,
   onNavigate,
+  onOpenInspector,
 }: {
   rate: Rate;
   dir: Dir;
@@ -23,6 +24,7 @@ export default function Stepper({
   onIndexChange: (index: number) => void;
   onExit: () => void;
   onNavigate: (path: string[]) => void;
+  onOpenInspector: () => void;
 }) {
   const stages = stagesFor(dir);
   const clamped = Math.min(index, stages.length - 1);
@@ -84,6 +86,7 @@ export default function Stepper({
           >
             {atEnd ? (dir === "rx" ? "At the MAC" : "At the medium") : "Next"}
           </button>
+          <button className="btn btn--ghost-signal" onClick={onOpenInspector}>Inspect this stage</button>
           <button className="btn" style={{ marginLeft: "auto" }} onClick={onExit}>
             Back to the stack
           </button>

@@ -8,13 +8,22 @@ import FrameInspector from "../src/components/FrameInspector";
 import { DEFAULT_FRAME } from "../src/inspector/defaults";
 import { buildMacFrame } from "../src/inspector/engine/mac";
 import { parseFrame } from "../src/inspector/engine/validation";
+import App from "../src/App";
+import { ThemeProvider } from "../src/theme/ThemeContext";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  window.history.replaceState({}, "", "/");
+});
 
 function defaultMac() {
   const parsed = parseFrame(DEFAULT_FRAME);
   if (!parsed.ok) throw new Error("default frame must parse");
   return buildMacFrame(parsed.value);
+}
+
+function renderApp() {
+  return render(<ThemeProvider><App /></ThemeProvider>);
 }
 
 describe("frame editor", () => {
@@ -48,6 +57,32 @@ describe("frame editor", () => {
 });
 
 describe("frame inspector", () => {
+  it("updates the displayed FCS only after applying an edited App frame", async () => {
+    const user = userEvent.setup();
+    renderApp();
+    await user.click(screen.getByRole("button", { name: "Open inspector" }));
+    const before = screen.getByRole("button", { name: /^FCS /i }).textContent;
+    const payload = screen.getByRole("textbox", { name: /Payload hex/i });
+    await user.clear(payload);
+    await user.type(payload, "0102");
+    await user.click(screen.getByRole("button", { name: "Apply frame" }));
+
+    expect(screen.getByRole("button", { name: /^FCS /i }).textContent).not.toBe(before);
+  });
+
+  it("keeps a walkthrough PHY-stage inspector unavailable and returns to that walkthrough step", async () => {
+    window.history.replaceState({}, "", "/?view=frame&step=5");
+    const user = userEvent.setup();
+    renderApp();
+    await user.click(screen.getByRole("button", { name: "Inspect this stage" }));
+
+    expect(screen.getByRole("region", { name: "Unavailable calculation" }).textContent).toMatch(/Calculation not available yet/);
+    expect(screen.queryByRole("region", { name: "Frame bytes" })).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Return to learning" }));
+    expect(window.location.search).toContain("view=frame");
+    expect(window.location.search).toContain("step=5");
+  });
+
   it("changes field details when payload and FCS bytes are selected", async () => {
     const user = userEvent.setup();
     render(<FrameInspector stage="mac" onStageChange={vi.fn()} onExit={vi.fn()} draft={DEFAULT_FRAME} onDraftChange={vi.fn()} mac={defaultMac()} onApply={vi.fn()} />);
