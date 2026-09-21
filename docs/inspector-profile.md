@@ -1,6 +1,6 @@
 # Inspector profile contract: verification blocked
 
-Status on 2026-09-20: **incomplete**. The shared data types, requested teaching defaults, and capability gate are available. The protocol algorithms and end-to-end fixture contract are not verified. `getProfileSupport` returns `supported: false` for every selection, including `400G / tx / 100`. Matching those three values is necessary for future support, but is not evidence of verified computation. No PCS, FEC, lane or PAM4 tables or results are supplied.
+Status updated 2026-09-21: **incomplete**. The shared data types, requested teaching defaults, and capability gate are available. The protocol algorithms and end-to-end fixture contract are not verified. `getProfileSupport` returns `supported: false` for every selection, including `400G / tx / 100`. Matching those three values is necessary for future support, but is not evidence of verified computation. No PCS, lane, or PAM4 results are supplied. A new research pass found final evidence sufficient for standalone RS(544,514) arithmetic only; that primitive must remain isolated from this blocked profile. See `docs/inspector-source-research-2026-09-21.md`.
 
 ## Intended scope and API
 

@@ -45,6 +45,17 @@ Deliver in three reviewable milestones within one feature branch:
 
 Task 2's protocol evidence blocks Tasks 6 through 10, but not MAC calculations or navigation. These are dependency boundaries, not permission gates. Do not report the whole feature complete after milestone 1.
 
+### Research update: 2026-09-21
+
+Read `docs/inspector-source-research-2026-09-21.md` before dispatching Tasks 6 through 10. A Terra High research pass checked 11 authoritative and contextual sources. Final IEEE Std 802.3-2022 algorithm text remains inaccessible through the tested public endpoints. The evidence changes the execution plan as follows:
+
+- Tasks 6 and 7 remain blocked for the final `400gbase-dr4-tx-v1` profile. Draft material may not supply production constants or expected results.
+- Task 8 is split into 8a and 8b. Task 8a may implement a standalone RS(544,514) primitive from final ITU-T G.709.5 Corrigendum 1 evidence. Task 8b, Ethernet pre-FEC distribution, codeword interleave, and PCS-lane distribution, remains blocked pending final Clause 119.2.4.7 and independent vectors.
+- Remove the assumed round-robin interleave assertion. The final ITU-T source explicitly points to IEEE 119.2.4.7 for the Ethernet interleave and describes it as non-round-robin.
+- Task 9 requires a user-selected `PmaMappingProfile`. IEEE permits implementation choice and does not establish one universal 16-to-4 DR4 sequence or PAM4/precoder state from the public evidence.
+- Task 10 remains blocked until Tasks 6, 7, 8b, and 9 are verified and a complete independent 400G fixture exists.
+- `getProfileSupport("400G", "tx", "100")` stays false. Completion of Task 8a alone must not enable it.
+
 ## File ownership and responsibilities
 
 | Path | Responsibility |
@@ -315,11 +326,11 @@ expect([...first.bits,...second.bits]).toEqual(scrambleVector.output);
 - [ ] Verify a marker-containing and marker-free window against the reference model, plus phase transitions across consecutive windows. Use a numeric phase jump for boundary tests, with documented seed/PRBS state, rather than allocating a full marker period.
 - [ ] Run `npx vitest run test/inspector-scramble-markers.test.ts test/inspector-pcs.test.ts` and typecheck; commit `feat: calculate scrambling and alignment marker windows`.
 
-## Task 8: Calculate RS parity and PCS lane distribution
+## Task 8: Calculate standalone RS parity; defer Ethernet distribution
 
-**Files:** Create `engine/gf1024.ts`, `rs544.ts`, `distribute.ts`, `test/inspector-fec.test.ts`, `test/inspector-lanes.test.ts`; extend reference script/tables/fixtures.
+**Files for 8a:** Create `engine/gf1024.ts`, `rs544.ts`, `test/inspector-fec.test.ts`; extend reference tables and standalone RS fixtures. **Deferred 8b files:** `engine/distribute.ts`, `test/inspector-lanes.test.ts`, and all Ethernet distribution fixtures.
 
-**Interfaces:** `gfMultiply(a:number,b:number):number`; `encodeRs544(message:Uint16Array):Uint16Array`; `splitFecMessages(bits:Uint8Array):readonly [Uint16Array,Uint16Array][]`; `interleaveCodewords(a:Uint16Array,b:Uint16Array):Uint16Array`; `distributePcs(symbols:Uint16Array, initialLane:number):readonly Uint16Array[]`.
+**8a interfaces:** `gfMultiply(a:number,b:number):number`; `encodeRs544(message:Uint16Array):Uint16Array`. **Deferred 8b interfaces:** `splitFecMessages(bits:Uint8Array):readonly [Uint16Array,Uint16Array][]`; `interleaveCodewords(a:Uint16Array,b:Uint16Array):Uint16Array`; `distributePcs(symbols:Uint16Array, initialLane:number):readonly Uint16Array[]`.
 
 - [ ] Write tests using independently sourced 514-symbol messages and expected 544-symbol codewords. Include nonzero data; the zero-codeword test alone is insufficient. Verify the 30 parity symbols exactly, complete codeword order, primitive field identities, and rejection of lengths other than 514 or symbols outside 0..1023.
 
@@ -327,21 +338,18 @@ expect([...first.bits,...second.bits]).toEqual(scrambleVector.output);
 expect(Array.from(encodeRs544(Uint16Array.from(rsVector.message))))
   .toEqual(rsVector.codeword);
 expect(() => encodeRs544(new Uint16Array(513))).toThrow(/514/);
-expect(Array.from(interleaveCodewords(
-  Uint16Array.from([1,2]),Uint16Array.from([11,12])))).toEqual([1,11,2,12]);
 ```
 
-The interleaver accepts equal-length arrays for independent ordering tests; the run composer enforces full 544-symbol codewords.
-- [ ] Run tests red. Implement GF arithmetic with the verified primitive polynomial and RS generator roots/coefficient order from Task 2. Use separate reference multiplication (polynomial arithmetic) to verify production lookup tables. Systematic encoder returns message and parity in the documented transmitted order.
-- [ ] Split each 40×257-bit pre-FEC window into two 514-symbol messages using the verified 10-bit alternating distribution. Encode both; interleave by 10-bit symbol; distribute across 16 logical lanes in the sourced order. Reject incomplete windows at this layer; completion with valid idle traffic is the upstream stream builder's responsibility.
-- [ ] Compare every symbol in a two-codeword pair and each PCS lane against fixtures. Test nonzero lane phase, consecutive codeword pairs, and marker-containing data. Use conservation/reassembly assertions only as supplementary checks.
-- [ ] Run FEC/lane and upstream tests; commit `feat: calculate RS-FEC codewords and PCS lane data`.
+- [ ] Run 8a tests red. Implement GF arithmetic using ITU-T G.709.5 (2024) Corrigendum 1 Annex A: GF(2^10), primitive polynomial `x^10 + x^3 + 1`, roots alpha^0 through alpha^29, 514 information symbols, 30 parity symbols, and the documented systematic output order. Use a separate polynomial-arithmetic reference to verify production lookup tables.
+- [ ] Use a nonzero standalone 514-symbol input and frozen expected 544-symbol output generated by an independently reviewed reference implementation. Record the reference revision, exact input convention, artifact hash, and source scope. The fixture must not be described as an Ethernet stream or a `400gbase-dr4-tx-v1` output.
+- [ ] Validate primitive identities, exact parity, full output order, invalid message lengths, and symbols outside 0..1023. Run focused tests and typecheck; commit `feat: add standalone RS544 arithmetic`.
+- [ ] Keep 8b blocked. Do not implement or test `splitFecMessages`, `interleaveCodewords`, or `distributePcs` until final IEEE 119.2.4.5 through 119.2.4.8 and independent Ethernet vectors are available.
 
 ## Task 9: Calculate physical lane bits and PAM4 symbol values
 
 **Files:** Create `engine/pma.ts`, `pam4.ts`, `test/inspector-pma-pam4.test.ts`; extend reference tables/script/fixtures.
 
-**Interfaces:** `mapPhysicalLanes(pcs:readonly Uint16Array[], profile:Profile):readonly Uint8Array[]`; `mapPam4(bits:Uint8Array, profile:Profile):{symbols:Uint8Array; normalizedLevels:Int8Array}`. Add profile-specific mapping/precoder state to the verified profile contract when applicable; never silently reset state per displayed page.
+**Interfaces:** Define `PmaMappingProfile` with source/revision, PCS-to-PMD mapping, unit width, lane numbering, bit-time order, PAM4 dibit-to-symbol labels, normalized-level order, precoder mode, and initial state. Only after a profile is supplied may `mapPhysicalLanes(pcs:readonly Uint16Array[], profile:PmaMappingProfile):readonly Uint8Array[]` and `mapPam4(bits:Uint8Array, profile:PmaMappingProfile):{symbols:Uint8Array; normalizedLevels:Int8Array}` be implemented. Never silently reset state per displayed page.
 
 - [ ] Write exact physical-lane and PAM4 fixture comparisons, including all four dibits and boundaries between PCS symbols. Verify the chosen precoding rule or its documented absence for this exact PMD. Expected symbol labels and normalized levels come from that convention, not an arbitrary gray-code example.
 
@@ -353,7 +361,7 @@ expect(Array.from(pam.symbols)).toEqual(vector.lane0Symbols);
 expect(Array.from(pam.normalizedLevels)).toEqual(vector.lane0Levels);
 ```
 
-- [ ] Run tests red. Implement the sourced 16-to-4 mapping; a generic round-robin fold is not an acceptable substitute. Convert coded bits to the specified dibits and labels in time order. Preserve intermediate outputs before any precoder so both the operation and its state can be inspected.
+- [ ] Do not begin implementation until a `PmaMappingProfile` and independent vectors are supplied. IEEE does not define one universal 16-to-4 implementation sequence in the evidence available to this project. A generic round-robin fold is not an acceptable substitute. When supplied, convert coded bits to the specified dibits and labels in time order and preserve intermediate outputs before any precoder.
 - [ ] Verify total bit conservation, independent lane ordering, and complete fixture equality. Label sample index as symbol index, optionally convert to time using the fixed profile baud. Never label normalized levels in volts or present an ideal level plot as an eye diagram.
 - [ ] Run `npx vitest run test/inspector-pma-pam4.test.ts` and upstream tests; commit `feat: calculate physical lane and PAM4 symbol outputs`.
 
@@ -526,7 +534,6 @@ Use the repository's actual target base if it changed, and record it. Confirm un
 ## Execution handoff
 
 The plan is ready for review. Choose subagent-driven execution with review between tasks, or inline execution using `superpowers:executing-plans`. Create the isolated feature branch only when implementation begins. No application implementation was performed while writing this plan.
-
 
 
 
