@@ -63,7 +63,3 @@ Current source content and `research-brief.md` describe mechanisms and teaching 
 - [Annex 172A scrambled/marker inputs](https://www.ieee802.org/3/publication/df/Annex_172A_Table_172A-1_and_Table_172A-2.txt) and [codewords](https://www.ieee802.org/3/publication/df/Annex_172A_Table_172A-3_to_Table_172A-6.txt). These are 800G examples; use only where the shared RS primitive and conventions are independently established, not as full 400G golden streams.
 
 The plan deliberately makes source verification a dependency of the PHY engine. If exact rules or independent vectors cannot be obtained, report that specific blocked subsystem and continue the MAC/UI work. A partial implementation is not acceptance of A4 or completion of this feature.
-
-
-
-

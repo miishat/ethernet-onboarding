@@ -84,6 +84,40 @@ describe("MAC frame construction", () => {
     expect(frame.fcs).toEqual(asBytes("5D7BF4CB"));
   });
 
+  it.each([
+    { payloadBytes: 45, expectedPadding: 1, expectPadField: true },
+    { payloadBytes: 46, expectedPadding: 0, expectPadField: false },
+  ])(
+    "handles the $payloadBytes-byte payload boundary with the correct padding and FCS placement",
+    ({ payloadBytes, expectedPadding, expectPadField }) => {
+      const parsed = parseFrame({ ...DEFAULT_FRAME, payloadHex: "AB".repeat(payloadBytes) });
+      if (!parsed.ok) throw new Error("Boundary payload must parse");
+
+      const frame = buildMacFrame(parsed.value);
+      const padField = frame.fields.find((field) => field.id === "pad");
+      const fcsField = frame.fields.find((field) => field.id === "fcs");
+
+      expect(frame.paddingBytes).toBe(expectedPadding);
+      expect(frame.bytes).toHaveLength(64);
+      expect(padField).toEqual(
+        expectPadField ? { id: "pad", offset: 14 + payloadBytes, length: expectedPadding } : undefined,
+      );
+      expect(fcsField).toEqual({ id: "fcs", offset: 60, length: 4 });
+    },
+  );
+
+  it("emits a different FCS when one protected payload octet changes", () => {
+    const original = parseFrame({ ...DEFAULT_FRAME, payloadHex: "AB".repeat(46) });
+    const edited = parseFrame({ ...DEFAULT_FRAME, payloadHex: `${"AB".repeat(45)}AC` });
+    if (!original.ok || !edited.ok) throw new Error("Regression inputs must parse");
+
+    const originalFrame = buildMacFrame(original.value);
+    const editedFrame = buildMacFrame(edited.value);
+
+    expect(editedFrame.fcs).not.toEqual(originalFrame.fcs);
+    expect(editedFrame.bytes.slice(-4)).toEqual(editedFrame.fcs);
+  });
+
   it("keeps a 1500-byte payload unpadded", () => {
     const parsed = parseFrame({ ...DEFAULT_FRAME, payloadHex: "AB".repeat(1500) });
     if (!parsed.ok) throw new Error("Maximum payload must parse");

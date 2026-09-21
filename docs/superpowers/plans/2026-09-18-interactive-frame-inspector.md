@@ -534,6 +534,3 @@ Use the repository's actual target base if it changed, and record it. Confirm un
 ## Execution handoff
 
 The plan is ready for review. Choose subagent-driven execution with review between tasks, or inline execution using `superpowers:executing-plans`. Create the isolated feature branch only when implementation begins. No application implementation was performed while writing this plan.
-
-
-
