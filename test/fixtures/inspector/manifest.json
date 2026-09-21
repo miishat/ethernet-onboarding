@@ -4,7 +4,19 @@
   "targetEdition": "IEEE Std 802.3-2022",
   "status": "verification-blocked",
   "retrievedOn": "2026-09-20",
-  "fixtures": [],
+  "fixtures": [
+    {
+      "id": "rs544-standalone-polynomial-v1",
+      "file": "rs544-standalone-polynomial-v1.json",
+      "sourceUrl": "https://www.itu.int/rec/dologin_pub.asp?id=T-REC-G.709.5-202505-I%21Cor1%21PDF-E&lang=e&type=items",
+      "edition": "ITU-T G.709.5 (2024) Corrigendum 1",
+      "clause": "Annex A, pages 36-38",
+      "inputState": "514 deterministic nonzero GF(2^10) symbols: symbol[i] = (73*i + 19) mod 1024.",
+      "encoding": "Systematic standalone codeword: 514 message symbols followed by 30 parity symbols. No Ethernet packing, distribution, interleave, or lane mapping is represented.",
+      "sha256": "97c170acb976375dd0bad722dce2e2eeeb789c39789084445f4e16742c003d46",
+      "verificationScope": "Independent Python shift-and-reduce multiplication and polynomial long division, reviewed against Annex A field, root, and systematic conventions. Source script revision standalone-rs544-reference-v1, SHA-256 083dc7677840434f252ecc39552885e79446994191eff3c27864a73777c14028."
+    }
+  ],
   "candidateSources": [
     {
       "id": "ieee-df-172a-rs-candidate",

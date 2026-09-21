@@ -4,6 +4,13 @@
  */
 export const REFERENCE_SOURCES = Object.freeze([
   Object.freeze({
+    id: "itu-g7095-2024-cor1-rs544",
+    edition: "ITU-T G.709.5 (2024) Corrigendum 1",
+    sourceUrl: "https://www.itu.int/rec/dologin_pub.asp?id=T-REC-G.709.5-202505-I%21Cor1%21PDF-E&lang=e&type=items",
+    retrievedOn: "2026-09-21",
+    verificationScope: "Annex A, pages 36-38: standalone GF(2^10) and systematic RS(544,514) arithmetic only. It does not define Ethernet distribution, interleave, lanes, or PMA.",
+  }),
+  Object.freeze({
     id: "ieee-8023-2022",
     edition: "IEEE Std 802.3-2022",
     sourceUrl: "https://standards.ieee.org/ieee/802.3/10422/",
