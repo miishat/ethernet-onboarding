@@ -4,6 +4,7 @@ import { DATA } from "./data/stack";
 import { nodeAt, kidsOf, pathTo, descendantIds, TRACKABLE } from "./data/tree";
 import { useUrlNavigation } from "./navigation/useUrlNavigation";
 import { documentTitle } from "./navigation/documentTitle";
+import { closeInspector } from "./inspector/stageMap";
 import { buildTopicCatalog } from "./search/topicCatalog";
 import { parseRecentTopics, recordRecentTopic, RECENT_TOPICS_KEY } from "./search/recentTopics";
 import Header from "./components/Header";
@@ -15,7 +16,8 @@ import Stepper from "./components/Stepper";
 
 export default function App() {
   const [navigation, navigate] = useUrlNavigation();
-  const { rate, dir, gen, path, stepping, stepIndex } = navigation;
+  const { rate, dir, gen, path, stepIndex } = navigation;
+  const isFrame = navigation.view === "frame";
   const [visited, setVisited] = useState<Set<string>>(() => new Set());
   const catalog = useMemo(() => buildTopicCatalog(), []);
   const [recent, setRecent] = useState<string[][]>(() => {
@@ -27,9 +29,9 @@ export default function App() {
   });
 
   useEffect(() => {
-    if (stepping || !path.length || !catalog.some((entry) => entry.path.join("/") === path.join("/"))) return;
+    if (isFrame || navigation.view === "inspector" || !path.length || !catalog.some((entry) => entry.path.join("/") === path.join("/"))) return;
     setRecent((previous) => previous[0]?.join("/") === path.join("/") ? previous : recordRecentTopic(previous, path));
-  }, [catalog, path, stepping]);
+  }, [catalog, path, isFrame, navigation.view]);
 
   useEffect(() => {
     try {
@@ -67,17 +69,17 @@ export default function App() {
     });
 
   const openTop = (id: string) => {
-    navigate({ path: [id], stepping: false }, "push");
+    navigate({ path: [id], view: "stack" }, "push");
   };
   const selectTopic = (nextPath: string[]) => {
     if (nextPath.length) markRead(nextPath[nextPath.length - 1]);
-    navigate({ path: nextPath, stepping: false }, "push");
+    navigate({ path: nextPath, view: "stack" }, "push");
   };
   const push = (id: string) => {
     markRead(id);
-    navigate({ path: pathTo(id) || path.concat(id), stepping: false }, "push");
+    navigate({ path: pathTo(id) || path.concat(id), view: "stack" }, "push");
   };
-  const upTo = (i: number) => navigate({ path: path.slice(0, i), stepping: false }, "push");
+  const upTo = (i: number) => navigate({ path: path.slice(0, i), view: "stack" }, "push");
 
   /* a node selected in one direction may not exist in the other */
   const changeDir = (d: Dir) => {
@@ -89,15 +91,17 @@ export default function App() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
-      if (stepping) {
-        navigate({ stepping: false }, "push");
+      if (navigation.view === "inspector") {
+        navigate(closeInspector(navigation), "push");
+      } else if (isFrame) {
+        navigate({ view: "stack" }, "push");
       } else if (path.length) {
-        navigate((current) => ({ path: current.path.slice(0, -1), stepping: false }), "push");
+        navigate((current) => ({ path: current.path.slice(0, -1), view: "stack" }), "push");
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [stepping, path.length, navigate]);
+  }, [navigation, isFrame, path.length, navigate]);
 
   /* ---------------------------------------------------------- breadcrumbs */
   const crumbs: Crumb[] = [{ label: "the stack", go: path.length ? () => upTo(0) : null }];
@@ -108,7 +112,63 @@ export default function App() {
   });
 
   const isTop = path.length === 1;
-  const panelKey = stepping ? "step" : path.join("/") || "root";
+  const panelKey = isFrame ? "step" : path.join("/") || "root";
+
+  const walkthrough = (
+    <main className="main main--step">
+      <section className="col-step panel-anim">
+        <StepperSidePanel />
+        <Stepper
+          rate={rate}
+          dir={dir}
+          gen={gen}
+          index={stepIndex}
+          onIndexChange={(index) => navigate({ stepIndex: index }, "replace")}
+          onExit={() => navigate({ view: "stack" }, "push")}
+          onNavigate={(p) => {
+            if (p.length) markRead(p[p.length - 1]);
+            navigate({ path: p, view: "stack" }, "push");
+          }}
+        />
+      </section>
+    </main>
+  );
+
+  const stack = (
+    <main className="main">
+      <section className="col-map">
+        <div className="map-sticky">
+          <Breadcrumbs crumbs={crumbs} />
+          {node && canvasNode ? (
+            <DrillCanvas
+              node={canvasNode}
+              kids={canvasKids}
+              rate={rate}
+              dir={dir}
+              visited={visited}
+              onPick={(id) => {
+                markRead(id);
+                navigate({
+                  path: pathTo(id) || path.slice(0, atLeaf ? -1 : path.length).concat(id),
+                  view: "stack",
+                }, "push");
+              }}
+              zone={zone}
+              litId={litId}
+            />
+          ) : (
+            <StackCanvas rate={rate} dir={dir} gen={gen} onOpen={openTop} complete={complete} />
+          )}
+        </div>
+      </section>
+
+      <section className="col-panel">
+        <div className="panel-anim" key={panelKey}>
+          <ContentPanel node={node} rate={rate} dir={dir} isTop={isTop} kids={kids} visited={visited} onPush={push} />
+        </div>
+      </section>
+    </main>
+  );
 
   return (
     <div className="app">
@@ -119,8 +179,8 @@ export default function App() {
         setDir={changeDir}
         gen={gen}
         setGen={(g) => navigate({ gen: g }, "replace")}
-        stepping={stepping}
-        toggleStep={() => navigate({ stepping: !stepping }, "push")}
+        stepping={isFrame}
+        toggleStep={() => navigate({ view: isFrame ? "stack" : "frame" }, "push")}
         read={visited.size}
         total={TRACKABLE}
         catalog={catalog}
@@ -128,61 +188,15 @@ export default function App() {
         onSelectTopic={selectTopic}
       />
 
-      {stepping ? (
-        <main className="main main--step">
-          <section className="col-step panel-anim">
-            <StepperSidePanel />
-            <Stepper
-              rate={rate}
-              dir={dir}
-              gen={gen}
-              index={stepIndex}
-              onIndexChange={(index) => navigate({ stepIndex: index }, "replace")}
-              onExit={() => navigate({ stepping: false }, "push")}
-              onNavigate={(p) => {
-                if (p.length) markRead(p[p.length - 1]);
-                navigate({ path: p, stepping: false }, "push");
-              }}
-            />
-          </section>
+      {navigation.view === "inspector" ? (
+        <main><h1>Frame inspector</h1>
+          <button onClick={() => navigate(closeInspector(navigation), "push")}>
+            Return to learning
+          </button>
         </main>
-      ) : (
-        <main className="main">
-          <section className="col-map">
-            <div className="map-sticky">
-              <Breadcrumbs crumbs={crumbs} />
-              {node && canvasNode ? (
-                <DrillCanvas
-                  node={canvasNode}
-                  kids={canvasKids}
-                  rate={rate}
-                  dir={dir}
-                  visited={visited}
-                  onPick={(id) => {
-                    markRead(id);
-                    navigate({
-                      path: pathTo(id) || path.slice(0, atLeaf ? -1 : path.length).concat(id),
-                      stepping: false,
-                    }, "push");
-                  }}
-                  zone={zone}
-                  litId={litId}
-                />
-              ) : (
-                <StackCanvas rate={rate} dir={dir} gen={gen} onOpen={openTop} complete={complete} />
-              )}
-            </div>
-          </section>
+      ) : isFrame ? walkthrough : stack}
 
-          <section className="col-panel">
-            <div className="panel-anim" key={panelKey}>
-              <ContentPanel node={node} rate={rate} dir={dir} isTop={isTop} kids={kids} visited={visited} onPush={push} />
-            </div>
-          </section>
-        </main>
-      )}
-
-      <footer className={"footer" + (stepping ? " footer--step" : "")}>
+      <footer className={"footer" + (isFrame ? " footer--step" : "")}>
         <div className="footer__inner">
           400G follows IEEE 802.3 Clause 119 and its PMD clauses; 800G follows 802.3df; 1.6T follows 802.3dj, still in draft at the
           time of writing, so anything marked draft may have moved.

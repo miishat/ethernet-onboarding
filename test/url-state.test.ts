@@ -31,7 +31,7 @@ describe("URL navigation state", () => {
     const state = {
       ...DEFAULT_URL_STATE,
       rate: "1.6T" as const,
-      stepping: true,
+      view: "frame" as const,
       stepIndex: 4,
     };
 
@@ -55,7 +55,7 @@ describe("URL navigation state", () => {
   });
 
   it("clamps walkthrough steps to the direction's stages", () => {
-    expect(normalizeUrlState({ ...DEFAULT_URL_STATE, stepping: true, stepIndex: 999 }).stepIndex)
+    expect(normalizeUrlState({ ...DEFAULT_URL_STATE, view: "frame", stepIndex: 999 }).stepIndex)
       .toBe(8);
   });
 
@@ -64,7 +64,7 @@ describe("URL navigation state", () => {
   });
 
   it("retains a valid topic path while stepping", () => {
-    expect(normalizeUrlState({ ...DEFAULT_URL_STATE, path: ["pcs"], stepping: true }).path)
+    expect(normalizeUrlState({ ...DEFAULT_URL_STATE, path: ["pcs"], view: "frame" }).path)
       .toEqual(["pcs"]);
   });
 

@@ -51,7 +51,8 @@ test("read-more navigation preserves the current walkthrough stage", async () =>
   const app = await source("src/App.tsx");
   const stepper = await source("src/components/Stepper.tsx");
 
-  assert.match(app, /const \{ rate, dir, gen, path, stepping, stepIndex \} = navigation/);
+  assert.match(app, /const \{ rate, dir, gen, path, stepIndex \} = navigation/);
+  assert.match(app, /const isFrame = navigation\.view === "frame"/);
   assert.match(app, /index=\{stepIndex\}/);
   assert.match(stepper, /onIndexChange: \(index: number\) => void/);
 });
@@ -63,19 +64,19 @@ test("App controls synchronize navigation through URL history", async () => {
   assert.match(app, /const \[navigation, navigate\] = useUrlNavigation\(\)/);
   assert.match(app, /navigate\(\{ rate: r \}, "replace"\)/);
   assert.match(app, /navigate\(\{ gen: g \}, "replace"\)/);
-  assert.match(app, /navigate\(\{ path: \[id\], stepping: false \}, "push"\)/);
+  assert.match(app, /navigate\(\{ path: \[id\], view: "stack" \}, "push"\)/);
   assert.match(app, /navigate\(\{ dir: d \}, "replace"\)/);
   assert.match(app, /navigate\(\{ stepIndex: index \}, "replace"\)/);
-  assert.match(app, /navigate\(\{ stepping: !stepping \}, "push"\)/);
+  assert.match(app, /navigate\(\{ view: isFrame \? "stack" : "frame" \}, "push"\)/);
   assert.doesNotMatch(app, /set(?:Rate|Dir|Gen|Path|Stepping|StepIndex)\(/);
 });
 
 test("breadcrumb navigation exits walkthrough and pushes the selected prefix", async () => {
   const app = await source("src/App.tsx");
 
-  assert.match(app, /navigate\(\{ path: path\.slice\(0, i\), stepping: false \}, "push"\)/);
+  assert.match(app, /navigate\(\{ path: path\.slice\(0, i\), view: "stack" \}, "push"\)/);
   assert.match(app, /go: path\.length \? \(\) => upTo\(0\) : null/);
-  assert.match(app, /if \(stepping\) \{\s*navigate\(\{ stepping: false \}, "push"\)/);
+  assert.match(app, /else if \(isFrame\) \{\s*navigate\(\{ view: "stack" \}, "push"\)/);
 });
 
 test("walkthrough footer shares the centered content alignment", async () => {

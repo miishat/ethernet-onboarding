@@ -3,6 +3,7 @@ import type { StackNode } from "../types";
 import { DATA } from "../data/stack";
 import { rawKids } from "../data/tree";
 import { stagesFor } from "../data/stepper";
+import type { InspectorStage } from "../inspector/types";
 
 export type NavigationDir = Exclude<Dir, "both">;
 
@@ -11,8 +12,10 @@ export interface UrlNavigationState {
   dir: NavigationDir;
   gen: LaneGen;
   path: string[];
-  stepping: boolean;
+  view: "stack" | "frame" | "inspector";
   stepIndex: number;
+  inspectorStage: InspectorStage;
+  inspectorReturn: "stack" | "frame";
 }
 
 export const DEFAULT_URL_STATE: UrlNavigationState = {
@@ -20,13 +23,18 @@ export const DEFAULT_URL_STATE: UrlNavigationState = {
   dir: "tx",
   gen: "100",
   path: [],
-  stepping: false,
+  view: "stack",
   stepIndex: 0,
+  inspectorStage: "mac",
+  inspectorReturn: "stack",
 };
 
 const rates: readonly Rate[] = ["400G", "800G", "1.6T"];
 const directions: readonly NavigationDir[] = ["tx", "rx"];
 const generations: readonly LaneGen[] = ["100", "200"];
+const inspectorStages: readonly InspectorStage[] = [
+  "mac", "encode66", "transcode257", "scramble", "markers", "fec", "pcs-lanes", "physical-lanes", "pam4",
+];
 
 function isRate(value: string | null): value is Rate {
   return value !== null && rates.includes(value as Rate);
@@ -38,6 +46,10 @@ function isDirection(value: string | null): value is NavigationDir {
 
 function isGeneration(value: string | null): value is LaneGen {
   return value !== null && generations.includes(value as LaneGen);
+}
+
+function isInspectorStage(value: InspectorStage): value is InspectorStage {
+  return inspectorStages.includes(value);
 }
 
 function permitsDirection(node: StackNode, dir: NavigationDir): boolean {
@@ -66,15 +78,23 @@ export function normalizeUrlState(state: UrlNavigationState): UrlNavigationState
     ? Math.min(maxStepIndex, Math.max(0, Math.floor(state.stepIndex)))
     : 0;
 
-  return { ...state, dir, path, stepIndex };
+  const view = state.view === "frame" || state.view === "inspector" ? state.view : "stack";
+  const inspectorStage = isInspectorStage(state.inspectorStage) ? state.inspectorStage : "mac";
+  const inspectorReturn = state.inspectorReturn === "frame" ? "frame" : "stack";
+
+  return view === "inspector"
+    ? { ...state, dir, path, stepIndex, view, inspectorStage, inspectorReturn }
+    : { ...state, dir, path, stepIndex, view, inspectorStage: "mac", inspectorReturn: "stack" };
 }
 
 export function statesEqual(a: UrlNavigationState, b: UrlNavigationState): boolean {
   return a.rate === b.rate
     && a.dir === b.dir
     && a.gen === b.gen
-    && a.stepping === b.stepping
+    && a.view === b.view
     && a.stepIndex === b.stepIndex
+    && a.inspectorStage === b.inspectorStage
+    && a.inspectorReturn === b.inspectorReturn
     && a.path.length === b.path.length
     && a.path.every((id, index) => id === b.path[index]);
 }
@@ -87,14 +107,18 @@ export function decodeUrlState(search: string): UrlNavigationState {
   const rate = params.get("rate");
   const dir = params.get("dir");
   const gen = params.get("lane");
+  const inspectStage = params.get("inspectStage");
+  const from = params.get("from");
 
   return normalizeUrlState({
     rate: isRate(rate) ? rate : DEFAULT_URL_STATE.rate,
     dir: isDirection(dir) ? dir : DEFAULT_URL_STATE.dir,
     gen: isGeneration(gen) ? gen : DEFAULT_URL_STATE.gen,
     path: topic ? topic.split("/") : [],
-    stepping: view === "frame",
+    view: view === "frame" || view === "inspector" ? view : "stack",
     stepIndex: Number.isFinite(parsedStep) && parsedStep >= 0 ? parsedStep : 0,
+    inspectorStage: inspectStage as InspectorStage,
+    inspectorReturn: from === "frame" ? "frame" : "stack",
   });
 }
 
@@ -104,9 +128,13 @@ export function encodeUrlState(state: UrlNavigationState): string {
   if (state.rate !== DEFAULT_URL_STATE.rate) params.set("rate", state.rate);
   if (state.dir !== DEFAULT_URL_STATE.dir) params.set("dir", state.dir);
   if (state.gen !== DEFAULT_URL_STATE.gen) params.set("lane", state.gen);
-  if (state.stepping) params.set("view", "frame");
+  if (state.view !== "stack") params.set("view", state.view);
   if (state.stepIndex > 0 && Number.isFinite(state.stepIndex)) {
     params.set("step", String(state.stepIndex));
+  }
+  if (state.view === "inspector") {
+    params.set("inspectStage", state.inspectorStage);
+    params.set("from", state.inspectorReturn);
   }
   const query = params.toString();
   return query ? `?${query}` : "";

@@ -13,8 +13,13 @@ describe("document title", () => {
   });
 
   it("includes the active walkthrough frame number", () => {
-    expect(documentTitle({ ...DEFAULT_URL_STATE, stepping: true, stepIndex: 2 }))
+    expect(documentTitle({ ...DEFAULT_URL_STATE, view: "frame", stepIndex: 2 }))
       .toContain("Frame 3");
+  });
+
+  it("identifies the selected inspector stage", () => {
+    expect(documentTitle({ ...DEFAULT_URL_STATE, view: "inspector", inspectorStage: "fec" }))
+      .toContain("Frame inspector: FEC");
   });
 
   it("falls back to the product name for an invalid path", () => {
