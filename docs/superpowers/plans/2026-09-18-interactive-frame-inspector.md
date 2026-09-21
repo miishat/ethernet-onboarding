@@ -47,14 +47,15 @@ Task 2's protocol evidence blocks Tasks 6 through 10, but not MAC calculations o
 
 ### Research update: 2026-09-21
 
-Read `docs/inspector-source-research-2026-09-21.md` before dispatching Tasks 6 through 10. A Terra High research pass checked 11 authoritative and contextual sources. Final IEEE Std 802.3-2022 algorithm text remains inaccessible through the tested public endpoints. The evidence changes the execution plan as follows:
+Read `docs/inspector-source-research-2026-09-21.md` before dispatching Tasks 6 through 10. IEEE Xplore document 9844436 offers IEEE Std 802.3-2022 through the IEEE Reading Room, but the Reading Room requires account sign-in and this research session was unauthenticated. Do not use or endorse a third-party mirror of copyrighted standard text as final production authority. The evidence changes the execution plan as follows:
 
-- Tasks 6 and 7 remain blocked for the final `400gbase-dr4-tx-v1` profile. Draft material may not supply production constants or expected results.
-- Task 8 is split into 8a and 8b. Task 8a may implement a standalone RS(544,514) primitive from final ITU-T G.709.5 Corrigendum 1 evidence. Task 8b, Ethernet pre-FEC distribution, codeword interleave, and PCS-lane distribution, remains blocked pending final Clause 119.2.4.7 and independent vectors.
-- Remove the assumed round-robin interleave assertion. The final ITU-T source explicitly points to IEEE 119.2.4.7 for the Ethernet interleave and describes it as non-round-robin.
-- Task 9 requires a user-selected `PmaMappingProfile`. IEEE permits implementation choice and does not establish one universal 16-to-4 DR4 sequence or PAM4/precoder state from the public evidence.
-- Task 10 remains blocked until Tasks 6, 7, 8b, and 9 are verified and a complete independent 400G fixture exists.
-- `getProfileSupport("400G", "tx", "100")` stays false. Completion of Task 8a alone must not enable it.
+- Tasks 6 and 7 are conditionally specified, not final-profile-ready. Their Clause 119 candidates need a lawful IEEE line check and independently admitted fixtures before implementation may supply `400gbase-dr4-tx-v1` values.
+- Task 8 is split into 8a and 8b. Task 8a may implement a standalone RS(544,514) primitive from final ITU-T G.709.5 Corrigendum 1 evidence. Task 8b has high-confidence candidate pre-FEC, interleave and PCS-lane formulas, but needs the same final Clause 119 line check, an explicit RS-orientation adapter and an Annex 119A fixture before integration.
+- Remove the assumed round-robin interleave assertion. Final ITU-T evidence independently says IEEE 119.2.4.7 is 10-bit and non-round-robin, while deferring the exact mapping to IEEE.
+- AM Idle deletion is implementation-owned. Before a finite default stream can exist, select `RateMatchPolicy` with eligible Idles, selection/deferral rules, frame-boundary behaviour, phase semantics and deletion trace.
+- Task 9 requires a fully populated implementation-specific `PmaMappingProfile`. IEEE permits multiple valid 16-to-4 orders. OIF/CMIS Gray labels and no-precoding evidence may be used only under their stated selected-module scope.
+- Task 10 remains blocked until Tasks 6, 7 and 8b are final-line-checked, `RateMatchPolicy` and any `PmaMappingProfile` are selected, and a complete independent 400G fixture exists.
+- `getProfileSupport("400G", "tx", "100")` stays false. Completion of Task 8a or a candidate-only adapter must not enable it.
 
 ## File ownership and responsibilities
 
@@ -177,8 +178,8 @@ expect(getProfileSupport('800G','tx','100').supported).toBe(false);
 expect(getProfileSupport('1.6T','tx','200').supported).toBe(false);
 ```
 
-- [ ] Verify the selected published edition's applicable MAC, RS/CDMII, PCS, PMA, and DR4 rules. Resolve specifically: control block tables/start and terminate placement, transcode ordering, bit serialization, scrambler recurrence and shift direction, AM values/pad/status/schedule and idle compensation, pre-FEC distribution, GF polynomial/root order/parity order, codeword interleave, 16-to-4 mapping, dibit order, Gray labeling, and applicability of precoding. Record exact clause/table references, source URLs, edition, and retrieval date. Existing prose is secondary evidence, not an oracle.
-- [ ] Pin one deterministic initialization. Use 58 one bits as the teaching scrambler seed, nonzero PRBS seed `0x1ff`, marker/lane phase zero, and 4,096 prefix idle octets, provided the verified recurrence accepts those states. Define phase zero precisely at the documented marker boundary. The chosen seed is an example state, not a universal hardware reset rule. Define trailing idles to complete codeword and lane groups. Cap the inspected result at 262,144 coded bits; reject over-cap requests instead of truncating a frame. Exercise later marker boundaries using phase-controlled windows rather than storing a full marker period.
+- [ ] Complete a lawful IEEE Std 802.3-2022 Reading Room or licensed-copy line check for the applicable MAC, RS/CDMII, PCS, PMA and DR4 rules. Resolve control block tables/start and terminate placement, transcode ordering, bit serialization, scrambler recurrence and shift direction, AM values/pad/status/schedule, pre-FEC distribution, RS orientation, codeword interleave, and PMA/PMD boundary. Record exact clause/table/page/line, source URL, edition and retrieval date. Retained Clause 119 formulas are high-confidence candidates only until this check completes. Existing prose and third-party mirrors are not an oracle.
+- [ ] Pin one deterministic initialization only after the final line check accepts the recurrence. The requested 58 one-bit teaching seed, PRBS seed `0x1ff`, marker/lane phase zero and 4,096 prefix Idle count remain teaching metadata, not hardware reset state. Add `RateMatchPolicy` with eligible Idle controls, selection strategy, maximum deferral, frame-boundary rule, AM phase relation and deletion trace. Its product-owned policy determines trailing Idles to complete codeword and lane groups. Cap the inspected result at 262,144 coded bits; reject over-cap requests instead of truncating a frame. Exercise later marker boundaries using phase-controlled windows with carried state and deletion trace rather than storing a full marker period.
 - [ ] Freeze `DEFAULT_FRAME` as destination `02:00:00:00:00:02`, source `02:00:00:00:00:01`, EtherType `88B5`, payload bytes `00` through `3F`. Record local experimental payload semantics.
 - [ ] Add independent fixture manifest entries with `id`, `sourceUrl`, `edition`, `clause`, `inputState`, `encoding`, `sha256`, and `verificationScope`. Obtain published examples where available. Supplement with separately implemented Python reference results, reviewed against the rules; do not import production TypeScript into that script. Never regenerate expected results during tests. Public 800G vectors may verify a shared RS primitive only after validating conventions.
 - [ ] Run the capability tests and commit named files with `feat: define verified inspector profile and contracts` only when its protocol contract is complete. If normative sources are inaccessible, record the specific missing rule and leave this task incomplete; Tasks 3 through 5 can proceed using the MAC subset. Do not invent constants or offer fabricated downstream results.
@@ -285,6 +286,8 @@ expect(screen.getByRole('alert').textContent).toMatch(/hex/i);
 
 ## Task 6: Encode a finite interface stream and transcode it
 
+**Research gate:** Do not start final-profile code or fixtures until the IEEE Reading Room or licensed-copy check resolves Clause 117, Clause 82 and 119.2.4.2. Candidate formulas are useful for making the verification fixture plan precise, not for bypassing that check.
+
 **Files:** Create `engine/bits.ts`, `stream.ts`, `encode66.ts`, `transcode257.ts`, `scripts/inspector-reference.py`, `test/inspector-pcs.test.ts`, PCS fixtures. Add sourced encoding/transcoding tables to `referenceTables.ts`.
 
 **Interfaces:** `buildInterfaceStream(frame:MacFrame, config:StreamConfig):InterfaceWord[]`; `encode66(words:readonly InterfaceWord[]):EncodedBlock[]`; `transcode257(blocks:readonly EncodedBlock[]):TranscodedBlock[]`. Add shared types: `InterfaceWord={octets:Uint8Array; controlMask:number; frameOffsets:Int32Array}`, `EncodedBlock={bits:Uint8Array; sourceWord:number}`, `TranscodedBlock={bits:Uint8Array; sourceBlocks:readonly number[]}`. Each interface word has eight octets; controlMask bit i describes octet i; frameOffsets uses -1 for non-frame octets. Uint8Array bits are stored in time order, values 0/1.
@@ -307,6 +310,8 @@ for (const vector of pcsVectors) {
 
 ## Task 7: Scramble and schedule alignment markers correctly
 
+**Research gate:** Do not start final-profile code or fixtures until the Clause 49/119.2.4.3-4 Reading Room or licensed-copy check succeeds. `RateMatchPolicy` is mandatory because the individual legal Idle deletion locations are implementation-owned.
+
 **Files:** Create `engine/scramble.ts`, `markers.ts`, `test/inspector-scramble-markers.test.ts`; extend reference script, tables, and fixtures.
 
 **Interfaces:** `scramble(bits:Uint8Array, seedHex:string):{bits:Uint8Array; finalSeedHex:string}`; `prepareStream(frame:MacFrame, config:StreamConfig):PreparedStream`; `insertMarkers(scrambled:Uint8Array, plan:MarkerPlan, config:StreamConfig):MarkerResult`. Add `MarkerPlan={insertionBitOffsets:readonly number[]; removedIdleOctets:number; finalPhase:number}`, `PreparedStream={words:readonly InterfaceWord[]; markerPlan:MarkerPlan}`, and `MarkerResult={bits:Uint8Array; markers:readonly {bitOffset:number;bitLength:number}[]; removedIdleOctets:number; finalPhase:number}`. Offsets in MarkerPlan are positions in the scrambled stream before any marker insertion, in ascending order. Marker insertion consumes already scrambled bits and a precomputed plan; it cannot infer deletable idle locations from scrambled bits.
@@ -326,11 +331,11 @@ expect([...first.bits,...second.bits]).toEqual(scrambleVector.output);
 - [ ] Verify a marker-containing and marker-free window against the reference model, plus phase transitions across consecutive windows. Use a numeric phase jump for boundary tests, with documented seed/PRBS state, rather than allocating a full marker period.
 - [ ] Run `npx vitest run test/inspector-scramble-markers.test.ts test/inspector-pcs.test.ts` and typecheck; commit `feat: calculate scrambling and alignment marker windows`.
 
-## Task 8: Calculate standalone RS parity; defer Ethernet distribution
+## Task 8: Calculate standalone RS parity; conditionally prepare Ethernet distribution
 
-**Files for 8a:** Create `engine/gf1024.ts`, `rs544.ts`, `test/inspector-fec.test.ts`; extend reference tables and standalone RS fixtures. **Deferred 8b files:** `engine/distribute.ts`, `test/inspector-lanes.test.ts`, and all Ethernet distribution fixtures.
+**Files for 8a:** Create `engine/gf1024.ts`, `rs544.ts`, `test/inspector-fec.test.ts`; extend reference tables and standalone RS fixtures. **Conditional 8b files:** `engine/distribute.ts`, `test/inspector-lanes.test.ts`, and Ethernet distribution fixtures, only after the final Clause 119 line check and Annex 119A fixture access.
 
-**8a interfaces:** `gfMultiply(a:number,b:number):number`; `encodeRs544(message:Uint16Array):Uint16Array`. **Deferred 8b interfaces:** `splitFecMessages(bits:Uint8Array):readonly [Uint16Array,Uint16Array][]`; `interleaveCodewords(a:Uint16Array,b:Uint16Array):Uint16Array`; `distributePcs(symbols:Uint16Array, initialLane:number):readonly Uint16Array[]`.
+**8a interfaces:** `gfMultiply(a:number,b:number):number`; `encodeRs544(message:Uint16Array):Uint16Array`. **Conditional 8b interfaces:** `splitFecMessages(bits:Uint8Array):readonly [Uint16Array,Uint16Array][]`; `interleaveCodewords(a:Uint16Array,b:Uint16Array):Uint16Array`; `distributePcs(symbols:Uint16Array):readonly Uint16Array[]`. The complete FEC-pair boundary fixes lane zero; a render window may not alter protocol phase with `initialLane`.
 
 - [ ] Write tests using independently sourced 514-symbol messages and expected 544-symbol codewords. Include nonzero data; the zero-codeword test alone is insufficient. Verify the 30 parity symbols exactly, complete codeword order, primitive field identities, and rejection of lengths other than 514 or symbols outside 0..1023.
 
@@ -343,13 +348,13 @@ expect(() => encodeRs544(new Uint16Array(513))).toThrow(/514/);
 - [ ] Run 8a tests red. Implement GF arithmetic using ITU-T G.709.5 (2024) Corrigendum 1 Annex A: GF(2^10), primitive polynomial `x^10 + x^3 + 1`, roots alpha^0 through alpha^29, 514 information symbols, 30 parity symbols, and the documented systematic output order. Use a separate polynomial-arithmetic reference to verify production lookup tables.
 - [ ] Use a nonzero standalone 514-symbol input and frozen expected 544-symbol output generated by an independently reviewed reference implementation. Record the reference revision, exact input convention, artifact hash, and source scope. The fixture must not be described as an Ethernet stream or a `400gbase-dr4-tx-v1` output.
 - [ ] Validate primitive identities, exact parity, full output order, invalid message lengths, and symbols outside 0..1023. Run focused tests and typecheck; commit `feat: add standalone RS544 arithmetic`.
-- [ ] Keep 8b blocked. Do not implement or test `splitFecMessages`, `interleaveCodewords`, or `distributePcs` until final IEEE 119.2.4.5 through 119.2.4.8 and independent Ethernet vectors are available.
+- [ ] Keep 8b conditionally blocked. Before implementation, check final IEEE 119.2.4.5 through 119.2.4.8 through the Reading Room or licensed copy, record the candidate-formula comparison, and access Annex 119A Tables 119A-2, 119A-5 and 119A-6 lawfully. Then freeze a separate constant-Idle/AM fixture, write an RS-orientation adapter test, and compare the two codewords through all sixteen 68-symbol lane windows. This fixture must not be relabeled as the teaching MAC frame.
 
 ## Task 9: Calculate physical lane bits and PAM4 symbol values
 
 **Files:** Create `engine/pma.ts`, `pam4.ts`, `test/inspector-pma-pam4.test.ts`; extend reference tables/script/fixtures.
 
-**Interfaces:** Define `PmaMappingProfile` with source/revision, PCS-to-PMD mapping, unit width, lane numbering, bit-time order, PAM4 dibit-to-symbol labels, normalized-level order, precoder mode, and initial state. Only after a profile is supplied may `mapPhysicalLanes(pcs:readonly Uint16Array[], profile:PmaMappingProfile):readonly Uint8Array[]` and `mapPam4(bits:Uint8Array, profile:PmaMappingProfile):{symbols:Uint8Array; normalizedLevels:Int8Array}` be implemented. Never silently reset state per displayed page.
+**Interfaces:** Define `PmaMappingProfile` with provenance and fixture hash; scope and PMA/PMD boundary; 16:4 geometry; every PMD lane's ordered bit-level PCS schedule and initial phase; boundary bit indexing; PMD-to-MDI and MDI-to-fiber maps; polarity transform and its stage; dibit order/significance; complete PAM4 labels and normalized-level map; precoder mode/state/reset; and PMA-training/PCS-scrambler boundary. Only after a profile is supplied may `mapPhysicalLanes(pcs:readonly Uint16Array[], profile:PmaMappingProfile):readonly Uint8Array[]` and `mapPam4(bits:Uint8Array, profile:PmaMappingProfile):{symbols:Uint8Array; normalizedLevels:Int8Array}` be implemented. Never silently reset state per displayed page.
 
 - [ ] Write exact physical-lane and PAM4 fixture comparisons, including all four dibits and boundaries between PCS symbols. Verify the chosen precoding rule or its documented absence for this exact PMD. Expected symbol labels and normalized levels come from that convention, not an arbitrary gray-code example.
 
@@ -367,6 +372,8 @@ expect(Array.from(pam.normalizedLevels)).toEqual(vector.lane0Levels);
 
 ## Task 10: Compose one reproducible run with honest provenance
 
+**Research gate:** This task cannot create a named-profile run until Tasks 6, 7 and 8b pass their final IEEE line checks, the chosen `RateMatchPolicy` is recorded, any physical output has a selected `PmaMappingProfile`, and an independent fixture covers every enabled stage.
+
 **Files:** Create `engine/run.ts`, `engine/trace.ts`, `test/inspector-run.test.ts`; extend shared types and full-run fixtures.
 
 **Interfaces:** `calculateRun(input:FrameInput, profile:Profile, stream:StreamConfig):Result<InspectorRun>`; `traceSelection(run:InspectorRun, selection:DataRef):readonly TraceEdge[]`.
@@ -383,7 +390,7 @@ for (const expected of fullVector.snapshots) {
 }
 ```
 
-- [ ] Run tests red. Compose the pipeline strictly in the source-verified order: `buildMacFrame`, `prepareStream`, `encode66`, `transcode257`, continuous `scramble`, `insertMarkers`, `splitFecMessages`, `encodeRs544`, `interleaveCodewords`, `distributePcs`, `mapPhysicalLanes`, and `mapPam4`. Carry phase/state across groups. `id` is a deterministic digest or stable local run key derived from applied input/profile/state, never a random source of calculation behavior. Each snapshot references the same run and explicit units; no stage pulls example values from a separate array.
+- [ ] Run tests red. Once the research gate is met, compose the pipeline strictly in the checked order: `buildMacFrame`, `prepareStream`, `encode66`, `transcode257`, continuous `scramble`, `insertMarkers`, `splitFecMessages`, `encodeRs544`, `interleaveCodewords`, `distributePcs`, `mapPhysicalLanes`, and `mapPam4`. Carry scrambler, AM, rate-match and PMA state across groups. `id` is a deterministic digest or stable local run key derived from applied input/profile/state and selected contracts, never a random source of calculation behavior. Each snapshot references the same run and explicit units; no stage pulls example values from a separate array.
 - [ ] Implement compact range-based trace edges: copied MAC bytes, encoded block inputs, parity dependencies on entire RS messages, marker insertion, and lane permutations. Scrambled data and parity are dependency relationships, not intact copies of payload bytes. Avoid an all-to-all per-bit dependency matrix; summarize recurrence/state dependencies as bounded ranges and state references.
 - [ ] Test selection ranges at each buffer boundary, inserted markers with no frame source, parity spanning a message, and frame data crossing multiple codewords. Never highlight a direct identity mapping when only a dependency exists.
 - [ ] Enforce length/allocation limits before creating buffers and catch malformed internal input as typed run errors. Test default/max samples complete inside the 262,144-coded-bit cap. Run engine tests and typecheck; commit `feat: compose verified frame inspection runs and traces`.
