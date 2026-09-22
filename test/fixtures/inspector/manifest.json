@@ -58,6 +58,15 @@
       "status": "quarantined"
     }
   ],
+  "sourceManifests": [
+    {
+      "id": "ieee-8023-2022-source-manifest",
+      "file": "ieee-8023-2022-source-manifest.json",
+      "edition": "IEEE Std 802.3-2022",
+      "status": "blocked",
+      "verificationScope": "Evidence template only. No final IEEE text, source artifact, table row, output, or accepted fixture is present."
+    }
+  ],
   "blockedBy": [
     "mac-frame-fcs",
     "rs-cdmii-placement",

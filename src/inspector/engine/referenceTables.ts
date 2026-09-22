@@ -18,6 +18,13 @@ export const REFERENCE_SOURCES = Object.freeze([
     verificationScope: "Publication metadata only; normative clauses inaccessible.",
   }),
   Object.freeze({
+    id: "ieee-8023-2022-line-check",
+    edition: "IEEE Std 802.3-2022",
+    sourceUrl: "https://ieeexplore.ieee.org/document/9844436",
+    retrievedOn: "2026-09-21",
+    verificationScope: "Blocked evidence-template record only. No final clause text, constants, table rows, or implementation convention was inspected or admitted.",
+  }),
+  Object.freeze({
     id: "ieee-bs-d14-cl119-locator",
     edition: "IEEE P802.3bs/D1.4, 7 April 2016, marked-up contribution",
     sourceUrl: "https://www.ieee802.org/3/bs/public/16_05/ofelt_3bs_03_0516.pdf",

@@ -26,6 +26,21 @@ Final ITU-T G.709.5 (2024) Corrigendum 1 unblocks the existing isolated RS(544,5
 | S8 | [ITU-T G.709.5 (2024) Corrigendum 1](https://www.itu.int/epublications/es/publication/itu-t-g-709-5-2024-cor-1-2025-05), May 2025, Annex A, 9.4, 13.5.1 and Table 13-3 | Final normative ITU-T text | GF(2^10), RS(544,514), non-round-robin IEEE interleave corroboration, 16-lane AM illustration and LSB-first warning. Exact IEEE mapping remains deferred to 119.2.4.7. |
 | S9 | [IEEE 802.3 Working Group discussion](https://www.ieee802.org/3/email_dialog/msg00924.html), 14 Jun 2019 | Official explanatory archive, not normative text | Confirms that individual Idle deletion locations for AM capacity are implementation-owned. |
 | S10 | [OIF-EEI-112G-RTLR 1.0](https://www.oiforum.com/wp-content/uploads/OIF-EEI-112G-RTLR-01.0.pdf), 2025, 1.3.2 p. 10; [CMIS 5.0](https://www.oiforum.com/wp-content/uploads/CMIS5p0_Third_Party_Spec.pdf), glossary p. 27 | Final OIF specifications | Conditional `precoder: none` and Gray-label conventions for a selected OIF/CMIS compatible implementation only. |
+| S11 | [IEEE Xplore document 9844436](https://ieeexplore.ieee.org/document/9844436), unauthenticated header check on 2026-09-21 | Official access evidence only | The response did not expose normative text. The blocked register and manifest record the remaining lawful review work. |
+
+## IEEE line-check artifacts
+
+The blocked [IEEE line-check register](inspector-ieee-line-check.md) and
+`test/fixtures/inspector/ieee-8023-2022-source-manifest.json` were prepared
+without transcribing any final IEEE text. They hold one blocked record for
+each required final clause and a separate source hash and interpreted-fixture
+hash field for Annex 119A. They do not admit a source artifact or a fixture.
+
+The only available unauthenticated Xplore evidence was an access-control
+response, not a normative-text response. No account authentication, purchase,
+or access circumvention was attempted. A reviewer with their own authorized
+Reading Room or licensed-copy access must complete the records before any
+candidate rule can become a profile constant.
 
 ## Consolidated evidence matrix
 

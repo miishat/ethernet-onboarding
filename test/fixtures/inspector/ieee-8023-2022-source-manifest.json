@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "kind": "ieee-source-manifest",
+  "targetEdition": "IEEE Std 802.3-2022",
+  "profileId": "400gbase-dr4-tx-v1",
+  "status": "blocked",
+  "createdOn": "2026-09-21",
+  "sourceAccess": {
+    "officialDocumentUrl": "https://ieeexplore.ieee.org/document/9844436",
+    "permittedPaths": ["IEEE Reading Room", "licensed copy"],
+    "authenticatedTextInspected": false,
+    "nonAuthenticatedObservation": "The public document record did not expose normative text to this workspace. No authentication, purchase, or bypass was attempted."
+  },
+  "verifiedRuleRecordSchema": {
+    "ruleId": "string",
+    "edition": "IEEE Std 802.3-2022",
+    "clause": "string",
+    "tableOrFigure": ["string", "null"],
+    "page": ["integer", "null"],
+    "lines": "string",
+    "retrievedOn": ["YYYY-MM-DD", "null"],
+    "accessPath": ["IEEE Reading Room", "licensed copy", "null"],
+    "implementationConvention": "string",
+    "reviewer": ["string", "null"],
+    "status": ["verified", "blocked"]
+  },
+  "records": [
+    {"ruleId": "scrambler-recurrence", "edition": "IEEE Std 802.3-2022", "clause": "49.2.6", "tableOrFigure": null, "page": null, "lines": "unread", "retrievedOn": null, "accessPath": null, "implementationConvention": "No convention entered pending final line review.", "reviewer": null, "status": "blocked"},
+    {"ruleId": "encode66-control-tables", "edition": "IEEE Std 802.3-2022", "clause": "82", "tableOrFigure": null, "page": null, "lines": "unread", "retrievedOn": null, "accessPath": null, "implementationConvention": "No convention entered pending final line review.", "reviewer": null, "status": "blocked"},
+    {"ruleId": "rs-cdmii-placement", "edition": "IEEE Std 802.3-2022", "clause": "117", "tableOrFigure": null, "page": null, "lines": "unread", "retrievedOn": null, "accessPath": null, "implementationConvention": "No convention entered pending final line review.", "reviewer": null, "status": "blocked"},
+    {"ruleId": "pcs-transmit-flow", "edition": "IEEE Std 802.3-2022", "clause": "119.2.4.1", "tableOrFigure": null, "page": null, "lines": "unread", "retrievedOn": null, "accessPath": null, "implementationConvention": "No convention entered pending final line review.", "reviewer": null, "status": "blocked"},
+    {"ruleId": "transcode257-order", "edition": "IEEE Std 802.3-2022", "clause": "119.2.4.2", "tableOrFigure": null, "page": null, "lines": "unread", "retrievedOn": null, "accessPath": null, "implementationConvention": "No convention entered pending final line review.", "reviewer": null, "status": "blocked"},
+    {"ruleId": "scrambler-application", "edition": "IEEE Std 802.3-2022", "clause": "119.2.4.3", "tableOrFigure": null, "page": null, "lines": "unread", "retrievedOn": null, "accessPath": null, "implementationConvention": "No convention entered pending final line review.", "reviewer": null, "status": "blocked"},
+    {"ruleId": "am-values-status-pad", "edition": "IEEE Std 802.3-2022", "clause": "119.2.4.4", "tableOrFigure": null, "page": null, "lines": "unread", "retrievedOn": null, "accessPath": null, "implementationConvention": "No convention entered pending final line review.", "reviewer": null, "status": "blocked"},
+    {"ruleId": "pre-fec-distribution", "edition": "IEEE Std 802.3-2022", "clause": "119.2.4.5", "tableOrFigure": null, "page": null, "lines": "unread", "retrievedOn": null, "accessPath": null, "implementationConvention": "No convention entered pending final line review.", "reviewer": null, "status": "blocked"},
+    {"ruleId": "rs-codeword-orientation", "edition": "IEEE Std 802.3-2022", "clause": "119.2.4.6", "tableOrFigure": null, "page": null, "lines": "unread", "retrievedOn": null, "accessPath": null, "implementationConvention": "No convention entered pending final line review.", "reviewer": null, "status": "blocked"},
+    {"ruleId": "codeword-interleave", "edition": "IEEE Std 802.3-2022", "clause": "119.2.4.7", "tableOrFigure": null, "page": null, "lines": "unread", "retrievedOn": null, "accessPath": null, "implementationConvention": "No convention entered pending final line review.", "reviewer": null, "status": "blocked"},
+    {"ruleId": "pma-16-to-4", "edition": "IEEE Std 802.3-2022", "clause": "120.5.2", "tableOrFigure": null, "page": null, "lines": "unread", "retrievedOn": null, "accessPath": null, "implementationConvention": "No convention entered pending final line review.", "reviewer": null, "status": "blocked"},
+    {"ruleId": "dr4-scope", "edition": "IEEE Std 802.3-2022", "clause": "124", "tableOrFigure": null, "page": null, "lines": "unread", "retrievedOn": null, "accessPath": null, "implementationConvention": "No convention entered pending final line review.", "reviewer": null, "status": "blocked"},
+    {"ruleId": "annex-119a-fixture", "edition": "IEEE Std 802.3-2022", "clause": "Annex 119A", "tableOrFigure": null, "page": null, "lines": "unread", "retrievedOn": null, "accessPath": null, "implementationConvention": "No convention entered pending final line review.", "reviewer": null, "status": "blocked"}
+  ],
+  "annex119a": {
+    "fixtureId": "ieee-8023-2022-119a-400g-idle-am",
+    "status": "blocked",
+    "tableIds": [],
+    "exactStateValues": null,
+    "sourceHash": null,
+    "sourceHashAlgorithm": "sha256",
+    "interpretedFixtureHash": null,
+    "interpretedFixtureHashAlgorithm": "sha256",
+    "encodingDirection": null,
+    "transcribedBytesOrBits": [],
+    "note": "No Annex 119A rows, values, bytes, or bit strings were read or transcribed. sourceHash covers the licensed source artifact once admitted; interpretedFixtureHash covers a separately generated repository fixture."
+  },
+  "independentReview": {
+    "reviewer": null,
+    "reviewedCommit": null,
+    "reviewedOn": null,
+    "result": "pending",
+    "hashesRecomputed": false
+  }
+}

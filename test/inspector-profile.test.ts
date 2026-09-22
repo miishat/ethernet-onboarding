@@ -3,6 +3,13 @@ import { DEFAULT_FRAME, DEFAULT_STREAM } from "../src/inspector/defaults";
 import { getProfileSupport, PROFILE, PROFILE_VERIFICATION } from "../src/inspector/profiles";
 
 describe("inspector profile capability gate", () => {
+  it.fails("requires every normative rule and fixture before enabling PCS calculation", () => {
+    expect(PROFILE_VERIFICATION.unresolvedRuleIds).toEqual([]);
+    expect(
+      (PROFILE_VERIFICATION as { fixtureIds?: readonly string[] }).fixtureIds ?? [],
+    ).toContain("ieee-8023-2022-119a-400g-idle-am");
+  });
+
   it("keeps the intended 400G transmit profile unavailable until its rules are verified", () => {
     const support = getProfileSupport("400G", "tx", "100");
     expect(support.supported).toBe(false);
