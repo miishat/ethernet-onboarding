@@ -109,6 +109,23 @@ describe("experimental reference scrambling and alignment markers", () => {
     expect(prepareStream({ provenance, words: afterWords }, { ...policy, maximumDeferralBlocks: 1 }, 38)).toMatchObject({ ok: false, errors: { run: expect.stringMatching(/maximum deferral/i) } });
   });
 
+  it("selects the earliest eligible Idles across a reservation boundary", () => {
+    const provenance = blocks(1)[0].provenance;
+    const idle = (index: number) => ({ index, octets: Uint8Array.from({ length: 8 }, () => 0x07), controlMask: 0xff, provenance });
+    const data = (index: number) => ({ index, octets: Uint8Array.of(0xfb, 1, 2, 3, 4, 5, 6, 7), controlMask: 1, provenance });
+    const mixed = Array.from({ length: 12 }, (_, index) => index < 7 || index === 8 ? idle(index) : data(index));
+    const selected = prepareStream({ provenance, words: mixed }, { ...policy, maximumDeferralBlocks: 1 }, 38);
+    expect(selected.ok).toBe(true);
+    if (!selected.ok) throw new Error(selected.errors.run);
+    expect(selected.value.deletions.map((entry) => entry.originalWordIndex)).toEqual([0, 1, 2, 3, 4, 5, 6, 8]);
+    expect(selected.value.deletions.every((entry) => entry.reservation.groupIndex === 1 && entry.reservation.insertionBitOffset === 514)).toBe(true);
+
+    const insufficient = prepareStream({ provenance, words: mixed.filter((word) => word.index !== 8) }, { ...policy, maximumDeferralBlocks: 4 }, 38);
+    expect(insufficient).toMatchObject({ ok: false, errors: { run: expect.stringMatching(/enough eligible/i) } });
+    const beyond = Array.from({ length: 22 }, (_, index) => index >= 13 && index < 21 ? idle(index) : data(index));
+    expect(prepareStream({ provenance, words: beyond }, { ...policy, maximumDeferralBlocks: 1 }, 38)).toMatchObject({ ok: false, errors: { run: expect.stringMatching(/maximum deferral/i) } });
+  });
+
   it("deep-freezes ledger entries supplied to marker planning", () => {
     const mutable = { originalWordIndex: 0, originalOctetOffset: 0, originalBitOffset: 0, idleOctets: [7, 7, 7, 7, 7, 7, 7, 7], controlMask: 0xff, policyId: policy.id, reason: "alignment-marker-reservation" as const, reservation: { groupIndex: 0, insertionBitOffset: 0, fecPairIndex: 0, boundaryKind: "am-group" as const } };
     const plan = planMarkers(blocks(1), policy, { absoluteStreamBlock: 0 }, Object.freeze([mutable]));

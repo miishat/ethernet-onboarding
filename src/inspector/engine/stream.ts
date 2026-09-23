@@ -64,15 +64,14 @@ export function prepareStream(input: InterfaceStream, policy: RateMatchPolicy, a
     const absoluteReservationBlock = schedule.phaseZeroAbsoluteStreamBlock + groupIndex * schedule.cadenceBlocks;
     const inputBlockIndex = absoluteReservationBlock - absoluteStreamBlock;
     const reservationWordBoundary = inputBlockIndex * 4;
-    const beforeBoundary = eligible.filter((word) => !selected.has(word.index) && (inputBlockIndex === 0 || word.index < reservationWordBoundary));
-    const chosen = beforeBoundary.length >= wordsPerReservation
-      ? beforeBoundary.slice(0, wordsPerReservation)
-      : eligible.filter((word) => !selected.has(word.index) && word.index >= reservationWordBoundary && word.index <= reservationWordBoundary + policy.maximumDeferralBlocks * 4).slice(0, wordsPerReservation);
+    const deferralLimit = reservationWordBoundary + policy.maximumDeferralBlocks * 4;
+    // Preserve original absolute word order across the boundary. This admits
+    // any earlier Idle first, then only the bounded post-reservation suffix.
+    const chosen = eligible.filter((word) => !selected.has(word.index) && word.index <= deferralLimit).slice(0, wordsPerReservation);
     if (chosen.length < wordsPerReservation) {
-      const deferralLimit = reservationWordBoundary + policy.maximumDeferralBlocks * 4;
-      const withinDeferral = eligible.filter((word) => !selected.has(word.index) && word.index <= deferralLimit);
-      if (withinDeferral.length < wordsPerReservation) return { ok: false, errors: { run: "The product-owned rate-match policy cannot find enough eligible Idle words before its maximum deferral." } };
-      return { ok: false, errors: { run: "The product-owned rate-match policy requires eligible Idle words before each marker reservation." } };
+      const remaining = eligible.filter((word) => !selected.has(word.index));
+      if (remaining.length < wordsPerReservation) return { ok: false, errors: { run: "The product-owned rate-match policy cannot find enough eligible Idle words for this reservation." } };
+      return { ok: false, errors: { run: "The product-owned rate-match policy cannot find enough eligible Idle words before its maximum deferral." } };
     }
     for (const word of chosen) {
       selected.add(word.index);

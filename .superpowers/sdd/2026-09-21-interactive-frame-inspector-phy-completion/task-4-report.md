@@ -72,3 +72,13 @@ Ledger construction now copies and freezes the ledger array, each deletion,
 each deletion's Idle-octet array, and each nested reservation mapping.
 `MarkerPlan` normalizes even a caller-supplied frozen outer array, so mutable
 entries cannot escape through the plan or marker result.
+
+## Fix round 3
+
+Selection now uses one original-word-order eligible window ending at the
+declared deferral limit. It therefore selects available Idles before a marker
+reservation first and continues into the permitted post-reservation window
+only for the remaining required words. The exact reservation provenance on all
+eight resulting entries is unchanged. Focused tests cover seven Idles before
+plus one within the window, insufficient total eligible Idles, and eight Idles
+that begin beyond the bound.
