@@ -54,7 +54,14 @@ export const REFERENCE_SOURCES = Object.freeze([
     edition: "IEEE P802.3bs/D1.4, 7 April 2016, marked-up contribution",
     sourceUrl: "https://www.ieee802.org/3/bs/public/16_05/ofelt_3bs_03_0516.pdf",
     retrievedOn: "2026-09-20",
-    verificationScope: "Clause 119 draft locators only; not the published target edition.",
+    verificationScope: "Candidate-only D1.4 Clause 119 source. The experimental PCS reference uses pages 98-101 for bit ordering, headers, and the 257-bit construction. It does not establish IEEE verification or standards conformance.",
+    candidateArtifact: Object.freeze({
+      retrievedOn: "2026-09-23",
+      sha256: "64f58abe7bc197578eebd0a0dc8d4b0d97e4855173b61bce6955e97b5accc1f9",
+      pages: Object.freeze([98, 99, 100, 101]),
+      status: "experimental-candidate",
+      missingControlTablePolicy: "product-owned-cdmii-controls-v1",
+    }),
   }),
   Object.freeze({
     id: "ieee-bs-dr4-geometry-context",

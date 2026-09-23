@@ -1,0 +1,32 @@
+{
+  "id": "pcs-d14-reference-v1",
+  "profileId": "400gbase-dr4-tx-reference-pma-v1",
+  "status": "experimental-candidate",
+  "sourceId": "ieee-bs-d14-cl119-locator",
+  "controlPolicyId": "product-owned-cdmii-controls-v1",
+  "retrievedOn": "2026-09-23",
+  "sourceSha256": "64f58abe7bc197578eebd0a0dc8d4b0d97e4855173b61bce6955e97b5accc1f9",
+  "sourcePages": [98, 99, 100, 101],
+  "conventions": {
+    "bitOrder": "least-significant-bit first",
+    "dataHeaderBits": [0, 1],
+    "controlHeaderBits": [1, 0],
+    "allDataLeadingBit": 1,
+    "controlLeadingBit": 0
+  },
+  "productOwnedControlPolicy": {
+    "reason": "D1.4 pages 98-99 delegate Figure 82-5 and Table 82-1, which are absent from the public D1.4 extract.",
+    "idleOctet": "07",
+    "startOctet": "FB",
+    "terminateOctet": "FD",
+    "allIdleBlockType": "1E",
+    "startBlockType": "78",
+    "terminateBlockTypes": ["87", "99", "AA", "B4", "CC", "D2", "E1", "FF"]
+  },
+  "provenanceLabels": [
+    "Experimental reference using candidate contracts",
+    "Candidate IEEE source",
+    "Independent local fixture",
+    "Not IEEE verified or standards conformant"
+  ]
+}
