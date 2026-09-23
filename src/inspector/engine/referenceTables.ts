@@ -29,9 +29,9 @@ export const REFERENCE_SOURCES = Object.freeze([
     edition: "Project-owned experimental reference profile",
     sourceUrl: "docs/inspector-profile.md",
     retrievedOn: "2026-09-23",
-    verificationScope: "Candidate-contract metadata only. This record does not add PCS, PMA, or PAM4 calculation code and does not establish IEEE verification or standards conformance.",
-    availability: "metadata-only",
-    runtimeSupport: "not-implemented",
+    verificationScope: "Experimental candidate PCS calculation only. It does not enable the IEEE-only profile, PMA, or PAM4 calculations and does not establish IEEE verification or standards conformance.",
+    availability: "experimental-pcs-only",
+    runtimeSupport: "pcs-implemented-experimental-only",
     provenanceLabels: Object.freeze([
       "Experimental reference using candidate contracts",
       "Candidate IEEE source",

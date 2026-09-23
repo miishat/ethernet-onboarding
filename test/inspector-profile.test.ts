@@ -62,7 +62,7 @@ describe("inspector profile capability gate", () => {
       .toMatchObject({ supported: true, provenance: "reference-mapping" });
   });
 
-  it("records the experimental reference profile as metadata-only with immutable disclosures", () => {
+  it("records experimental PCS-only support with immutable disclosures", () => {
     expect(getProfileSupport("400G", "tx", "100").supported).toBe(false);
 
     const experimentalProfile = REFERENCE_SOURCES.find(
@@ -75,8 +75,8 @@ describe("inspector profile capability gate", () => {
 
     expect(experimentalProfile).toMatchObject({
       id: "400gbase-dr4-tx-reference-pma-v1",
-      availability: "metadata-only",
-      runtimeSupport: "not-implemented",
+      availability: "experimental-pcs-only",
+      runtimeSupport: "pcs-implemented-experimental-only",
       standardsConformance: "not-claimed",
       independentLocalFixturePolicy: "required-before-expected-output-admission",
     });

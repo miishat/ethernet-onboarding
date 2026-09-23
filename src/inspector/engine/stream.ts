@@ -6,6 +6,8 @@ export const EXPERIMENTAL_PCS_PROVENANCE = Object.freeze({
   sourceId: "ieee-bs-d14-cl119-locator",
   controlPolicyId: "product-owned-cdmii-controls-v1",
   label: "Experimental reference using candidate contracts",
+  candidateArtifactSha256: "64f58abe7bc197578eebd0a0dc8d4b0d97e4855173b61bce6955e97b5accc1f9",
+  candidatePages: Object.freeze([98, 99, 100, 101]),
 });
 
 export interface InterfaceWord {

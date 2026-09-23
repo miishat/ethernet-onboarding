@@ -77,8 +77,8 @@
   "experimentalProfiles": [
     {
       "id": "400gbase-dr4-tx-reference-pma-v1",
-      "status": "metadata-only",
-      "runtimeSupport": "not-implemented",
+      "status": "experimental-pcs-only",
+      "runtimeSupport": "pcs-implemented-experimental-only",
       "provenanceLabels": [
         "Experimental reference using candidate contracts",
         "Candidate IEEE source",
@@ -94,7 +94,7 @@
       ],
       "independentLocalFixturePolicy": "required-before-expected-output-admission",
       "standardsConformance": "not-claimed",
-      "verificationScope": "Metadata only. No 400G pipeline or expected-output fixture is implemented, and the IEEE-only profile stays verification-blocked."
+      "verificationScope": "Candidate CDMII, 64B/66B, and 256B/257B calculation only. The IEEE-only profile stays verification-blocked."
     }
   ],
   "blockedBy": [

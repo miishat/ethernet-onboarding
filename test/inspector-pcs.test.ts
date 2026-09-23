@@ -4,6 +4,9 @@ import { octetsToBits, bitsToOctets, readBits, writeBits } from "../src/inspecto
 import { buildInterfaceStream } from "../src/inspector/engine/stream";
 import { encode66Block } from "../src/inspector/engine/encode66";
 import { transcode257Group } from "../src/inspector/engine/transcode257";
+import vectors from "./fixtures/inspector/pcs-d14-reference-v1.json";
+
+const bits = (value: Uint8Array) => Array.from(value).join("");
 
 const mac = buildMacFrame({
   destination: Uint8Array.of(2, 0, 0, 0, 0, 2),
@@ -40,6 +43,15 @@ describe("experimental PCS reference serialization", () => {
   it("rejects a prefix that cannot represent whole CDMII words", () => {
     expect(buildInterfaceStream(mac, 1)).toMatchObject({ ok: false, errors: { run: expect.stringMatching(/multiple of eight/i) } });
   });
+
+  it.each([46, 47, 48, 49, 50, 51, 52, 53])("generates each terminate placement and completes a four-word group for a %i-byte payload", (payloadBytes) => {
+    const frame = buildMacFrame({ destination: Uint8Array.of(2, 0, 0, 0, 0, 2), source: Uint8Array.of(2, 0, 0, 0, 0, 1), etherType: 0x88b5, payload: new Uint8Array(payloadBytes) });
+    const result = buildInterfaceStream(frame, 8);
+    if (!result.ok) throw new Error(result.errors.run);
+    const term = result.value.words.find((word) => word.octets.includes(0xfd));
+    expect(term?.octets.indexOf(0xfd)).toBe(payloadBytes - 46);
+    expect(result.value.words.length % 4).toBe(0);
+  });
 });
 
 describe("experimental 64B/66B and 256B/257B reference blocks", () => {
@@ -62,5 +74,20 @@ describe("experimental 64B/66B and 256B/257B reference blocks", () => {
     const group = transcode257Group(blocks.map((block) => (block as { ok: true; value: any }).value) as any);
     expect(group).toMatchObject({ ok: true, value: { index: 0, sourceBlockIds: [0, 1, 2, 3], bits: expect.any(Uint8Array) } });
     if (group.ok) expect(group.value.bits).toHaveLength(257);
+  });
+
+  it("matches independent frozen all-data and mixed-control 66b and 257b vectors", () => {
+    for (const fixture of [vectors.vectors.allData, vectors.vectors.mixedControl]) {
+      const blocks = fixture.inputOctets.map((octets, index) => {
+        const block = encode66Block({ index, octets: Uint8Array.from(octets), controlMask: fixture.controlMasks[index] });
+        if (!block.ok) throw new Error(block.errors.run);
+        expect(bits(block.value.bits)).toBe(fixture.expected66Bits[index]);
+        return block.value;
+      });
+      const group = transcode257Group(blocks as [typeof blocks[0], typeof blocks[1], typeof blocks[2], typeof blocks[3]]);
+      if (!group.ok) throw new Error(group.errors.run);
+      expect(bits(group.value.bits)).toBe(fixture.expected257Bits);
+      expect(group.value.provenance).toMatchObject({ candidateArtifactSha256: vectors.sourceSha256, candidatePages: vectors.sourcePages });
+    }
   });
 });
