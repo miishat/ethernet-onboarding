@@ -1,9 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_FRAME, DEFAULT_STREAM } from "../src/inspector/defaults";
+import {
+  DEFAULT_FRAME,
+  DEFAULT_STREAM,
+  REFERENCE_PMA_MAPPING,
+} from "../src/inspector/defaults";
 import { REFERENCE_SOURCES } from "../src/inspector/engine/referenceTables";
 import {
   getProfileSupport,
   getStageSupport,
+  EXPERIMENTAL_REFERENCE_CALCULATION_CONTRACT,
   PROFILE,
   PROFILE_VERIFICATION,
 } from "../src/inspector/profiles";
@@ -45,6 +50,16 @@ describe("inspector profile capability gate", () => {
       provenance: "reference-mapping",
     });
     expect(referencePam4.reason).toMatch(/declared.*contract.*not.*calculation/i);
+  });
+
+  it("labels the declared reference mapping as experimental and exposes both declared PMA stages", () => {
+    expect(EXPERIMENTAL_REFERENCE_CALCULATION_CONTRACT.label).toBe(
+      "Experimental 400GBASE-DR4 with Reference 16-to-4 mapping",
+    );
+    expect(getStageSupport("400gbase-dr4-tx-reference-pma-v1", "physical-lanes"))
+      .toMatchObject({ supported: true, provenance: "reference-mapping" });
+    expect(getStageSupport("400gbase-dr4-tx-reference-pma-v1", "pam4"))
+      .toMatchObject({ supported: true, provenance: "reference-mapping" });
   });
 
   it("records the experimental reference profile as metadata-only with immutable disclosures", () => {
@@ -108,6 +123,29 @@ describe("inspector profile capability gate", () => {
 });
 
 describe("inspector teaching defaults", () => {
+  it("freezes the exact project-owned reference 16-to-4 mapping", () => {
+    expect(REFERENCE_PMA_MAPPING).toMatchObject({
+      id: "reference-16x4-bit-mux-v1",
+      periodBits: 4,
+      initialPhase: 0,
+      firstBitSignificance: "msb",
+      grayLevels: { "00": -3, "01": -1, "11": 1, "10": 3 },
+      precoder: { mode: "none" },
+    });
+    expect(REFERENCE_PMA_MAPPING.sourcePcsLaneByPmdLane).toEqual([
+      [0, 1, 2, 3],
+      [4, 5, 6, 7],
+      [8, 9, 10, 11],
+      [12, 13, 14, 15],
+    ]);
+    expect(() => (REFERENCE_PMA_MAPPING.sourcePcsLaneByPmdLane[0] as number[])[0] = 15)
+      .toThrow();
+    expect(() => (REFERENCE_PMA_MAPPING.grayLevels as Record<string, number>)["00"] = 3)
+      .toThrow();
+    expect(() => (REFERENCE_PMA_MAPPING.precoder as { mode: string }).mode = "present")
+      .toThrow();
+  });
+
   it("provides the requested local experimental frame draft", () => {
     expect(DEFAULT_FRAME).toEqual({
       destination: "02:00:00:00:00:02",

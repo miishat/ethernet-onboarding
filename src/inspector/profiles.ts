@@ -28,7 +28,7 @@ export const PROFILE_VERIFICATION = Object.freeze({
  */
 export const EXPERIMENTAL_REFERENCE_CALCULATION_CONTRACT: Readonly<CalculationContract> = Object.freeze({
   id: "400gbase-dr4-tx-reference-pma-v1",
-  label: "400GBASE-DR4 with Reference 16-to-4 mapping",
+  label: "Experimental 400GBASE-DR4 with Reference 16-to-4 mapping",
   provenance: "reference-mapping",
   declaredStages: Object.freeze(["physical-lanes", "pam4"] as const),
   executionStatus: "declared-contract-only",

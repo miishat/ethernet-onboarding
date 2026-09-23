@@ -39,3 +39,22 @@ No protocol engine was added or changed. The IEEE-only profile remains hard
 disabled. The experimental stage declaration does not permit calculation or
 claim standards conformance; it gives Tasks 3 through 8 typed, named contract
 inputs only.
+
+## Fix round 1
+
+The public experimental contract label is now `Experimental 400GBASE-DR4 with
+Reference 16-to-4 mapping`. The PMA UI label remains `Reference 16-to-4
+mapping` as required. Focused coverage now asserts the exact four mapping
+schedules, period, initial phase, Gray levels, no-precoder declaration, both
+declared experimental PMA stage responses, and deep immutability of the nested
+lane arrays, Gray-level object, and precoder object.
+
+TDD evidence: the new label assertion first failed because the public label
+omitted `Experimental`, then passed after that one label change.
+
+Verification after the fix:
+
+- `npm exec vitest run test/inspector-profile.test.ts` passed: 18 tests.
+- `npm run typecheck` passed.
+- `npm test` passed: 93 Vitest tests and 23 Node tests.
+- `git diff --check` passed.
