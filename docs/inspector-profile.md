@@ -1,6 +1,6 @@
 # Inspector profile contract: verification blocked
 
-Status updated 2026-09-23: **IEEE verification blocked; experimental reference metadata authorized.** `getProfileSupport` returns `supported: false` for every IEEE-only selection, including `400G / tx / 100`. IEEE Std 802.3-2022 is available through the IEEE Reading Room, but requires account sign-in; this research session did not inspect that final text. Clause 119 FEC-distribution and PCS-lane formulas remain candidates for the IEEE-only profile. The existing final ITU-T evidence is sufficient only for the isolated RS(544,514) primitive. A separate metadata-only experimental reference contract reserves retained candidate provenance for a future pipeline. It does not claim IEEE verification or standards conformance. See `docs/inspector-source-research-2026-09-21.md`.
+Status updated 2026-09-23: **IEEE verification blocked; experimental reference contract authorized.** `getProfileSupport` returns `supported: false` for every IEEE-only selection, including `400G / tx / 100`. IEEE Std 802.3-2022 is available through the IEEE Reading Room, but requires account sign-in; this research session did not inspect that final text. Clause 119 FEC-distribution and PCS-lane formulas remain candidates for the IEEE-only profile. The existing final ITU-T evidence is sufficient only for the isolated RS(544,514) primitive. The experimental reference contract declares a project-owned PMA and PAM4 interface for future consumers. `getStageSupport` reports that declaration only. It does not report an implemented calculation, IEEE verification, or standards conformance. See `docs/inspector-source-research-2026-09-21.md`.
 
 ## Intended scope and API
 
@@ -8,9 +8,9 @@ The reserved profile ID is `400gbase-dr4-tx-v1`. The selected target edition is 
 
 ## Experimental reference profile
 
-`400gbase-dr4-tx-reference-pma-v1` is a metadata-only contract for a future
-project-owned experimental pipeline. The repository does not expose executable
-support for it yet. Once implemented, it may use retained candidate contracts
+`400gbase-dr4-tx-reference-pma-v1` is a declared-contract-only profile for a future
+project-owned experimental pipeline. Its declared physical-lane and PAM4 contract
+availability is not executable calculation support. Once implemented, it may use retained candidate contracts
 and a project-owned reference PMA mapping, but it must never be labeled
 `IEEE-derived`, `IEEE verified`, `standards conformant`, or `400GBASE-DR4`
 without its experimental qualifier.
@@ -21,6 +21,9 @@ Every experimental result must show all of these provenance labels:
 - `Candidate IEEE source`
 - `Independent local fixture`
 - `Not IEEE verified or standards conformant`
+
+Its PMA UI label is `Reference 16-to-4 mapping`; its PMA profile ID is
+`reference-16x4-bit-mux-v1`, never an IEEE-only profile ID.
 
 The profile's candidate-source IDs are `ieee-bs-d14-cl119-locator`,
 `ieee-bs-dr4-geometry-context`, `itu-g7095-2024-cor1-rs544`,

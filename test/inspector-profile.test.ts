@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_FRAME, DEFAULT_STREAM } from "../src/inspector/defaults";
 import { REFERENCE_SOURCES } from "../src/inspector/engine/referenceTables";
-import { getProfileSupport, PROFILE, PROFILE_VERIFICATION } from "../src/inspector/profiles";
+import {
+  getProfileSupport,
+  getStageSupport,
+  PROFILE,
+  PROFILE_VERIFICATION,
+} from "../src/inspector/profiles";
 
 describe("inspector profile capability gate", () => {
   it.fails("requires every normative rule and fixture before enabling PCS calculation", () => {
@@ -17,6 +22,29 @@ describe("inspector profile capability gate", () => {
     expect(support.reason).toMatch(/verification.*blocked/i);
     expect(PROFILE_VERIFICATION.status).toBe("blocked");
     expect(PROFILE_VERIFICATION.unresolvedRuleIds.length).toBeGreaterThan(0);
+  });
+
+  it("keeps IEEE stages blocked while declaring the experimental reference PAM4 contract", () => {
+    const ieeePcs = getStageSupport("400gbase-r-tx-v1", "pcs-lanes");
+    const ieeePhysical = getStageSupport("400gbase-r-tx-v1", "physical-lanes");
+    const referencePam4 = getStageSupport(
+      "400gbase-dr4-tx-reference-pma-v1",
+      "pam4",
+    );
+
+    expect(ieeePcs).toMatchObject({
+      supported: false,
+      provenance: "blocked",
+    });
+    expect(ieeePhysical).toMatchObject({
+      supported: false,
+      provenance: "blocked",
+    });
+    expect(referencePam4).toMatchObject({
+      supported: true,
+      provenance: "reference-mapping",
+    });
+    expect(referencePam4.reason).toMatch(/declared.*contract.*not.*calculation/i);
   });
 
   it("records the experimental reference profile as metadata-only with immutable disclosures", () => {
