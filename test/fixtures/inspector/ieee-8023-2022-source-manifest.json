@@ -3,13 +3,22 @@
   "kind": "ieee-source-manifest",
   "targetEdition": "IEEE Std 802.3-2022",
   "profileId": "400gbase-dr4-tx-v1",
-  "status": "blocked",
+  "status": "partially-admitted",
   "createdOn": "2026-09-21",
   "sourceAccess": {
     "officialDocumentUrl": "https://ieeexplore.ieee.org/document/9844436",
-    "permittedPaths": ["IEEE Reading Room", "licensed copy"],
+    "permittedPaths": ["IEEE Reading Room", "licensed copy", "user-provided local copy"],
     "authenticatedTextInspected": false,
-    "nonAuthenticatedObservation": "The public document record did not expose normative text to this workspace. No authentication, purchase, or bypass was attempted."
+    "localTextInspected": true,
+    "localAccessPath": "user-provided local copy",
+    "localReviewedOn": "2026-09-23",
+    "localArtifacts": [
+      "8023-2022-4817-4823-Clause-117_compressed.pdf",
+      "8023-2022-4836-4874-Clause-119_compressed.pdf",
+      "8023-2022-4875-4904-Clause-120_compressed.pdf",
+      "8023-2022-4988-5009-Clause-124_compressed.pdf"
+    ],
+    "nonAuthenticatedObservation": "Public document access did not expose normative text. The listed user-provided local copies were reviewed without authentication, purchase, or bypass."
   },
   "experimentalReferenceContract": {
     "profileId": "400gbase-dr4-tx-reference-pma-v1",
@@ -40,7 +49,7 @@
     "page": ["integer", "null"],
     "lines": "string",
     "retrievedOn": ["YYYY-MM-DD", "null"],
-    "accessPath": ["IEEE Reading Room", "licensed copy", "null"],
+    "accessPath": ["IEEE Reading Room", "licensed copy", "user-provided local copy", "null"],
     "implementationConvention": "string",
     "reviewer": ["string", "null"],
     "status": ["verified", "blocked"]
@@ -49,15 +58,15 @@
     {"ruleId": "scrambler-recurrence", "edition": "IEEE Std 802.3-2022", "clause": "49.2.6", "tableOrFigure": null, "page": null, "lines": "unread", "retrievedOn": null, "accessPath": null, "implementationConvention": "No convention entered pending final line review.", "reviewer": null, "status": "blocked"},
     {"ruleId": "encode66-control-tables", "edition": "IEEE Std 802.3-2022", "clause": "82", "tableOrFigure": null, "page": null, "lines": "unread", "retrievedOn": null, "accessPath": null, "implementationConvention": "No convention entered pending final line review.", "reviewer": null, "status": "blocked"},
     {"ruleId": "rs-cdmii-placement", "edition": "IEEE Std 802.3-2022", "clause": "117", "tableOrFigure": null, "page": null, "lines": "unread", "retrievedOn": null, "accessPath": null, "implementationConvention": "No convention entered pending final line review.", "reviewer": null, "status": "blocked"},
-    {"ruleId": "pcs-transmit-flow", "edition": "IEEE Std 802.3-2022", "clause": "119.2.4.1", "tableOrFigure": null, "page": null, "lines": "unread", "retrievedOn": null, "accessPath": null, "implementationConvention": "No convention entered pending final line review.", "reviewer": null, "status": "blocked"},
-    {"ruleId": "transcode257-order", "edition": "IEEE Std 802.3-2022", "clause": "119.2.4.2", "tableOrFigure": null, "page": null, "lines": "unread", "retrievedOn": null, "accessPath": null, "implementationConvention": "No convention entered pending final line review.", "reviewer": null, "status": "blocked"},
-    {"ruleId": "scrambler-application", "edition": "IEEE Std 802.3-2022", "clause": "119.2.4.3", "tableOrFigure": null, "page": null, "lines": "unread", "retrievedOn": null, "accessPath": null, "implementationConvention": "No convention entered pending final line review.", "reviewer": null, "status": "blocked"},
-    {"ruleId": "am-values-status-pad", "edition": "IEEE Std 802.3-2022", "clause": "119.2.4.4", "tableOrFigure": null, "page": null, "lines": "unread", "retrievedOn": null, "accessPath": null, "implementationConvention": "No convention entered pending final line review.", "reviewer": null, "status": "blocked"},
-    {"ruleId": "pre-fec-distribution", "edition": "IEEE Std 802.3-2022", "clause": "119.2.4.5", "tableOrFigure": null, "page": null, "lines": "unread", "retrievedOn": null, "accessPath": null, "implementationConvention": "No convention entered pending final line review.", "reviewer": null, "status": "blocked"},
-    {"ruleId": "rs-codeword-orientation", "edition": "IEEE Std 802.3-2022", "clause": "119.2.4.6", "tableOrFigure": null, "page": null, "lines": "unread", "retrievedOn": null, "accessPath": null, "implementationConvention": "No convention entered pending final line review.", "reviewer": null, "status": "blocked"},
-    {"ruleId": "codeword-interleave", "edition": "IEEE Std 802.3-2022", "clause": "119.2.4.7", "tableOrFigure": null, "page": null, "lines": "unread", "retrievedOn": null, "accessPath": null, "implementationConvention": "No convention entered pending final line review.", "reviewer": null, "status": "blocked"},
-    {"ruleId": "pma-16-to-4", "edition": "IEEE Std 802.3-2022", "clause": "120.5.2", "tableOrFigure": null, "page": null, "lines": "unread", "retrievedOn": null, "accessPath": null, "implementationConvention": "No convention entered pending final line review.", "reviewer": null, "status": "blocked"},
-    {"ruleId": "dr4-scope", "edition": "IEEE Std 802.3-2022", "clause": "124", "tableOrFigure": null, "page": null, "lines": "unread", "retrievedOn": null, "accessPath": null, "implementationConvention": "No convention entered pending final line review.", "reviewer": null, "status": "blocked"},
+    {"ruleId": "pcs-transmit-flow", "edition": "IEEE Std 802.3-2022", "clause": "119.2.4.1", "tableOrFigure": null, "page": 4840, "lines": "printed p. 4840; 8023-2022-4836-4874-Clause-119_compressed.pdf", "retrievedOn": "2026-09-23", "accessPath": "user-provided local copy", "implementationConvention": "Encode then transcode; rate matching removes eligible control characters or ordered sets for AM insertion.", "reviewer": "local IEEE audit", "status": "verified"},
+    {"ruleId": "transcode257-order", "edition": "IEEE Std 802.3-2022", "clause": "119.2.4.2", "tableOrFigure": "Figure 119-3", "page": 4841, "lines": "printed pp. 4841-4842; 8023-2022-4836-4874-Clause-119_compressed.pdf", "retrievedOn": "2026-09-23", "accessPath": "user-provided local copy", "implementationConvention": "Four inputs, j=3 newest; output serializes bit 0 first.", "reviewer": "local IEEE audit", "status": "verified"},
+    {"ruleId": "scrambler-application", "edition": "IEEE Std 802.3-2022", "clause": "119.2.4.3", "tableOrFigure": null, "page": 4842, "lines": "printed p. 4842; 8023-2022-4836-4874-Clause-119_compressed.pdf", "retrievedOn": "2026-09-23", "accessPath": "user-provided local copy", "implementationConvention": "Scramble the complete 257-bit block after transcoding; recurrence remains separately blocked.", "reviewer": "local IEEE audit", "status": "verified"},
+    {"ruleId": "am-values-status-pad", "edition": "IEEE Std 802.3-2022", "clause": "119.2.4.4.2", "tableOrFigure": "Table 119-2; Figure 119-8", "page": 4846, "lines": "printed pp. 4846-4848; 8023-2022-4836-4874-Clause-119_compressed.pdf", "retrievedOn": "2026-09-23", "accessPath": "user-provided local copy", "implementationConvention": "2056 bits: 8 x 257, 16 x 120-bit markers, 133-bit PRBS9 pad, 3 status bits; cadence 163840 blocks.", "reviewer": "local IEEE audit", "status": "verified"},
+    {"ruleId": "pre-fec-distribution", "edition": "IEEE Std 802.3-2022", "clause": "119.2.4.5", "tableOrFigure": null, "page": 4848, "lines": "printed p. 4848; 8023-2022-4836-4874-Clause-119_compressed.pdf", "retrievedOn": "2026-09-23", "accessPath": "user-provided local copy", "implementationConvention": "A 10280-bit, 40-block FEC pair becomes two 514-symbol messages by 10-bit round-robin distribution.", "reviewer": "local IEEE audit", "status": "verified"},
+    {"ruleId": "rs-codeword-orientation", "edition": "IEEE Std 802.3-2022", "clause": "119.2.4.6", "tableOrFigure": "Table 119-3", "page": 4848, "lines": "printed pp. 4848-4849; 8023-2022-4836-4874-Clause-119_compressed.pdf", "retrievedOn": "2026-09-23", "accessPath": "user-provided local copy", "implementationConvention": "RS(544,514) GF(2^10); first encoder input m[k-1]; temporal output c[n-1] first.", "reviewer": "local IEEE audit", "status": "verified"},
+    {"ruleId": "codeword-interleave", "edition": "IEEE Std 802.3-2022", "clause": "119.2.4.7", "tableOrFigure": null, "page": 4850, "lines": "printed p. 4850; 8023-2022-4836-4874-Clause-119_compressed.pdf", "retrievedOn": "2026-09-23", "accessPath": "user-provided local copy", "implementationConvention": "k=0..67 and j=0..7; A/B ownership alternates by k parity; distribute low PCS lane to high; symbol bit 0 first.", "reviewer": "local IEEE audit", "status": "verified"},
+    {"ruleId": "pma-16-to-4", "edition": "IEEE Std 802.3-2022", "clause": "120.5.2", "tableOrFigure": null, "page": 4881, "lines": "printed pp. 4881-4882; 8023-2022-4875-4904-Clause-120_compressed.pdf", "retrievedOn": "2026-09-23", "accessPath": "user-provided local copy", "implementationConvention": "16 PCSLs; permissible order is an implementation choice that must be maintained.", "reviewer": "local IEEE audit", "status": "verified"},
+    {"ruleId": "dr4-scope", "edition": "IEEE Std 802.3-2022", "clause": "124.1", "tableOrFigure": "Table 124-1", "page": 4987, "lines": "printed p. 4987; 8023-2022-4988-5009-Clause-124_compressed.pdf", "retrievedOn": "2026-09-23", "accessPath": "user-provided local copy", "implementationConvention": "DR4 is PAM4 and requires Clauses 119 and 120; 400GMII and Annex 120E are optional.", "reviewer": "local IEEE audit", "status": "verified"},
     {"ruleId": "annex-119a-fixture", "edition": "IEEE Std 802.3-2022", "clause": "Annex 119A", "tableOrFigure": null, "page": null, "lines": "unread", "retrievedOn": null, "accessPath": null, "implementationConvention": "No convention entered pending final line review.", "reviewer": null, "status": "blocked"}
   ],
   "annex119a": {

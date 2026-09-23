@@ -1,69 +1,50 @@
 # IEEE Std 802.3-2022 line-check register
 
-Status: **blocked** as of 2026-09-21.
+Status: **partially admitted** as of 2026-09-23.
 
-This register is the only admission path for IEEE-derived rules used by
-`400gbase-dr4-tx-v1`. It intentionally contains no transcribed normative
-text, calculated values, table rows, or implementation constants. The final
-standard's clause text was not inspected in this workspace.
+This register is the admission path for IEEE-derived rules used by
+`400gbase-dr4-tx-v1`. It records concise implementation facts only. Final
+IEEE text is not reproduced here.
 
-## Access evidence
+## Local access evidence
 
-The public IEEE SA publication page identifies IEEE Std 802.3-2022. The
-public IEEE Xplore document record for document 9844436 did not provide
-normative text to an unauthenticated request. Its response was a CloudFront
-WAF challenge, and the existing Reading Room entry identifies account sign-in
-as the route to reading access. No sign-in, credential entry, purchase, or
-paywall bypass was attempted.
+The following user-provided local extracts were reviewed on 2026-09-23. Page
+numbers are printed PDF pages, not viewer indices. Clauses 49 and 82, and
+Annex 119A, are absent from `knowledge_base_ieee` and remain blocked.
 
-## Required record shape
+| Local filename | Clauses admitted from the extract |
+| --- | --- |
+| `8023-2022-4817-4823-Clause-117_compressed.pdf` | 117.1-117.3; 117.5.4.2-117.5.4.3 |
+| `8023-2022-4836-4874-Clause-119_compressed.pdf` | 119.2.4.1-119.2.4.7 |
+| `8023-2022-4875-4904-Clause-120_compressed.pdf` | 120.1.3-120.1.4; 120.5.2 |
+| `8023-2022-4988-5009-Clause-124_compressed.pdf` | 124.1; Table 124-1 |
 
-```ts
-interface VerifiedRuleRecord {
-  ruleId: string;
-  edition: "IEEE Std 802.3-2022";
-  clause: string;
-  tableOrFigure: string | null;
-  page: number;
-  lines: string;
-  retrievedOn: string;
-  accessPath: "IEEE Reading Room" | "licensed copy";
-  implementationConvention: string;
-  reviewer: string;
-  status: "verified" | "blocked";
-}
-```
+## Rule register
 
-The blocked template below uses `pending` rather than inventing a page,
-line range, access path, implementation convention, or reviewer. A verified
-record must replace every pending field with the required value above.
+| Rule ID | Clause and printed page | Local filename | Access path and date | Concise implementation convention | Status |
+| --- | --- | --- | --- | --- | --- |
+| `scrambler-recurrence` | 49.2.6, unavailable | unavailable | unavailable | The recurrence is not admitted. | blocked |
+| `encode66-control-tables` | 82, unavailable | unavailable | unavailable | Control definitions are not admitted. | blocked |
+| `rs-cdmii-placement` | 117.1-117.3, pp. 4816-4818; 117.5.4.2-117.5.4.3, pp. 4820-4821 | `8023-2022-4817-4823-Clause-117_compressed.pdf` | user-provided local copy, 2026-09-23 | 400GMII has independent 64-bit paths; TXD/TXC proceed from lane 0 through lane 63; Start is lane 0 and Terminate can occupy any lane. Full stream rules still defer to unavailable Clauses 81 and 82. | blocked |
+| `pcs-transmit-flow` | 119.2.4.1, p. 4840 | `8023-2022-4836-4874-Clause-119_compressed.pdf` | user-provided local copy, 2026-09-23 | Encode 66-bit blocks, transcode, and remove eligible control characters or ordered sets when rate matching is needed for AM insertion. | verified |
+| `transcode257-order` | 119.2.4.2, pp. 4841-4842; Figure 119-3 | `8023-2022-4836-4874-Clause-119_compressed.pdf` | user-provided local copy, 2026-09-23 | Four inputs are ordered oldest to newest, with j=3 newest; the 257-bit result and constituent fields serialize bit 0 first. | verified |
+| `scrambler-application` | 119.2.4.3, p. 4842 | `8023-2022-4836-4874-Clause-119_compressed.pdf` | user-provided local copy, 2026-09-23 | Scramble each complete transcoded 257-bit block after transcoding. The Clause 49 recurrence remains blocked. | verified |
+| `am-values-status-pad` | 119.2.4.4.2, pp. 4846-4848; Table 119-2; Figure 119-8 | `8023-2022-4836-4874-Clause-119_compressed.pdf` | user-provided local copy, 2026-09-23 | A 400G AM group is 2056 bits (8 x 257), has 16 120-bit lane markers, a 133-bit PRBS9 pad, and 3 status bits. It begins a two-message FEC pair and recurs every 163840 transcoded blocks. | verified |
+| `pre-fec-distribution` | 119.2.4.5, p. 4848 | `8023-2022-4836-4874-Clause-119_compressed.pdf` | user-provided local copy, 2026-09-23 | A 10280-bit, 40-block FEC pair becomes two 514-symbol messages by the specified 10-bit round-robin equations. | verified |
+| `rs-codeword-orientation` | 119.2.4.6, pp. 4848-4849; Table 119-3 | `8023-2022-4836-4874-Clause-119_compressed.pdf` | user-provided local copy, 2026-09-23 | Use RS(544,514) over GF(2^10); the first encoder input is m[k-1], and temporal codeword order starts c[n-1]. | verified |
+| `codeword-interleave` | 119.2.4.7, p. 4850 | `8023-2022-4836-4874-Clause-119_compressed.pdf` | user-provided local copy, 2026-09-23 | For k=0..67 and j=0..7, alternate A/B ownership by k parity, distribute low PCS lane to high, and serialize each symbol bit 0 first. | verified |
+| `pma-16-to-4` | 120.1.3-120.1.4, pp. 4874-4876; 120.5.2, pp. 4881-4882 | `8023-2022-4875-4904-Clause-120_compressed.pdf` | user-provided local copy, 2026-09-23 | 400G uses 16 PCSLs. An implementation may choose any allowable PCSL order if it preserves that choice, so a `PmaMappingProfile` is still required. | verified |
+| `dr4-scope` | 124.1 and Table 124-1, p. 4987 | `8023-2022-4988-5009-Clause-124_compressed.pdf` | user-provided local copy, 2026-09-23 | 400GBASE-DR4 is PAM4 and requires Clauses 119 and 120; 400GMII and Annex 120E are optional interfaces. | verified |
+| `annex-119a-fixture` | Annex 119A, unavailable | unavailable | unavailable | No Annex row, source hash, state, or fixture is admitted. | blocked |
 
-| Rule ID | Edition | Clause | Table or figure | Page | Lines | Retrieved | Access path | Implementation convention | Reviewer | Status |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `scrambler-recurrence` | IEEE Std 802.3-2022 | 49.2.6 | pending | pending | unread | pending | pending | No convention entered | pending | blocked |
-| `encode66-control-tables` | IEEE Std 802.3-2022 | 82 | pending | pending | unread | pending | pending | No convention entered | pending | blocked |
-| `rs-cdmii-placement` | IEEE Std 802.3-2022 | 117 | pending | pending | unread | pending | pending | No convention entered | pending | blocked |
-| `pcs-transmit-flow` | IEEE Std 802.3-2022 | 119.2.4.1 | pending | pending | unread | pending | pending | No convention entered | pending | blocked |
-| `transcode257-order` | IEEE Std 802.3-2022 | 119.2.4.2 | pending | pending | unread | pending | pending | No convention entered | pending | blocked |
-| `scrambler-application` | IEEE Std 802.3-2022 | 119.2.4.3 | pending | pending | unread | pending | pending | No convention entered | pending | blocked |
-| `am-values-status-pad` | IEEE Std 802.3-2022 | 119.2.4.4 | pending | pending | unread | pending | pending | No convention entered | pending | blocked |
-| `pre-fec-distribution` | IEEE Std 802.3-2022 | 119.2.4.5 | pending | pending | unread | pending | pending | No convention entered | pending | blocked |
-| `rs-codeword-orientation` | IEEE Std 802.3-2022 | 119.2.4.6 | pending | pending | unread | pending | pending | No convention entered | pending | blocked |
-| `codeword-interleave` | IEEE Std 802.3-2022 | 119.2.4.7 | pending | pending | unread | pending | pending | No convention entered | pending | blocked |
-| `pma-16-to-4` | IEEE Std 802.3-2022 | 120.5.2 | pending | pending | unread | pending | pending | No convention entered | pending | blocked |
-| `dr4-scope` | IEEE Std 802.3-2022 | 124 | pending | pending | unread | pending | pending | No convention entered | pending | blocked |
-| `annex-119a-fixture` | IEEE Std 802.3-2022 | Annex 119A | pending | pending | unread | pending | pending | No convention entered | pending | blocked |
+## Admission limits
 
-## Admission requirements
+The verified records do not enable `400gbase-dr4-tx-v1`. The missing Clause
+49 recurrence, Clause 82 control rules, full Clause 117/81 stream chain, and
+independently reviewed Annex 119A fixture keep the IEEE-only capability false.
 
-An authorized reviewer must inspect a licensed IEEE Std 802.3-2022 copy or
-the IEEE Reading Room after signing in themselves. For each record, they must
-enter the exact clause, table or figure, page, line range, retrieval date,
-access path, concise implementation convention, and reviewer identity. The
-reviewer must then independently compare every entered rule and recompute the
-source and interpreted-fixture hashes recorded in
-`test/fixtures/inspector/ieee-8023-2022-source-manifest.json`.
-
-Until that work is complete, `UNRESOLVED_RULE_IDS` remains nonempty and no
-PCS calculation, profile enablement, source transcription, or fixture
-admission is authorized.
+The current Task 4 candidate conflicts with the admitted 400G structure: it
+reserves two blocks every 40 blocks and uses a 514-bit local AM. The final
+structure is an eight-block, 2056-bit AM group every 163840 blocks, aligned to
+a 40-block FEC pair. A product-owned deletion policy remains necessary and
+must remove only Clause 82-legal inputs.

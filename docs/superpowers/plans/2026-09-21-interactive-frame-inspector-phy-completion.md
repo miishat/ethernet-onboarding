@@ -4,7 +4,7 @@
 
 **Goal:** Complete the Interactive Frame Inspector from MAC output through 400GBASE-R PCS values, then provide physical-lane and PAM4 values through a clearly identified project-owned reference PMA mapping.
 
-**Architecture:** Keep every protocol transformation pure and independently testable in `src/inspector/engine`. Separate final IEEE-derived PCS behavior from the implementation-specific rate-matching and PMA choices by making both explicit, immutable run inputs with provenance. The named IEEE profile remains disabled until the final Reading Room line check and frozen fixtures pass; physical-lane and PAM4 output uses a separate `400gbase-dr4-tx-reference-pma-v1` composite profile so illustrative ordering is never presented as a universal IEEE result.
+**Architecture:** Keep every protocol transformation pure and independently testable in `src/inspector/engine`. Separate final IEEE-derived PCS behavior from the implementation-specific rate-matching and PMA choices by making both explicit, immutable run inputs with provenance. Local final copies admit scoped Clauses 117, 119, 120, and 124 evidence, but the named IEEE profile remains disabled until Clause 49, Clause 82, Annex 119A, and frozen fixtures pass; physical-lane and PAM4 output uses a separate `400gbase-dr4-tx-reference-pma-v1` composite profile so illustrative ordering is never presented as a universal IEEE result.
 
 **Tech Stack:** React 18, TypeScript strict mode, Vite, typed arrays, native Web Worker, Vitest, Testing Library, Python 3 reference scripts, Playwright for browser verification.
 
@@ -15,7 +15,7 @@
 - Read `docs/inspector-source-research-2026-09-21.md` and `docs/inspector-profile.md` before every task involving PCS, FEC, PMA, or PAM4 behavior.
 - Use IEEE Std 802.3-2022 as the governing Ethernet edition. Record exact clause, table, page, line, retrieval date, and access path for every admitted IEEE rule.
 - Do not use third-party mirrors, draft text, secondary articles, diagrams, or production TypeScript as a final-profile oracle.
-- Keep `getProfileSupport("400G", "tx", "100")` false until Tasks 1 through 6 pass their evidence and fixture gates.
+- Keep `getProfileSupport("400G", "tx", "100")` false until missing Clause 49, Clause 82, Annex 119A, policy, and fixture gates pass.
 - `400gbase-dr4-tx-reference-pma-v1` is metadata-only until its pipeline is implemented. Its future runtime must show candidate-source and independent-local-fixture provenance, must never claim IEEE verification or standards conformance, and cannot enable the IEEE-only profile.
 - Preserve the existing walkthrough and its return position. The inspector remains an optional workspace.
 - Every displayed value must derive from the applied input and the selected named computation contract.
@@ -79,7 +79,7 @@ The remaining work is divided into evidence, PCS transforms, implementation-owne
 - Test: `test/inspector-profile.test.ts`
 
 **Interfaces:**
-- Consumes: authenticated IEEE Reading Room or a licensed IEEE Std 802.3-2022 copy.
+- Consumes: an authenticated IEEE Reading Room copy, a licensed copy, or a user-provided local copy of IEEE Std 802.3-2022.
 - Produces: immutable source records for Clauses 49.2.6, 82, 117, 119.2.4.1 through 119.2.4.7, 120.5.2, 124, and Annex 119A.
 
 - [ ] **Step 1: Record the evidence template before inspecting text**
@@ -95,16 +95,16 @@ interface VerifiedRuleRecord {
   page: number;
   lines: string;
   retrievedOn: string;
-  accessPath: "IEEE Reading Room" | "licensed copy";
+  accessPath: "IEEE Reading Room" | "licensed copy" | "user-provided local copy";
   implementationConvention: string;
   reviewer: string;
   status: "verified" | "blocked";
 }
 ```
 
-- [ ] **Step 2: Inspect every required clause and capture concise implementation facts**
+- [x] **Step 2: Inspect available local final clauses and capture concise implementation facts**
 
-Record CDMII lane/octet order, sync headers, every emitted control type, legal Start and Terminate placement, 256B/257B bit positions, scrambler recurrence and first-output convention, AM values/status/pad order, AM cadence and reservation size, pre-FEC equations, RS orientation, checkerboard interleave, lane bit order, PMA freedom, and DR4 scope. Do not copy long copyrighted passages.
+The 2026-09-23 local-copy review admitted scoped Clause 117, 119, 120, and 124 facts. It established the 2056-bit AM group, 163840-block cadence, 40-block FEC pair, 16 x 120-bit markers, 133-bit PRBS9 pad, and 3 status bits. Clause 49, Clause 82, and Annex 119A remain unavailable and block profile completion. Do not copy long copyrighted passages.
 
 - [ ] **Step 3: Extract Annex 119A into a source manifest**
 
@@ -143,7 +143,7 @@ git diff --check
 
 Expected: all commands exit 0 and no required rule remains falsely marked verified.
 
-Commit: `docs: verify IEEE PCS source contracts`
+Commit: `docs: admit local IEEE Clause 119 evidence`
 
 #### Experimental reference execution ruling
 
