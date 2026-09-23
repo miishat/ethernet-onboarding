@@ -90,4 +90,30 @@ describe("experimental 64B/66B and 256B/257B reference blocks", () => {
       expect(group.value.provenance).toMatchObject({ candidateArtifactSha256: vectors.sourceSha256, candidatePages: vectors.sourcePages });
     }
   });
+
+  it("matches every frozen generated Terminate word", () => {
+    for (const vector of Object.values(vectors.terminateWords)) {
+      const block = encode66Block({ index: 0, octets: Uint8Array.from(vector.octets), controlMask: vector.mask });
+      if (!block.ok) throw new Error(block.errors.run);
+      expect(bits(block.value.bits)).toBe(vector.bits);
+    }
+  });
+
+  it("matches frozen mixed groups for first control positions zero through three", () => {
+    for (const [positionText, expectedBits] of Object.entries(vectors.firstControlGroups)) {
+      const position = Number(positionText);
+      const term = Object.values(vectors.terminateWords)[position];
+      const blocks = [0, 1, 2, 3].map((index) => {
+        const input = index === position
+          ? { octets: Uint8Array.from(term.octets), controlMask: term.mask }
+          : { octets: Uint8Array.from({ length: 8 }, (_, bit) => 0x10 + index * 8 + bit), controlMask: 0 };
+        const block = encode66Block({ index, ...input });
+        if (!block.ok) throw new Error(block.errors.run);
+        return block.value;
+      });
+      const group = transcode257Group(blocks as [typeof blocks[0], typeof blocks[1], typeof blocks[2], typeof blocks[3]]);
+      if (!group.ok) throw new Error(group.errors.run);
+      expect(bits(group.value.bits)).toBe(expectedBits);
+    }
+  });
 });
