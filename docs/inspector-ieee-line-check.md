@@ -39,6 +39,11 @@ Annex 119A, are absent from `knowledge_base_ieee` and remain blocked.
 
 ## Admission limits
 
+Independent review by `/root/ieee_source_admission_review_light` accepted the
+scoped local facts in commit `887f6c3` on 2026-09-23. It required two
+bookkeeping corrections: correct the review provenance and stop tracking the
+local SDD report. This is not full Task 1 admission.
+
 The verified records do not enable `400gbase-dr4-tx-v1`. The missing Clause
 49 recurrence, Clause 82 control rules, full Clause 117/81 stream chain, and
 independently reviewed Annex 119A fixture keep the IEEE-only capability false.

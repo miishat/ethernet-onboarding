@@ -18,6 +18,10 @@ control definitions, complete finite stream chain, and independent Annex
 fixture remain blocked. `getProfileSupport("400G", "tx", "100")` therefore
 remains false.
 
+Independent review by `/root/ieee_source_admission_review_light` accepted the
+scoped facts in commit `887f6c3` on 2026-09-23, with two required bookkeeping
+corrections. That acceptance does not complete Task 1 or change any IEEE gate.
+
 ## Final local source ledger
 
 | ID | Final local source and scope | Status | Safe use |

@@ -2,6 +2,8 @@
 
 Status updated 2026-09-23: **IEEE verification partially admitted; profile still blocked.** `getProfileSupport` returns `supported: false` for every IEEE-only selection, including `400G / tx / 100`. User-provided local final copies admit scoped Clause 117, 119, 120, and 124 facts. Clause 49, Clause 82, and Annex 119A are absent, so the recurrence, control rules, full stream chain, and fixture remain blocked. The experimental reference contract declares a project-owned PMA and PAM4 interface for future consumers. `getStageSupport` reports that declaration only. It does not report an implemented calculation, IEEE verification, or standards conformance. See `docs/inspector-source-research-2026-09-21.md`.
 
+The scoped facts were independently reviewed by `/root/ieee_source_admission_review_light` against commit `887f6c3` on 2026-09-23. The review accepted the facts with two required bookkeeping corrections. It did not complete Task 1 or authorize profile enablement.
+
 ## Intended scope and API
 
 The reserved profile ID is `400gbase-dr4-tx-v1`. The selected target edition is **IEEE Std 802.3-2022**, without assuming later amendments. Final local evidence admits 16 PCS lanes, Clause 119 PCS behavior, and DR4's PAM4 scope, but does not enable the profile. A 16-to-4 physical ordering remains implementation-specific and is not an IEEE-only mapping.

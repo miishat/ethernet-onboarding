@@ -83,10 +83,11 @@
     "note": "No Annex 119A rows, values, bytes, or bit strings were read or transcribed. sourceHash covers the licensed source artifact once admitted; interpretedFixtureHash covers a separately generated repository fixture."
   },
   "independentReview": {
-    "reviewer": null,
-    "reviewedCommit": null,
-    "reviewedOn": null,
-    "result": "pending",
+    "reviewer": "/root/ieee_source_admission_review_light",
+    "reviewedCommit": "887f6c3",
+    "reviewedOn": "2026-09-23",
+    "result": "accepted-with-two-bookkeeping-corrections-required",
+    "scope": "The local Clause 117, 119, 120, and 124 facts were accepted. The two corrections are provenance bookkeeping only and do not complete Task 1 or admit Clause 49, Clause 82, or Annex 119A.",
     "hashesRecomputed": false
   }
 }
