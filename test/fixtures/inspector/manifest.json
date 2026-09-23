@@ -70,8 +70,14 @@
   "experimentalProfiles": [
     {
       "id": "400gbase-dr4-tx-reference-pma-v1",
-      "status": "experimental-reference",
-      "provenanceLabel": "Experimental reference using candidate contracts",
+      "status": "metadata-only",
+      "runtimeSupport": "not-implemented",
+      "provenanceLabels": [
+        "Experimental reference using candidate contracts",
+        "Candidate IEEE source",
+        "Independent local fixture",
+        "Not IEEE verified or standards conformant"
+      ],
       "candidateSourceIds": [
         "ieee-bs-d14-cl119-locator",
         "ieee-bs-dr4-geometry-context",
@@ -81,7 +87,7 @@
       ],
       "independentLocalFixturePolicy": "required-before-expected-output-admission",
       "standardsConformance": "not-claimed",
-      "verificationScope": "Candidate calculations may be investigated with explicit reference provenance. No 400G expected-output fixture is admitted, and the IEEE-only profile stays verification-blocked."
+      "verificationScope": "Metadata only. No 400G pipeline or expected-output fixture is implemented, and the IEEE-only profile stays verification-blocked."
     }
   ],
   "blockedBy": [

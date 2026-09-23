@@ -16,7 +16,7 @@
 - Use IEEE Std 802.3-2022 as the governing Ethernet edition. Record exact clause, table, page, line, retrieval date, and access path for every admitted IEEE rule.
 - Do not use third-party mirrors, draft text, secondary articles, diagrams, or production TypeScript as a final-profile oracle.
 - Keep `getProfileSupport("400G", "tx", "100")` false until Tasks 1 through 6 pass their evidence and fixture gates.
-- The separate `400gbase-dr4-tx-reference-pma-v1` may run only as an experimental reference with visible candidate-source and independent-local-fixture provenance. It must never claim IEEE verification or standards conformance, and it cannot enable the IEEE-only profile.
+- `400gbase-dr4-tx-reference-pma-v1` is metadata-only until its pipeline is implemented. Its future runtime must show candidate-source and independent-local-fixture provenance, must never claim IEEE verification or standards conformance, and cannot enable the IEEE-only profile.
 - Preserve the existing walkthrough and its return position. The inspector remains an optional workspace.
 - Every displayed value must derive from the applied input and the selected named computation contract.
 - Display `IEEE-derived` and `reference PMA mapping` provenance separately in the UI.
@@ -147,9 +147,9 @@ Commit: `docs: verify IEEE PCS source contracts`
 
 #### Experimental reference execution ruling
 
-While the final line check is blocked, a separate
-`400gbase-dr4-tx-reference-pma-v1` may use retained candidate contracts for
-experimental work. Every result must visibly state `Experimental reference
+While the final line check is blocked,
+`400gbase-dr4-tx-reference-pma-v1` remains metadata-only until a separate
+experimental pipeline is implemented. Its future results must visibly state `Experimental reference
 using candidate contracts`, `Candidate IEEE source`, `Independent local
 fixture`, and `Not IEEE verified or standards conformant`. Expected outputs
 require a reviewed independent local fixture with complete input and state,

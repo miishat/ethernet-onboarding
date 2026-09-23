@@ -19,20 +19,41 @@ describe("inspector profile capability gate", () => {
     expect(PROFILE_VERIFICATION.unresolvedRuleIds.length).toBeGreaterThan(0);
   });
 
-  it("makes the experimental reference profile available only with explicit candidate provenance", () => {
+  it("records the experimental reference profile as metadata-only with immutable disclosures", () => {
     expect(getProfileSupport("400G", "tx", "100").supported).toBe(false);
 
     const experimentalProfile = REFERENCE_SOURCES.find(
       (source) => source.id === "400gbase-dr4-tx-reference-pma-v1",
-    );
+    ) as {
+      availability: string;
+      runtimeSupport: string;
+      provenanceLabels: readonly string[];
+    };
 
     expect(experimentalProfile).toMatchObject({
       id: "400gbase-dr4-tx-reference-pma-v1",
-      availability: "experimental-reference",
-      provenanceLabel: "Experimental reference using candidate contracts",
+      availability: "metadata-only",
+      runtimeSupport: "not-implemented",
       standardsConformance: "not-claimed",
       independentLocalFixturePolicy: "required-before-expected-output-admission",
     });
+    expect(experimentalProfile.provenanceLabels).toEqual([
+      "Experimental reference using candidate contracts",
+      "Candidate IEEE source",
+      "Independent local fixture",
+      "Not IEEE verified or standards conformant",
+    ]);
+    expect(Object.isFrozen(experimentalProfile.provenanceLabels)).toBe(true);
+    expect(() => (experimentalProfile.provenanceLabels as string[]).push("unlabeled")).toThrow();
+  });
+
+  it("resolves every experimental candidate source ID through the runtime source inventory", () => {
+    const experimentalProfile = REFERENCE_SOURCES.find(
+      (source) => source.id === "400gbase-dr4-tx-reference-pma-v1",
+    ) as { candidateSourceIds: readonly string[] };
+    const sourceIds = new Set(REFERENCE_SOURCES.map((source) => source.id));
+
+    expect(experimentalProfile.candidateSourceIds.every((id) => sourceIds.has(id))).toBe(true);
   });
 
   it.each([

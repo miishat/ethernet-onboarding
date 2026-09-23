@@ -13,7 +13,8 @@
   },
   "experimentalReferenceContract": {
     "profileId": "400gbase-dr4-tx-reference-pma-v1",
-    "availability": "experimental-reference",
+    "availability": "metadata-only",
+    "runtimeSupport": "not-implemented",
     "provenanceLabels": [
       "Experimental reference using candidate contracts",
       "Candidate IEEE source",

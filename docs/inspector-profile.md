@@ -1,6 +1,6 @@
 # Inspector profile contract: verification blocked
 
-Status updated 2026-09-23: **IEEE verification blocked; experimental reference authorized.** `getProfileSupport` returns `supported: false` for every IEEE-only selection, including `400G / tx / 100`. IEEE Std 802.3-2022 is available through the IEEE Reading Room, but requires account sign-in; this research session did not inspect that final text. Clause 119 FEC-distribution and PCS-lane formulas remain candidates for the IEEE-only profile. The existing final ITU-T evidence is sufficient only for the isolated RS(544,514) primitive. A separate experimental reference profile may use retained candidate contracts under the provenance and fixture policy below. It does not claim IEEE verification or standards conformance. See `docs/inspector-source-research-2026-09-21.md`.
+Status updated 2026-09-23: **IEEE verification blocked; experimental reference metadata authorized.** `getProfileSupport` returns `supported: false` for every IEEE-only selection, including `400G / tx / 100`. IEEE Std 802.3-2022 is available through the IEEE Reading Room, but requires account sign-in; this research session did not inspect that final text. Clause 119 FEC-distribution and PCS-lane formulas remain candidates for the IEEE-only profile. The existing final ITU-T evidence is sufficient only for the isolated RS(544,514) primitive. A separate metadata-only experimental reference contract reserves retained candidate provenance for a future pipeline. It does not claim IEEE verification or standards conformance. See `docs/inspector-source-research-2026-09-21.md`.
 
 ## Intended scope and API
 
@@ -8,9 +8,10 @@ The reserved profile ID is `400gbase-dr4-tx-v1`. The selected target edition is 
 
 ## Experimental reference profile
 
-`400gbase-dr4-tx-reference-pma-v1` is a separate project-owned profile for
-experimental investigation. It may use retained candidate contracts and a
-project-owned reference PMA mapping, but it must never be labeled
+`400gbase-dr4-tx-reference-pma-v1` is a metadata-only contract for a future
+project-owned experimental pipeline. The repository does not expose executable
+support for it yet. Once implemented, it may use retained candidate contracts
+and a project-owned reference PMA mapping, but it must never be labeled
 `IEEE-derived`, `IEEE verified`, `standards conformant`, or `400GBASE-DR4`
 without its experimental qualifier.
 

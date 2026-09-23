@@ -30,8 +30,14 @@ export const REFERENCE_SOURCES = Object.freeze([
     sourceUrl: "docs/inspector-profile.md",
     retrievedOn: "2026-09-23",
     verificationScope: "Candidate-contract metadata only. This record does not add PCS, PMA, or PAM4 calculation code and does not establish IEEE verification or standards conformance.",
-    availability: "experimental-reference",
-    provenanceLabel: "Experimental reference using candidate contracts",
+    availability: "metadata-only",
+    runtimeSupport: "not-implemented",
+    provenanceLabels: Object.freeze([
+      "Experimental reference using candidate contracts",
+      "Candidate IEEE source",
+      "Independent local fixture",
+      "Not IEEE verified or standards conformant",
+    ]),
     standardsConformance: "not-claimed",
     candidateSourceIds: Object.freeze([
       "ieee-bs-d14-cl119-locator",
@@ -63,6 +69,13 @@ export const REFERENCE_SOURCES = Object.freeze([
     sourceUrl: "https://www.ieee802.org/3/publication/df/Annex_172A_Table_172A-3_to_Table_172A-6.txt",
     retrievedOn: "2026-09-20",
     verificationScope: "Published 800G example source retrieved; 400G conventions unverified.",
+  }),
+  Object.freeze({
+    id: "ieee-df-172a-input-candidate",
+    edition: "IEEE Std 802.3df-2024",
+    sourceUrl: "https://www.ieee802.org/3/publication/df/Annex_172A_Table_172A-1_and_Table_172A-2.txt",
+    retrievedOn: "2026-09-20",
+    verificationScope: "Published 800G input-example source retrieved. It remains quarantined source-integrity evidence and does not establish 400G inputs, state, or a fixture.",
   }),
 ]);
 

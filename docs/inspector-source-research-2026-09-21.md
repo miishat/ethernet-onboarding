@@ -14,9 +14,10 @@ Final ITU-T G.709.5 (2024) Corrigendum 1 unblocks the existing isolated RS(544,5
 
 ## Experimental reference execution ruling
 
-`400gbase-dr4-tx-reference-pma-v1` is a separate project-owned experimental
-reference profile. It may run only from retained candidate contracts and only
-when every result visibly carries these labels: `Experimental reference using
+`400gbase-dr4-tx-reference-pma-v1` is metadata for a future separate
+project-owned experimental reference pipeline. It has no executable runtime
+support yet. When implemented, every result must visibly carry these labels:
+`Experimental reference using
 candidate contracts`, `Candidate IEEE source`, `Independent local fixture`,
 and `Not IEEE verified or standards conformant`.
 
@@ -27,14 +28,14 @@ machine-readable extracts stay quarantined evidence for their stated scope.
 They do not become 400G standards authority or a substitute Annex 119A
 fixture.
 
-An experimental result may be displayed for investigation, but an expected
-output cannot be admitted until an independent local reference generates a
-nonzero fixture with its complete input, state, candidate-source IDs, output
-hash, and reviewer record. No production pipeline code is added by this
-ruling. The upgrade path is unchanged: complete the blocked IEEE line-check
-register, replace each candidate contract with the reviewed final clause
-record, independently review the 400G fixture, and only then consider
-enabling `400gbase-dr4-tx-v1`.
+After a future experimental runner is implemented, an experimental result may
+be displayed for investigation, but an expected output cannot be admitted
+until an independent local reference generates a nonzero fixture with its
+complete input, state, candidate-source IDs, output hash, and reviewer record.
+No production pipeline code is added by this ruling. The upgrade path is
+unchanged: complete the blocked IEEE line-check register, replace each
+candidate contract with the reviewed final clause record, independently review
+the 400G fixture, and only then consider enabling `400gbase-dr4-tx-v1`.
 
 ## Source ledger
 
