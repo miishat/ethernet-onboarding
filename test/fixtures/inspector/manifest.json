@@ -13,6 +13,20 @@
       "verificationScope": "Experimental finite PCS reference only. D1.4 pages 98-101 provide candidate serialization, headers and transcoding. The product-owned control policy fills only the table absent from the extract. This fixture is not IEEE verified or standards conformant."
     },
     {
+      "id": "scramble-reference-policy-v1",
+      "file": "scramble-reference-policy-v1.json",
+      "sourceId": "ieee-bs-d14-cl119-locator",
+      "status": "experimental-candidate",
+      "verificationScope": "Frozen local vector for a named product-owned recurrence. Candidate source locator only; not IEEE verified or standards conformant."
+    },
+    {
+      "id": "marker-reference-policy-v1",
+      "file": "marker-reference-policy-v1.json",
+      "sourceId": "ieee-bs-d14-cl119-locator",
+      "status": "experimental-candidate",
+      "verificationScope": "Frozen local marker and PRBS policy. Candidate source locator only; not IEEE verified or standards conformant."
+    },
+    {
       "id": "rs544-standalone-polynomial-v1",
       "file": "rs544-standalone-polynomial-v1.json",
       "sourceUrl": "https://www.itu.int/rec/dologin_pub.asp?id=T-REC-G.709.5-202505-I%21Cor1%21PDF-E&lang=e&type=items",

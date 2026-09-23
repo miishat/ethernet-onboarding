@@ -1,4 +1,4 @@
-import type { MacFrame, Result } from "../types";
+import type { MacFrame, RateMatchDeletion, RateMatchPolicy, Result } from "../types";
 
 export const EXPERIMENTAL_PCS_PROVENANCE = Object.freeze({
   profileId: "400gbase-dr4-tx-reference-pma-v1",
@@ -20,6 +20,40 @@ export interface InterfaceWord {
 export interface InterfaceStream {
   words: readonly InterfaceWord[];
   provenance: typeof EXPERIMENTAL_PCS_PROVENANCE;
+}
+
+export interface PreparedStream {
+  stream: InterfaceStream;
+  deletions: readonly RateMatchDeletion[];
+  absoluteStreamBlock: number;
+  provenance: { source: "project-owned"; policyId: string; status: "experimental-candidate" };
+}
+
+/**
+ * Applies the declared product-owned selection rule before PCS encoding.
+ * A reservation deletes whole all-Idle CDMII words only. A partial word or
+ * any word containing frame data is deliberately ineligible.
+ */
+export function prepareStream(input: InterfaceStream, policy: RateMatchPolicy, absoluteStreamBlock: number): Result<PreparedStream> {
+  if (!Number.isInteger(absoluteStreamBlock) || absoluteStreamBlock < 0) return { ok: false, errors: { run: "The absolute stream block must be a nonnegative integer." } };
+  if (policy.source !== "project-owned" || policy.selection !== "earliest-eligible-before-reservation" || policy.tieBreak !== "lowest-absolute-word-index") return { ok: false, errors: { run: "Only the declared product-owned reference rate-match policy is supported." } };
+  const schedule = policy.amSchedule;
+  if (![schedule.cadenceBlocks, schedule.reservationBlocks, schedule.fecPairBlocks].every((value) => Number.isInteger(value) && value > 0) || schedule.cadenceBlocks % schedule.fecPairBlocks !== 0) return { ok: false, errors: { run: "Rate-match cadence must use positive FEC-pair-aligned block counts." } };
+  // Four 66-bit blocks, each built from one eight-octet CDMII word, form one
+  // 257-bit input block. Count exact schedule boundaries in this window.
+  const span = Math.ceil(input.words.length / 4);
+  const firstAbsolute = Math.max(absoluteStreamBlock, schedule.phaseZeroAbsoluteStreamBlock);
+  const lastAbsolute = absoluteStreamBlock + span - 1;
+  const firstGroup = Math.ceil((firstAbsolute - schedule.phaseZeroAbsoluteStreamBlock) / schedule.cadenceBlocks);
+  const lastGroup = Math.floor((lastAbsolute - schedule.phaseZeroAbsoluteStreamBlock) / schedule.cadenceBlocks);
+  const groups = Math.max(0, lastGroup - firstGroup + 1);
+  const needed = groups * schedule.reservationBlocks;
+  const eligible = input.words.filter((word) => word.controlMask === 0xff && word.octets.every((octet) => policy.eligibleIdleControlCodes.includes(octet)));
+  if (!Number.isInteger(policy.maximumDeferralBlocks) || policy.maximumDeferralBlocks < 0 || needed > eligible.length) return { ok: false, errors: { run: "The product-owned rate-match policy cannot find enough eligible Idle words before its maximum deferral." } };
+  const selected = new Set(eligible.slice(0, needed).map((word) => word.index));
+  const deletions: RateMatchDeletion[] = eligible.slice(0, needed).map((word, groupIndex) => ({ originalWordIndex: word.index, originalOctetOffset: 0, originalBitOffset: 0, idleOctets: Object.freeze([...word.octets]), controlMask: word.controlMask, policyId: policy.id, reason: "alignment-marker-reservation", reservation: { groupIndex, insertionBitOffset: groupIndex * schedule.cadenceBlocks * 257, fecPairIndex: Math.floor((absoluteStreamBlock + groupIndex * schedule.cadenceBlocks) / schedule.fecPairBlocks), boundaryKind: "am-group" } }));
+  const words = input.words.filter((word) => !selected.has(word.index)).map((word, index) => ({ ...word, index }));
+  return { ok: true, value: { stream: { words, provenance: input.provenance }, deletions: Object.freeze(deletions), absoluteStreamBlock, provenance: { source: "project-owned", policyId: policy.id, status: "experimental-candidate" } } };
 }
 
 const IDLE = 0x07;

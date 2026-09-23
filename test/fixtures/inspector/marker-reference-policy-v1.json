@@ -1,0 +1,13 @@
+{
+  "id": "marker-reference-policy-v1",
+  "status": "experimental-candidate",
+  "sourceId": "ieee-bs-d14-cl119-locator",
+  "policyId": "product-owned-reference-am-values-v1",
+  "layout": "16-bit fixed common value 0xA55A in LSB-first order, 16-bit group index in LSB-first order, PRBS9 pad with output bit state[8] and feedback state[8] xor state[4]",
+  "rateMatchPolicyId": "product-owned-reference-am-rate-match-v1",
+  "cadenceBlocks": 40,
+  "reservationBlocks": 2,
+  "fecPairBlocks": 2,
+  "markerPrbsState": "111111111",
+  "verificationScope": "Product-owned AM reference policy and frozen local fixture. It has no IEEE verification or standards-conformance claim."
+}
