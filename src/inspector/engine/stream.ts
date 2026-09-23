@@ -29,6 +29,15 @@ export interface PreparedStream {
   provenance: { source: "project-owned"; policyId: string; status: "experimental-candidate" };
 }
 
+/** Copies every mutable nested value before exposing the rate-match ledger. */
+export function freezeRateMatchLedger(deletions: readonly RateMatchDeletion[]): readonly RateMatchDeletion[] {
+  return Object.freeze(deletions.map((deletion) => Object.freeze({
+    ...deletion,
+    idleOctets: Object.freeze([...deletion.idleOctets]),
+    reservation: Object.freeze({ ...deletion.reservation }),
+  })));
+}
+
 /**
  * Applies the declared product-owned selection rule before PCS encoding.
  * A reservation deletes whole all-Idle CDMII words only. A partial word or
@@ -56,19 +65,22 @@ export function prepareStream(input: InterfaceStream, policy: RateMatchPolicy, a
     const inputBlockIndex = absoluteReservationBlock - absoluteStreamBlock;
     const reservationWordBoundary = inputBlockIndex * 4;
     const beforeBoundary = eligible.filter((word) => !selected.has(word.index) && (inputBlockIndex === 0 || word.index < reservationWordBoundary));
-    if (beforeBoundary.length < wordsPerReservation) {
+    const chosen = beforeBoundary.length >= wordsPerReservation
+      ? beforeBoundary.slice(0, wordsPerReservation)
+      : eligible.filter((word) => !selected.has(word.index) && word.index >= reservationWordBoundary && word.index <= reservationWordBoundary + policy.maximumDeferralBlocks * 4).slice(0, wordsPerReservation);
+    if (chosen.length < wordsPerReservation) {
       const deferralLimit = reservationWordBoundary + policy.maximumDeferralBlocks * 4;
       const withinDeferral = eligible.filter((word) => !selected.has(word.index) && word.index <= deferralLimit);
       if (withinDeferral.length < wordsPerReservation) return { ok: false, errors: { run: "The product-owned rate-match policy cannot find enough eligible Idle words before its maximum deferral." } };
       return { ok: false, errors: { run: "The product-owned rate-match policy requires eligible Idle words before each marker reservation." } };
     }
-    for (const word of beforeBoundary.slice(0, wordsPerReservation)) {
+    for (const word of chosen) {
       selected.add(word.index);
       deletions.push({ originalWordIndex: word.index, originalOctetOffset: 0, originalBitOffset: 0, idleOctets: Object.freeze([...word.octets]), controlMask: word.controlMask, policyId: policy.id, reason: "alignment-marker-reservation", reservation: { groupIndex, insertionBitOffset: inputBlockIndex * 257, fecPairIndex: Math.floor(absoluteReservationBlock / schedule.fecPairBlocks), boundaryKind: "am-group" } });
     }
   }
   const words = input.words.filter((word) => !selected.has(word.index)).map((word, index) => ({ ...word, index }));
-  return { ok: true, value: { stream: { words, provenance: input.provenance }, deletions: Object.freeze(deletions), absoluteStreamBlock, provenance: { source: "project-owned", policyId: policy.id, status: "experimental-candidate" } } };
+  return { ok: true, value: { stream: { words, provenance: input.provenance }, deletions: freezeRateMatchLedger(deletions), absoluteStreamBlock, provenance: { source: "project-owned", policyId: policy.id, status: "experimental-candidate" } } };
 }
 
 const IDLE = 0x07;

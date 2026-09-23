@@ -33,8 +33,10 @@ IEEE authority.
 state and all 512 output bits of a deterministic input. The test also checks
 one-shot and split-window output and state identity. `marker-reference-policy-v1.json`
 records the AM and PRBS convention, starting PRBS state, reservation, cadence,
-and pair alignment. Both are independent local reference-policy fixtures, not
-admitted IEEE vectors.
+and pair alignment. They are frozen local reference-policy fixtures, not
+admitted IEEE vectors. The scrambler fixture does not claim independent
+generation because no generator revision, artifact hash, or reviewer record is
+present.
 
 ## Validation
 
@@ -55,3 +57,18 @@ The AM fixture now freezes all 514 first-marker bits, including fixed common
 and status fields, group field, PRBS9 pad, and carried PRBS state after one
 and two inserted markers. The scrambler fixture is now accurately labeled a
 frozen local product-policy fixture rather than an independent vector.
+
+## Fix round 2
+
+Rate matching now selects the earliest complete Idle words before a reservation
+when available. If that set is short, it selects the earliest eligible Idles in
+the bounded post-reservation window through
+`maximumDeferralBlocks * 4` CDMII words. It rejects a request only when the
+eight words required for a two-block reservation fall beyond that bound. Tests
+cover the before-reservation case, an eligible bounded deferral, and an
+otherwise identical request one block beyond the bound.
+
+Ledger construction now copies and freezes the ledger array, each deletion,
+each deletion's Idle-octet array, and each nested reservation mapping.
+`MarkerPlan` normalizes even a caller-supplied frozen outer array, so mutable
+entries cannot escape through the plan or marker result.

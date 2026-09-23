@@ -72,7 +72,8 @@ describe("experimental reference scrambling and alignment markers", () => {
     expect(prepared.value.deletions[0]).toMatchObject({ policyId: policy.id, reason: "alignment-marker-reservation", reservation: { groupIndex: 0, insertionBitOffset: 0, fecPairIndex: 0, boundaryKind: "am-group" } });
     const plan = planMarkers(blocks(1), policy, { absoluteStreamBlock: 0 }, prepared.value.deletions);
     if (!plan.ok) throw new Error(plan.errors.run);
-    expect(plan.value.deletions).toBe(prepared.value.deletions);
+    expect(plan.value.deletions).toEqual(prepared.value.deletions);
+    expect(Object.isFrozen(plan.value.deletions[0])).toBe(true);
     const result = insertMarkers(Uint8Array.from({ length: 257 }, () => 0), plan.value, Uint8Array.from({ length: 9 }, () => 1));
     if (!result.ok) throw new Error(result.errors.run);
     expect(result.value.deletions).toBe(plan.value.deletions);
@@ -89,5 +90,34 @@ describe("experimental reference scrambling and alignment markers", () => {
     const provenance = blocks(1)[0].provenance;
     const lateIdles = Array.from({ length: 8 }, (_, offset) => ({ index: offset + 5, octets: Uint8Array.from({ length: 8 }, () => 0x07), controlMask: 0xff, provenance }));
     expect(prepareStream({ provenance, words: lateIdles }, { ...policy, maximumDeferralBlocks: 0 }, 39)).toMatchObject({ ok: false, errors: { run: expect.stringMatching(/maximum deferral/i) } });
+  });
+
+  it("uses earliest Idles before a reservation, then permits the bounded post-reservation window only", () => {
+    const provenance = blocks(1)[0].provenance;
+    const idle = (index: number) => ({ index, octets: Uint8Array.from({ length: 8 }, () => 0x07), controlMask: 0xff, provenance });
+    const before = prepareStream({ provenance, words: Array.from({ length: 16 }, (_, index) => idle(index)) }, policy, 38);
+    expect(before.ok).toBe(true);
+    if (!before.ok) throw new Error(before.errors.run);
+    expect(before.value.deletions.map((entry) => entry.originalWordIndex)).toEqual([0, 1, 2, 3, 4, 5, 6, 7]);
+    expect(before.value.deletions.every((entry) => entry.reservation.insertionBitOffset === 514)).toBe(true);
+
+    const afterWords = Array.from({ length: 16 }, (_, index) => index < 8 ? { index, octets: Uint8Array.of(0xfb, 1, 2, 3, 4, 5, 6, 7), controlMask: 1, provenance } : idle(index));
+    const within = prepareStream({ provenance, words: afterWords }, { ...policy, maximumDeferralBlocks: 2 }, 38);
+    expect(within.ok).toBe(true);
+    if (!within.ok) throw new Error(within.errors.run);
+    expect(within.value.deletions.map((entry) => entry.originalWordIndex)).toEqual([8, 9, 10, 11, 12, 13, 14, 15]);
+    expect(prepareStream({ provenance, words: afterWords }, { ...policy, maximumDeferralBlocks: 1 }, 38)).toMatchObject({ ok: false, errors: { run: expect.stringMatching(/maximum deferral/i) } });
+  });
+
+  it("deep-freezes ledger entries supplied to marker planning", () => {
+    const mutable = { originalWordIndex: 0, originalOctetOffset: 0, originalBitOffset: 0, idleOctets: [7, 7, 7, 7, 7, 7, 7, 7], controlMask: 0xff, policyId: policy.id, reason: "alignment-marker-reservation" as const, reservation: { groupIndex: 0, insertionBitOffset: 0, fecPairIndex: 0, boundaryKind: "am-group" as const } };
+    const plan = planMarkers(blocks(1), policy, { absoluteStreamBlock: 0 }, Object.freeze([mutable]));
+    if (!plan.ok) throw new Error(plan.errors.run);
+    expect(Object.isFrozen(plan.value.deletions[0])).toBe(true);
+    expect(Object.isFrozen(plan.value.deletions[0].reservation)).toBe(true);
+    expect(Object.isFrozen(plan.value.deletions[0].idleOctets)).toBe(true);
+    const result = insertMarkers(Uint8Array.from({ length: 257 }, () => 0), plan.value, Uint8Array.from({ length: 9 }, () => 1));
+    if (!result.ok) throw new Error(result.errors.run);
+    expect(Object.isFrozen(result.value.deletions[0].reservation)).toBe(true);
   });
 });

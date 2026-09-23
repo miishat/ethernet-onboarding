@@ -1,5 +1,6 @@
 import type { RateMatchDeletion, Result, RateMatchPolicy } from "../types";
 import type { Block257 } from "./transcode257";
+import { freezeRateMatchLedger } from "./stream";
 
 export interface MarkerPhase { absoluteStreamBlock: number; }
 export type MarkerPrbsState = Uint8Array;
@@ -27,7 +28,7 @@ export function planMarkers(blocks: readonly Block257[], policy: RateMatchPolicy
     const relative = absolute - phaseZeroAbsoluteStreamBlock;
     if (relative >= 0 && relative % cadenceBlocks === 0) reservations.push({ groupIndex: relative / cadenceBlocks, inputBlockIndex: index, insertionBitOffset: index * 257, reservationBlocks, fecPairIndex: absolute / fecPairBlocks });
   }
-  const immutableDeletions = Object.isFrozen(deletions) ? deletions : Object.freeze([...deletions]);
+  const immutableDeletions = freezeRateMatchLedger(deletions);
   return { ok: true, value: { reservations: Object.freeze(reservations), reservationBits: reservationBlocks * 257, deletions: immutableDeletions, provenance: PROVENANCE } };
 }
 
