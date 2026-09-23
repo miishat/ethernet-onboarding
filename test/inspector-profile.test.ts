@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_FRAME, DEFAULT_STREAM } from "../src/inspector/defaults";
+import { REFERENCE_SOURCES } from "../src/inspector/engine/referenceTables";
 import { getProfileSupport, PROFILE, PROFILE_VERIFICATION } from "../src/inspector/profiles";
 
 describe("inspector profile capability gate", () => {
@@ -16,6 +17,22 @@ describe("inspector profile capability gate", () => {
     expect(support.reason).toMatch(/verification.*blocked/i);
     expect(PROFILE_VERIFICATION.status).toBe("blocked");
     expect(PROFILE_VERIFICATION.unresolvedRuleIds.length).toBeGreaterThan(0);
+  });
+
+  it("makes the experimental reference profile available only with explicit candidate provenance", () => {
+    expect(getProfileSupport("400G", "tx", "100").supported).toBe(false);
+
+    const experimentalProfile = REFERENCE_SOURCES.find(
+      (source) => source.id === "400gbase-dr4-tx-reference-pma-v1",
+    );
+
+    expect(experimentalProfile).toMatchObject({
+      id: "400gbase-dr4-tx-reference-pma-v1",
+      availability: "experimental-reference",
+      provenanceLabel: "Experimental reference using candidate contracts",
+      standardsConformance: "not-claimed",
+      independentLocalFixturePolicy: "required-before-expected-output-admission",
+    });
   });
 
   it.each([

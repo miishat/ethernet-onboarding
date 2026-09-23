@@ -11,6 +11,26 @@
     "authenticatedTextInspected": false,
     "nonAuthenticatedObservation": "The public document record did not expose normative text to this workspace. No authentication, purchase, or bypass was attempted."
   },
+  "experimentalReferenceContract": {
+    "profileId": "400gbase-dr4-tx-reference-pma-v1",
+    "availability": "experimental-reference",
+    "provenanceLabels": [
+      "Experimental reference using candidate contracts",
+      "Candidate IEEE source",
+      "Independent local fixture",
+      "Not IEEE verified or standards conformant"
+    ],
+    "candidateSourceIds": [
+      "ieee-bs-d14-cl119-locator",
+      "ieee-bs-dr4-geometry-context",
+      "itu-g7095-2024-cor1-rs544",
+      "ieee-df-172a-rs-candidate",
+      "ieee-df-172a-input-candidate"
+    ],
+    "independentLocalFixturePolicy": "required-before-expected-output-admission",
+    "lineCheckUpgradePath": "Complete every blocked final IEEE record, independently review a nonzero 400G fixture and hashes, then consider enabling only the IEEE-only profile.",
+    "standardsConformance": "not-claimed"
+  },
   "verifiedRuleRecordSchema": {
     "ruleId": "string",
     "edition": "IEEE Std 802.3-2022",

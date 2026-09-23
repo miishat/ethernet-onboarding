@@ -12,6 +12,30 @@ The exact Clause 119 FEC-distribution, two-codeword interleave and PCS-lane form
 
 Final ITU-T G.709.5 (2024) Corrigendum 1 unblocks the existing isolated RS(544,514) primitive. It also independently confirms that IEEE 400G uses a 10-bit, non-round-robin two-codeword re-interleave and 16 logical lanes, while deliberately referring to IEEE 119.2.4.7 for the exact mapping. The complete 400GBASE-DR4 profile remains verification-blocked, and `getProfileSupport("400G", "tx", "100")` stays false.
 
+## Experimental reference execution ruling
+
+`400gbase-dr4-tx-reference-pma-v1` is a separate project-owned experimental
+reference profile. It may run only from retained candidate contracts and only
+when every result visibly carries these labels: `Experimental reference using
+candidate contracts`, `Candidate IEEE source`, `Independent local fixture`,
+and `Not IEEE verified or standards conformant`.
+
+Its candidate-source set is `ieee-bs-d14-cl119-locator`,
+`ieee-bs-dr4-geometry-context`, `itu-g7095-2024-cor1-rs544`,
+`ieee-df-172a-rs-candidate`, and `ieee-df-172a-input-candidate`. The 800G
+machine-readable extracts stay quarantined evidence for their stated scope.
+They do not become 400G standards authority or a substitute Annex 119A
+fixture.
+
+An experimental result may be displayed for investigation, but an expected
+output cannot be admitted until an independent local reference generates a
+nonzero fixture with its complete input, state, candidate-source IDs, output
+hash, and reviewer record. No production pipeline code is added by this
+ruling. The upgrade path is unchanged: complete the blocked IEEE line-check
+register, replace each candidate contract with the reviewed final clause
+record, independently review the 400G fixture, and only then consider
+enabling `400gbase-dr4-tx-v1`.
+
 ## Source ledger
 
 | ID | Source and exact location | Status | Safe use |

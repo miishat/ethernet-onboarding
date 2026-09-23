@@ -1,10 +1,42 @@
 # Inspector profile contract: verification blocked
 
-Status updated 2026-09-21: **incomplete**. The shared data types, requested teaching defaults, and capability gate are available. `getProfileSupport` returns `supported: false` for every selection, including `400G / tx / 100`. IEEE Std 802.3-2022 is available through the IEEE Reading Room, but requires account sign-in; this research session did not inspect that final text. Clause 119 FEC-distribution and PCS-lane formulas are retained as high-confidence candidates pending a lawful final line check and independently admitted fixture. The existing final ITU-T evidence is sufficient only for the isolated RS(544,514) primitive. No complete PCS, lane, or PAM4 result is supplied. See `docs/inspector-source-research-2026-09-21.md`.
+Status updated 2026-09-23: **IEEE verification blocked; experimental reference authorized.** `getProfileSupport` returns `supported: false` for every IEEE-only selection, including `400G / tx / 100`. IEEE Std 802.3-2022 is available through the IEEE Reading Room, but requires account sign-in; this research session did not inspect that final text. Clause 119 FEC-distribution and PCS-lane formulas remain candidates for the IEEE-only profile. The existing final ITU-T evidence is sufficient only for the isolated RS(544,514) primitive. A separate experimental reference profile may use retained candidate contracts under the provenance and fixture policy below. It does not claim IEEE verification or standards conformance. See `docs/inspector-source-research-2026-09-21.md`.
 
 ## Intended scope and API
 
 The reserved profile ID is `400gbase-dr4-tx-v1`. The selected target edition is **IEEE Std 802.3-2022**, without assuming later amendments. Its normative text must be checked before the profile is enabled. Metadata describes the intended 16 PCS lanes, four physical lanes and 53.125 GBd geometry. These values are candidate metadata, not an implemented mapping. The draft sources below provide context for 16 lanes and 53.125 GBd, but do not establish the selected edition's algorithms.
+
+## Experimental reference profile
+
+`400gbase-dr4-tx-reference-pma-v1` is a separate project-owned profile for
+experimental investigation. It may use retained candidate contracts and a
+project-owned reference PMA mapping, but it must never be labeled
+`IEEE-derived`, `IEEE verified`, `standards conformant`, or `400GBASE-DR4`
+without its experimental qualifier.
+
+Every experimental result must show all of these provenance labels:
+
+- `Experimental reference using candidate contracts`
+- `Candidate IEEE source`
+- `Independent local fixture`
+- `Not IEEE verified or standards conformant`
+
+The profile's candidate-source IDs are `ieee-bs-d14-cl119-locator`,
+`ieee-bs-dr4-geometry-context`, `itu-g7095-2024-cor1-rs544`,
+`ieee-df-172a-rs-candidate`, and `ieee-df-172a-input-candidate`. The
+independent local fixture policy is
+`required-before-expected-output-admission`: a separate local implementation
+must generate nonzero inputs and outputs, record complete state and source
+IDs, hash the artifact, and receive independent review before its expected
+output can enter tests. Candidate calculations may be investigated before
+that admission, but no expected output is treated as a verified vector.
+
+The upgrade path is intentionally one-way. Complete every record in
+`docs/inspector-ieee-line-check.md` against an authorized final source,
+independently review the 400G fixture and hashes, then replace candidate
+provenance with final IEEE provenance. Only that review can make
+`400gbase-dr4-tx-v1` eligible for enablement. It does not retroactively make
+experimental output standards conformant.
 
 `types.ts` supplies the interfaces in Task 2. `PROFILE`, `PROFILE_VERIFICATION`, `DEFAULT_FRAME`, and `DEFAULT_STREAM` are frozen. Consumers should copy a default into editable state and call `getProfileSupport(rate, dir, gen)` before constructing any complete run. The separate verification state does not change the agreed `Profile` interface. Rejections explain an unsupported rate, direction or lane generation before reporting the verification block for the intended tuple.
 

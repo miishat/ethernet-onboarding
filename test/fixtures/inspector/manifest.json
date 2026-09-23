@@ -67,6 +67,23 @@
       "verificationScope": "Evidence template only. No final IEEE text, source artifact, table row, output, or accepted fixture is present."
     }
   ],
+  "experimentalProfiles": [
+    {
+      "id": "400gbase-dr4-tx-reference-pma-v1",
+      "status": "experimental-reference",
+      "provenanceLabel": "Experimental reference using candidate contracts",
+      "candidateSourceIds": [
+        "ieee-bs-d14-cl119-locator",
+        "ieee-bs-dr4-geometry-context",
+        "itu-g7095-2024-cor1-rs544",
+        "ieee-df-172a-rs-candidate",
+        "ieee-df-172a-input-candidate"
+      ],
+      "independentLocalFixturePolicy": "required-before-expected-output-admission",
+      "standardsConformance": "not-claimed",
+      "verificationScope": "Candidate calculations may be investigated with explicit reference provenance. No 400G expected-output fixture is admitted, and the IEEE-only profile stays verification-blocked."
+    }
+  ],
   "blockedBy": [
     "mac-frame-fcs",
     "rs-cdmii-placement",
