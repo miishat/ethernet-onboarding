@@ -5,6 +5,7 @@ import { prepareStream } from "../src/inspector/engine/stream";
 import type { RateMatchPolicy } from "../src/inspector/types";
 import type { Block257 } from "../src/inspector/engine/transcode257";
 import scrambleFixture from "./fixtures/inspector/scramble-reference-policy-v1.json";
+import markerFixture from "./fixtures/inspector/marker-reference-policy-v1.json";
 
 const policy: RateMatchPolicy = {
   id: "product-owned-reference-am-rate-match-v1", source: "project-owned",
@@ -36,14 +37,17 @@ describe("experimental reference scrambling and alignment markers", () => {
     expect(plan.ok).toBe(true);
     if (!plan.ok) throw new Error(plan.errors.run);
     expect(plan.value.reservations).toEqual([{ groupIndex: 0, inputBlockIndex: 0, insertionBitOffset: 0, reservationBlocks: 2, fecPairIndex: 0 }, { groupIndex: 1, inputBlockIndex: 40, insertionBitOffset: 10280, reservationBlocks: 2, fecPairIndex: 20 }]);
+    expect(Object.isFrozen(plan.value.deletions)).toBe(true);
     const source = Uint8Array.from({ length: 41 * 257 }, (_, index) => index & 1);
     const result = insertMarkers(source, plan.value, Uint8Array.from({ length: 9 }, () => 1));
     expect(result.ok).toBe(true);
     if (!result.ok) throw new Error(result.errors.run);
     expect(result.value.bits).toHaveLength(source.length + 2 * 2 * 257);
-    expect(result.value.bits.slice(514, 530)).toEqual(source.slice(0, 16));
+    expect(Array.from(result.value.bits.slice(0, 514)).join("")).toBe(markerFixture.firstMarkerBits);
+    expect(Array.from(result.value.bits.slice(514, 530))).toEqual(Array.from(source.slice(0, 16)));
     expect(result.value.provenance.policyId).toBe("product-owned-reference-am-values-v1");
-    expect(result.value.state).toHaveLength(9);
+    expect(Array.from(result.value.state).join("")).toBe(markerFixture.carriedPrbsStateAfterTwoMarkers);
+    expect(result.value.deletions).toEqual([]);
   });
 
   it("deletes the earliest whole Idle words with an immutable provenance ledger", () => {
@@ -51,15 +55,27 @@ describe("experimental reference scrambling and alignment markers", () => {
     const input = { provenance, words: [
       { index: 0, octets: Uint8Array.from({ length: 8 }, () => 0x07), controlMask: 0xff, provenance },
       { index: 1, octets: Uint8Array.from({ length: 8 }, () => 0x07), controlMask: 0xff, provenance },
-      { index: 2, octets: Uint8Array.of(0xfb, 1, 2, 3, 4, 5, 6, 7), controlMask: 1, provenance },
+      { index: 2, octets: Uint8Array.from({ length: 8 }, () => 0x07), controlMask: 0xff, provenance },
+      { index: 3, octets: Uint8Array.from({ length: 8 }, () => 0x07), controlMask: 0xff, provenance },
+      { index: 4, octets: Uint8Array.from({ length: 8 }, () => 0x07), controlMask: 0xff, provenance },
+      { index: 5, octets: Uint8Array.from({ length: 8 }, () => 0x07), controlMask: 0xff, provenance },
+      { index: 6, octets: Uint8Array.from({ length: 8 }, () => 0x07), controlMask: 0xff, provenance },
+      { index: 7, octets: Uint8Array.from({ length: 8 }, () => 0x07), controlMask: 0xff, provenance },
+      { index: 8, octets: Uint8Array.of(0xfb, 1, 2, 3, 4, 5, 6, 7), controlMask: 1, provenance },
     ] };
     const prepared = prepareStream(input, policy, 0);
     expect(prepared.ok).toBe(true);
     if (!prepared.ok) throw new Error(prepared.errors.run);
     expect(prepared.value.stream.words).toHaveLength(1);
-    expect(prepared.value.deletions.map((deletion) => deletion.originalWordIndex)).toEqual([0, 1]);
+    expect(prepared.value.deletions.map((deletion) => deletion.originalWordIndex)).toEqual([0, 1, 2, 3, 4, 5, 6, 7]);
     expect(Object.isFrozen(prepared.value.deletions)).toBe(true);
-    expect(prepared.value.deletions[0]).toMatchObject({ policyId: policy.id, reason: "alignment-marker-reservation", reservation: { groupIndex: 0, fecPairIndex: 0, boundaryKind: "am-group" } });
+    expect(prepared.value.deletions[0]).toMatchObject({ policyId: policy.id, reason: "alignment-marker-reservation", reservation: { groupIndex: 0, insertionBitOffset: 0, fecPairIndex: 0, boundaryKind: "am-group" } });
+    const plan = planMarkers(blocks(1), policy, { absoluteStreamBlock: 0 }, prepared.value.deletions);
+    if (!plan.ok) throw new Error(plan.errors.run);
+    expect(plan.value.deletions).toBe(prepared.value.deletions);
+    const result = insertMarkers(Uint8Array.from({ length: 257 }, () => 0), plan.value, Uint8Array.from({ length: 9 }, () => 1));
+    if (!result.ok) throw new Error(result.errors.run);
+    expect(result.value.deletions).toBe(plan.value.deletions);
   });
 
   it("refuses an unaligned marker reservation or a policy that would delete frame data", () => {
@@ -67,5 +83,11 @@ describe("experimental reference scrambling and alignment markers", () => {
     expect(planMarkers(blocks(1), bad, { absoluteStreamBlock: 0 })).toMatchObject({ ok: false });
     const provenance = blocks(1)[0].provenance;
     expect(prepareStream({ provenance, words: [{ index: 0, octets: Uint8Array.of(0xfb, 1, 2, 3, 4, 5, 6, 7), controlMask: 1, provenance }] }, policy, 0)).toMatchObject({ ok: false, errors: { run: expect.stringMatching(/eligible Idle/i) } });
+  });
+
+  it("does not defer a reservation past the declared maximum", () => {
+    const provenance = blocks(1)[0].provenance;
+    const lateIdles = Array.from({ length: 8 }, (_, offset) => ({ index: offset + 5, octets: Uint8Array.from({ length: 8 }, () => 0x07), controlMask: 0xff, provenance }));
+    expect(prepareStream({ provenance, words: lateIdles }, { ...policy, maximumDeferralBlocks: 0 }, 39)).toMatchObject({ ok: false, errors: { run: expect.stringMatching(/maximum deferral/i) } });
   });
 });

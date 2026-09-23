@@ -41,3 +41,17 @@ admitted IEEE vectors.
 - Focused PCS and marker suite: 22 passing tests.
 - Focused marker coverage command: 4 passing tests.
 - TypeScript typecheck and whitespace diff check passed.
+
+## Fix round 1
+
+Each reserved 257-bit marker block now removes exactly four complete all-Idle
+CDMII words. A two-block reservation therefore removes eight words. Selection
+is performed per reservation in stable original-word order, records the exact
+reservation mapping on every deletion, and rejects an eligible Idle that would
+require deferral past `maximumDeferralBlocks`. The immutable ledger is carried
+from `PreparedStream` through `MarkerPlan` and `MarkerResult`.
+
+The AM fixture now freezes all 514 first-marker bits, including fixed common
+and status fields, group field, PRBS9 pad, and carried PRBS state after one
+and two inserted markers. The scrambler fixture is now accurately labeled a
+frozen local product-policy fixture rather than an independent vector.

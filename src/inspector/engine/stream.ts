@@ -46,12 +46,27 @@ export function prepareStream(input: InterfaceStream, policy: RateMatchPolicy, a
   const lastAbsolute = absoluteStreamBlock + span - 1;
   const firstGroup = Math.ceil((firstAbsolute - schedule.phaseZeroAbsoluteStreamBlock) / schedule.cadenceBlocks);
   const lastGroup = Math.floor((lastAbsolute - schedule.phaseZeroAbsoluteStreamBlock) / schedule.cadenceBlocks);
-  const groups = Math.max(0, lastGroup - firstGroup + 1);
-  const needed = groups * schedule.reservationBlocks;
+  const wordsPerReservation = schedule.reservationBlocks * 4;
   const eligible = input.words.filter((word) => word.controlMask === 0xff && word.octets.every((octet) => policy.eligibleIdleControlCodes.includes(octet)));
-  if (!Number.isInteger(policy.maximumDeferralBlocks) || policy.maximumDeferralBlocks < 0 || needed > eligible.length) return { ok: false, errors: { run: "The product-owned rate-match policy cannot find enough eligible Idle words before its maximum deferral." } };
-  const selected = new Set(eligible.slice(0, needed).map((word) => word.index));
-  const deletions: RateMatchDeletion[] = eligible.slice(0, needed).map((word, groupIndex) => ({ originalWordIndex: word.index, originalOctetOffset: 0, originalBitOffset: 0, idleOctets: Object.freeze([...word.octets]), controlMask: word.controlMask, policyId: policy.id, reason: "alignment-marker-reservation", reservation: { groupIndex, insertionBitOffset: groupIndex * schedule.cadenceBlocks * 257, fecPairIndex: Math.floor((absoluteStreamBlock + groupIndex * schedule.cadenceBlocks) / schedule.fecPairBlocks), boundaryKind: "am-group" } }));
+  if (!Number.isInteger(policy.maximumDeferralBlocks) || policy.maximumDeferralBlocks < 0) return { ok: false, errors: { run: "The product-owned rate-match policy requires a nonnegative maximum deferral." } };
+  const selected = new Set<number>();
+  const deletions: RateMatchDeletion[] = [];
+  for (let groupIndex = firstGroup; groupIndex <= lastGroup; groupIndex += 1) {
+    const absoluteReservationBlock = schedule.phaseZeroAbsoluteStreamBlock + groupIndex * schedule.cadenceBlocks;
+    const inputBlockIndex = absoluteReservationBlock - absoluteStreamBlock;
+    const reservationWordBoundary = inputBlockIndex * 4;
+    const beforeBoundary = eligible.filter((word) => !selected.has(word.index) && (inputBlockIndex === 0 || word.index < reservationWordBoundary));
+    if (beforeBoundary.length < wordsPerReservation) {
+      const deferralLimit = reservationWordBoundary + policy.maximumDeferralBlocks * 4;
+      const withinDeferral = eligible.filter((word) => !selected.has(word.index) && word.index <= deferralLimit);
+      if (withinDeferral.length < wordsPerReservation) return { ok: false, errors: { run: "The product-owned rate-match policy cannot find enough eligible Idle words before its maximum deferral." } };
+      return { ok: false, errors: { run: "The product-owned rate-match policy requires eligible Idle words before each marker reservation." } };
+    }
+    for (const word of beforeBoundary.slice(0, wordsPerReservation)) {
+      selected.add(word.index);
+      deletions.push({ originalWordIndex: word.index, originalOctetOffset: 0, originalBitOffset: 0, idleOctets: Object.freeze([...word.octets]), controlMask: word.controlMask, policyId: policy.id, reason: "alignment-marker-reservation", reservation: { groupIndex, insertionBitOffset: inputBlockIndex * 257, fecPairIndex: Math.floor(absoluteReservationBlock / schedule.fecPairBlocks), boundaryKind: "am-group" } });
+    }
+  }
   const words = input.words.filter((word) => !selected.has(word.index)).map((word, index) => ({ ...word, index }));
   return { ok: true, value: { stream: { words, provenance: input.provenance }, deletions: Object.freeze(deletions), absoluteStreamBlock, provenance: { source: "project-owned", policyId: policy.id, status: "experimental-candidate" } } };
 }

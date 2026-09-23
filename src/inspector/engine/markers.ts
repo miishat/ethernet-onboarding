@@ -1,11 +1,11 @@
-import type { Result, RateMatchPolicy } from "../types";
+import type { RateMatchDeletion, Result, RateMatchPolicy } from "../types";
 import type { Block257 } from "./transcode257";
 
 export interface MarkerPhase { absoluteStreamBlock: number; }
 export type MarkerPrbsState = Uint8Array;
 export interface MarkerReservation { groupIndex: number; inputBlockIndex: number; insertionBitOffset: number; reservationBlocks: number; fecPairIndex: number; }
-export interface MarkerPlan { reservations: readonly MarkerReservation[]; reservationBits: number; provenance: { sourceId: "ieee-bs-d14-cl119-locator"; policyId: "product-owned-reference-am-values-v1"; status: "experimental-candidate"; }; }
-export interface MarkerResult { bits: Uint8Array; state: MarkerPrbsState; plan: MarkerPlan; provenance: MarkerPlan["provenance"]; }
+export interface MarkerPlan { reservations: readonly MarkerReservation[]; reservationBits: number; deletions: readonly RateMatchDeletion[]; provenance: { sourceId: "ieee-bs-d14-cl119-locator"; policyId: "product-owned-reference-am-values-v1"; status: "experimental-candidate"; }; }
+export interface MarkerResult { bits: Uint8Array; state: MarkerPrbsState; plan: MarkerPlan; deletions: readonly RateMatchDeletion[]; provenance: MarkerPlan["provenance"]; }
 
 const PROVENANCE = Object.freeze({ sourceId: "ieee-bs-d14-cl119-locator" as const, policyId: "product-owned-reference-am-values-v1" as const, status: "experimental-candidate" as const });
 
@@ -16,7 +16,7 @@ function validPolicy(policy: RateMatchPolicy): string | undefined {
   return undefined;
 }
 
-export function planMarkers(blocks: readonly Block257[], policy: RateMatchPolicy, phase: MarkerPhase): Result<MarkerPlan> {
+export function planMarkers(blocks: readonly Block257[], policy: RateMatchPolicy, phase: MarkerPhase, deletions: readonly RateMatchDeletion[] = []): Result<MarkerPlan> {
   const error = validPolicy(policy);
   if (error) return { ok: false, errors: { run: error } };
   if (!Number.isInteger(phase.absoluteStreamBlock) || phase.absoluteStreamBlock < 0) return { ok: false, errors: { run: "Marker phase must be a nonnegative absolute block index." } };
@@ -27,7 +27,8 @@ export function planMarkers(blocks: readonly Block257[], policy: RateMatchPolicy
     const relative = absolute - phaseZeroAbsoluteStreamBlock;
     if (relative >= 0 && relative % cadenceBlocks === 0) reservations.push({ groupIndex: relative / cadenceBlocks, inputBlockIndex: index, insertionBitOffset: index * 257, reservationBlocks, fecPairIndex: absolute / fecPairBlocks });
   }
-  return { ok: true, value: { reservations: Object.freeze(reservations), reservationBits: reservationBlocks * 257, provenance: PROVENANCE } };
+  const immutableDeletions = Object.isFrozen(deletions) ? deletions : Object.freeze([...deletions]);
+  return { ok: true, value: { reservations: Object.freeze(reservations), reservationBits: reservationBlocks * 257, deletions: immutableDeletions, provenance: PROVENANCE } };
 }
 
 function nextPrbs(state: Uint8Array): number {
@@ -40,11 +41,13 @@ function nextPrbs(state: Uint8Array): number {
 
 function markerBits(size: number, state: Uint8Array, groupIndex: number): Uint8Array {
   const marker = new Uint8Array(size);
-  // Product-owned AM layout: 16-bit common word, 16-bit group identifier,
-  // then PRBS9 pad. The fixed fields make the reference reservation visible.
+  // Product-owned AM layout: 16-bit common value, 16-bit status value 0x0001,
+  // 16-bit group identifier, then a PRBS9 pad. These are reference policy
+  // values, not an inferred final IEEE layout.
   for (let bit = 0; bit < Math.min(16, size); bit += 1) marker[bit] = (0xa55a >>> bit) & 1;
-  for (let bit = 16; bit < Math.min(32, size); bit += 1) marker[bit] = (groupIndex >>> (bit - 16)) & 1;
-  for (let bit = 32; bit < size; bit += 1) marker[bit] = nextPrbs(state);
+  for (let bit = 16; bit < Math.min(32, size); bit += 1) marker[bit] = (0x0001 >>> (bit - 16)) & 1;
+  for (let bit = 32; bit < Math.min(48, size); bit += 1) marker[bit] = (groupIndex >>> (bit - 32)) & 1;
+  for (let bit = 48; bit < size; bit += 1) marker[bit] = nextPrbs(state);
   return marker;
 }
 
@@ -64,5 +67,5 @@ export function insertMarkers(scrambled: Uint8Array, plan: MarkerPlan, state: Ma
   const total = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
   const bits = new Uint8Array(total); let offset = 0;
   for (const chunk of chunks) { bits.set(chunk, offset); offset += chunk.length; }
-  return { ok: true, value: { bits, state: carried, plan, provenance: plan.provenance } };
+  return { ok: true, value: { bits, state: carried, plan, deletions: plan.deletions, provenance: plan.provenance } };
 }
