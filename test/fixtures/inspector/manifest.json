@@ -22,9 +22,17 @@
     {
       "id": "marker-reference-policy-v1",
       "file": "marker-reference-policy-v1.json",
-      "sourceId": "ieee-bs-d14-cl119-locator",
+      "sourceId": "ieee-8023-2022-cl119-am",
       "status": "experimental-candidate",
-      "verificationScope": "Frozen local marker and PRBS policy. Candidate source locator only; not IEEE verified or standards conformant."
+      "derivationArtifact": {
+        "file": "marker-final-cl119-derivation-v1.json",
+        "canonicalArtifactSha256": "1492ad7e953927de52bf925dca837b3c1f3f28bc0f84304ecd334ac979d63386",
+        "sourceRevision": "IEEE Std 802.3-2022 final",
+        "sourceSha256": "c6a2d53370057a3ad16166ef7918561cad8e7318f4ddf57106de22aa241731d5",
+        "reviewerId": "/root/phy_am_final_alignment_light",
+        "reviewType": "author self-check; not independent review"
+      },
+      "verificationScope": "Frozen local marker and PRBS policy, bound to a documented manual derivation artifact for final Clause 119 Table 119-2 and pp. 4846-4848. It is not an independent implementation, IEEE verified, or standards conformant."
     },
     {
       "id": "rs544-standalone-polynomial-v1",

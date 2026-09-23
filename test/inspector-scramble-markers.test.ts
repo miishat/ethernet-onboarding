@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { createHash } from "node:crypto";
 import { scrambleBits } from "../src/inspector/engine/scramble";
 import { insertMarkers, planMarkers } from "../src/inspector/engine/markers";
 import { prepareStream } from "../src/inspector/engine/stream";
@@ -6,6 +7,16 @@ import type { RateMatchPolicy } from "../src/inspector/types";
 import type { Block257 } from "../src/inspector/engine/transcode257";
 import scrambleFixture from "./fixtures/inspector/scramble-reference-policy-v1.json";
 import markerFixture from "./fixtures/inspector/marker-reference-policy-v1.json";
+import markerDerivation from "./fixtures/inspector/marker-final-cl119-derivation-v1.json";
+import fixtureManifest from "./fixtures/inspector/manifest.json";
+
+function canonicalJson(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
+  if (value && typeof value === "object") {
+    return `{${Object.entries(value as Record<string, unknown>).filter(([key]) => key !== "canonicalArtifactSha256").sort(([left], [right]) => left.localeCompare(right)).map(([key, entry]) => `${JSON.stringify(key)}:${canonicalJson(entry)}`).join(",")}}`;
+  }
+  return JSON.stringify(value);
+}
 
 const policy: RateMatchPolicy = {
   id: "product-owned-reference-am-rate-match-v1", source: "project-owned",
@@ -20,6 +31,14 @@ const blocks = (count: number): Block257[] => Array.from({ length: count }, (_, 
 }));
 
 describe("experimental reference scrambling and alignment markers", () => {
+  it("locks the documented Clause 119 derivation artifact and frozen fixture by SHA-256", () => {
+    expect(createHash("sha256").update(markerFixture.final400gFirstMarkerBits, "utf8").digest("hex")).toBe(markerDerivation.expectedMarkerBitsSha256);
+    expect(createHash("sha256").update(canonicalJson(markerDerivation), "utf8").digest("hex")).toBe(markerDerivation.canonicalArtifactSha256);
+    expect(markerFixture.derivationArtifact.canonicalArtifactSha256).toBe(markerDerivation.canonicalArtifactSha256);
+    const manifestEntry = fixtureManifest.fixtures.find((fixture) => fixture.id === markerFixture.id);
+    expect(manifestEntry?.derivationArtifact.canonicalArtifactSha256).toBe(markerDerivation.canonicalArtifactSha256);
+  });
+
   it("plans 2056-bit AM groups on 40-block FEC-pair boundaries at the final 400G cadence", () => {
     const finalPolicy: RateMatchPolicy = {
       ...policy,

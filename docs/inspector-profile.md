@@ -39,12 +39,15 @@ that admission, but no expected output is treated as a verified vector.
 
 The experimental reference AM component uses the locally reviewed final Clause
 119 Table 119-2 lane encodings and 400G mapping procedure: 16 x 120-bit lane
-markers, a 133-bit PRBS9 pad, a product-owned zero 3-bit status field, and a
+markers, a 133-bit PRBS9 pad, a product-owned zero 3-bit `tx_am_sf` selection,
+and a
 2056-bit group inserted every 163840 transcoded blocks at the beginning of a
 40-block FEC pair. Its product-owned all-Idle rate-match policy deletes 32
 complete 64-bit words for the eight-block reservation. This scoped correction
-does not verify the Clause 49 recurrence, Clause 82 controls or status
-behavior, or the IEEE-only profile.
+does not verify the Clause 49 recurrence, Clause 82 controls, the current
+profile's end-to-end PHY_XS inputs or selected `tx_am_sf` behavior, or the
+IEEE-only profile. Clause 119 p. 4844 defines `tx_am_sf` composition; it is
+not an unavailable Clause 82 rule.
 
 The upgrade path is intentionally one-way. Complete every record in
 `docs/inspector-ieee-line-check.md` against an authorized final source,

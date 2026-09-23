@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "artifactId": "marker-final-cl119-derivation-v1",
+  "artifactKind": "documented-manual-derivation",
+  "independence": "This is a documented manual derivation artifact, not an independent implementation.",
+  "source": {
+    "standard": "IEEE Std 802.3-2022",
+    "sourceFile": "8023-2022-4836-4874-Clause-119_compressed.pdf",
+    "sourceSha256": "c6a2d53370057a3ad16166ef7918561cad8e7318f4ddf57106de22aa241731d5",
+    "revision": "2022 final",
+    "locators": ["119.2.4.4.2, printed pp. 4846-4848", "Table 119-2", "Figure 119-8"]
+  },
+  "derivation": {
+    "laneMarkerSerialization": "Table 119-2 octets, LSB first",
+    "laneMapping": "p. 4847 alternating 10-bit lane-pair order for k=0..11",
+    "pad": "133 PRBS9 bits, state[8] output and state[8] xor state[4] feedback",
+    "padSeedBits": "111111111",
+    "status": "product-owned tx_am_sf = 000",
+    "canonicalization": "UTF-8 JSON with recursively sorted object keys, compact separators, and canonicalArtifactSha256 omitted"
+  },
+  "expectedMarkerBitsSha256": "64fb7be4d0549bbf9b8ebf1946db9a3da1491f96830403bae51bf698b149f201",
+  "expectedPrbsStateAfterMarker": "000100000",
+  "authorship": {
+    "authorId": "/root/phy_am_final_alignment_light",
+    "reviewerId": "/root/phy_am_final_alignment_light",
+    "reviewType": "author self-check; not independent review",
+    "sourceReviewEvidence": "docs/inspector-profile.md records local source review by /root/ieee_source_admission_review_light"
+  },
+  "canonicalArtifactSha256": "1492ad7e953927de52bf925dca837b3c1f3f28bc0f84304ecd334ac979d63386"
+}

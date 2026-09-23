@@ -26,15 +26,17 @@ insertion, 40-block pre-FEC-pair boundary, and 163840-block repetition period.
 - The product-owned all-Idle selection remains bounded and deterministic. It
   deletes 32 complete 64-bit words for one eight-block reservation and keeps
   its deep-frozen ledger.
-- The frozen fixture contains an independently constructed full 2056-bit first
-  marker and PRBS9 state after the 133-bit pad.
+- The frozen fixture is bound to a hash-checked documented manual derivation
+  artifact. It is not presented as an independent implementation.
 
 ## Deliberate limits
 
-Clause 49 scrambling recurrence, Clause 82 control legality and AM status
-behavior, and Annex 119A vectors are still unavailable locally. Their source
-labels remain experimental or product-owned where applicable. This work does
-not claim IEEE verification or standards conformance.
+Clause 49 scrambling recurrence, Clause 82 control legality, end-to-end
+PHY_XS inputs and selected AM status behavior for this experimental profile,
+and Annex 119A vectors are still unavailable locally. Clause 119 p. 4844 does
+define `tx_am_sf` composition, while this implementation intentionally selects
+the labeled product-owned zero status value. This work does not claim IEEE
+verification or standards conformance.
 
 ## Verification
 
@@ -43,3 +45,12 @@ cadence, exact 2056-bit marker output, frozen PRBS state, deterministic
 32-word deletion capacity, maximum deferral, selection order, and immutable
 ledger. Type checking and the full repository test suite were run after the
 change.
+
+## Provenance follow-up
+
+The fixture now references `marker-final-cl119-derivation-v1.json`, a separate
+documented manual derivation artifact. It records the final-source filename,
+SHA-256, edition, pages, table and figure, deterministic JSON canonicalization,
+author self-check identity, and its non-independent review status. The focused
+test checks both the frozen marker-bit SHA-256 and the artifact's canonical
+SHA-256 before using the fixture as an expected value.
