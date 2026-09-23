@@ -47,7 +47,7 @@ export function prepareStream(input: InterfaceStream, policy: RateMatchPolicy, a
   if (!Number.isInteger(absoluteStreamBlock) || absoluteStreamBlock < 0) return { ok: false, errors: { run: "The absolute stream block must be a nonnegative integer." } };
   if (policy.source !== "project-owned" || policy.selection !== "earliest-eligible-before-reservation" || policy.tieBreak !== "lowest-absolute-word-index") return { ok: false, errors: { run: "Only the declared product-owned reference rate-match policy is supported." } };
   const schedule = policy.amSchedule;
-  if (![schedule.cadenceBlocks, schedule.reservationBlocks, schedule.fecPairBlocks].every((value) => Number.isInteger(value) && value > 0) || schedule.cadenceBlocks % schedule.fecPairBlocks !== 0) return { ok: false, errors: { run: "Rate-match cadence must use positive FEC-pair-aligned block counts." } };
+  if (schedule.cadenceBlocks !== 163840 || schedule.reservationBlocks !== 8 || schedule.fecPairBlocks !== 40 || schedule.phaseZeroAbsoluteStreamBlock !== 0) return { ok: false, errors: { run: "The experimental reference rate-match policy uses the final 400G schedule: 32 complete all-Idle words for eight blocks at the beginning of each 40-block FEC pair, every 163840 blocks." } };
   // Four 66-bit blocks, each built from one eight-octet CDMII word, form one
   // 257-bit input block. Count exact schedule boundaries in this window.
   const span = Math.ceil(input.words.length / 4);
