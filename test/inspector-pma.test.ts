@@ -104,8 +104,12 @@ describe("reference 16-to-4 PMA mapping", () => {
     });
     const referencePath = fileURLToPath(new URL("../scripts/inspector-reference.py", import.meta.url));
 
-    expect(referenceFixture.status).toBe("pending-independent-review");
-    expect(referenceFixture.review.result).toBe("pending");
+    expect(referenceFixture.status).toBe("independently-reviewed-experimental-only");
+    expect(referenceFixture.review).toMatchObject({
+      reviewerId: "/root/phy_pma_review_light",
+      reviewedOn: "2026-09-24",
+      result: "accepted-experimental-only",
+    });
     expect(sha256(new TextEncoder().encode(canonical))).toBe(referenceFixture.artifactSha256);
     expect(sha256(readFileSync(referencePath))).toBe(referenceFixture.reference.sha256);
     expect(referenceFixture.pmdLaneBits.every((bits) => bits.length === 64)).toBe(true);

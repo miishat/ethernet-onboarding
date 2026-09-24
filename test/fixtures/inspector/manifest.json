@@ -9,9 +9,15 @@
       "id": "reference-pma-16x4-v1",
       "file": "reference-pma-16x4-v1.json",
       "sourceId": "project-owned-reference-pma-v1",
-      "status": "pending-independent-review",
+      "status": "independently-reviewed-experimental-only",
       "inputState": "Sixteen recoverable 16-bit PCS lane patterns, absolute PMD output phase 0, four product-owned 4-bit source schedules, MSB-first dibits, Gray normalized levels, and no precoder.",
-      "verificationScope": "Expected PMA and PAM4 output is frozen from an independent Python implementation but remains pending independent review. It never establishes a universal IEEE PMA order, measured voltage, optical power, standards conformance, or IEEE-only profile support."
+      "review": {
+        "reviewerId": "/root/phy_pma_review_light",
+        "reviewedOn": "2026-09-24",
+        "scope": "All four 64-bit PMD streams, every PAM4 dibit and normalized level, start and end mux state, source-lane traces, reference-script SHA-256, and artifact SHA-256.",
+        "result": "accepted-experimental-only"
+      },
+      "verificationScope": "Expected PMA and PAM4 output is frozen from an independently reviewed Python implementation. It never establishes a universal IEEE PMA order, measured voltage, optical power, standards conformance, or IEEE-only profile support."
     },
     {
       "id": "pcs-d14-reference-v1",
