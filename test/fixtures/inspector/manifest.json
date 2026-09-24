@@ -155,8 +155,10 @@
     "independent-vectors"
   ],
   "independentReference": {
-    "status": "experimental-fixture-pending-review",
+    "status": "experimental-fixture-reviewed-only",
     "fixtureId": "experimental-cl119-local-400g-am-fec-v1",
-    "reason": "A local standalone reference freezes experimental Clause 119 FEC outputs. It requires an independent review and cannot certify unknown rules or enable the IEEE-only profile."
+    "reviewerId": "/root/phy_distribution_review_light",
+    "reviewedOn": "2026-09-24",
+    "reason": "The independently reviewed local reference freezes experimental Clause 119 FEC outputs. Annex 119A remains unavailable, and this fixture cannot certify unknown rules or enable the IEEE-only profile."
   }
 }
