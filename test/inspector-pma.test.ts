@@ -49,8 +49,11 @@ describe("reference 16-to-4 PMA mapping", () => {
     const whole = mapPhysicalLanes(pcs, REFERENCE_PMA_MAPPING, 0, 64);
     const first = mapPhysicalLanes(pcs, REFERENCE_PMA_MAPPING, 0, 13);
     const second = mapPhysicalLanes(pcs, REFERENCE_PMA_MAPPING, first.nextState, 51);
+    const secondWithDefaultLength = mapPhysicalLanes(pcs, REFERENCE_PMA_MAPPING, first.nextState);
 
     expect(joinLanes(first.lanes, second.lanes)).toEqual(whole.lanes);
+    expect(joinLanes(first.lanes, secondWithDefaultLength.lanes)).toEqual(whole.lanes);
+    expect(secondWithDefaultLength.nextAbsoluteBit).toBe(64);
     expect(second.nextAbsoluteBit).toBe(whole.nextAbsoluteBit);
     expect(first.nextState.consumedBitsByPcsLane).toEqual([
       4, 3, 3, 3, 4, 3, 3, 3, 4, 3, 3, 3, 4, 3, 3, 3,

@@ -65,6 +65,22 @@ function assertState(state: PmaMuxState): void {
   }
 }
 
+function maximumOutputBitCount(
+  laneLength: number,
+  profile: PmaMappingProfile,
+  state: PmaMuxState,
+): number {
+  const consumed = Array.from(state.consumedBitsByPcsLane);
+  let count = 0;
+  while (true) {
+    const phase = (profile.initialPhase + state.absoluteOutputBit + count) % profile.periodBits;
+    const sources = profile.sourcePcsLaneByPmdLane.map((schedule) => schedule[phase]);
+    if (sources.some((sourceLane) => consumed[sourceLane] >= laneLength)) return count;
+    for (const sourceLane of sources) consumed[sourceLane] += 1;
+    count += 1;
+  }
+}
+
 /**
  * Applies the selected project-owned 16:4 bit mux. Each input PCSL supplies
  * the same number of bits and is consumed in order whenever its schedule slot
@@ -90,7 +106,7 @@ export function mapPhysicalLanes(
     assertBinary(lane);
   }
 
-  const defaultOutputCount = (laneLength - Math.max(...startState.consumedBitsByPcsLane)) * profile.periodBits;
+  const defaultOutputCount = maximumOutputBitCount(laneLength, profile, startState);
   const count = outputBitCount ?? defaultOutputCount;
   if (!Number.isSafeInteger(count) || count < 0) {
     throw new RangeError("PMA output bit count must be a nonnegative safe integer.");
