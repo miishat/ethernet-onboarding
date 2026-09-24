@@ -26,13 +26,17 @@
       "status": "experimental-candidate",
       "derivationArtifact": {
         "file": "marker-final-cl119-derivation-v1.json",
-        "canonicalArtifactSha256": "1492ad7e953927de52bf925dca837b3c1f3f28bc0f84304ecd334ac979d63386",
+        "canonicalArtifactSha256": "724c42e2e222dc5cb25f6c70a6fb3a01a7a71d7e276f29f53bc83aeab8424e89",
         "sourceRevision": "IEEE Std 802.3-2022 final",
         "sourceSha256": "c6a2d53370057a3ad16166ef7918561cad8e7318f4ddf57106de22aa241731d5",
-        "reviewerId": "/root/phy_am_final_alignment_light",
-        "reviewType": "author self-check; not independent review"
+        "referenceScript": "scripts/marker-reference.py",
+        "referenceScriptRevision": "marker-reference-v2",
+        "referenceScriptSha256": "feb9a7c3c9119a3389a177fd8847abf399bd19ccf98b498f78f3d9e8ceb21916",
+        "reviewerId": "/root/marker_reference_review_light",
+        "reviewType": "independent review of standalone Python reference and Table 119-2 transcription",
+        "reviewedScope": "lane 5 byte 13=0xED; lane 12 byte 9=0xA2; mapping, product PRBS orientation/seed and product status=000"
       },
-      "verificationScope": "Frozen local marker and PRBS policy, bound to a documented manual derivation artifact for final Clause 119 Table 119-2 and pp. 4846-4848. It is not an independent implementation, IEEE verified, or standards conformant."
+      "verificationScope": "Frozen local marker and product PRBS/status policy, bound to a reviewed standalone Python reference for final Clause 119 Table 119-2 and pp. 4846-4848. The PRBS orientation/seed and status=000 are product choices, not normative wire values. It is not IEEE verified or standards conformant."
     },
     {
       "id": "rs544-standalone-polynomial-v1",

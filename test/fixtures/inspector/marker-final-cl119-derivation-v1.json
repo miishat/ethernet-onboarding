@@ -1,30 +1,39 @@
 {
   "schemaVersion": 1,
   "artifactId": "marker-final-cl119-derivation-v1",
-  "artifactKind": "documented-manual-derivation",
-  "independence": "This is a documented manual derivation artifact, not an independent implementation.",
+  "artifactKind": "independent-python-reference",
+  "independence": "The standalone Python reference reads no production TypeScript or fixture data. It is independently reasoned from the recorded Table 119-2 transcription and accepted product choices; it does not establish IEEE profile conformance.",
   "source": {
     "standard": "IEEE Std 802.3-2022",
     "sourceFile": "8023-2022-4836-4874-Clause-119_compressed.pdf",
     "sourceSha256": "c6a2d53370057a3ad16166ef7918561cad8e7318f4ddf57106de22aa241731d5",
     "revision": "2022 final",
-    "locators": ["119.2.4.4.2, printed pp. 4846-4848", "Table 119-2", "Figure 119-8"]
+    "locators": ["119.2.4.4.2, printed pp. 4846-4848", "Table 119-2, printed p. 4846", "400G mapping procedure, printed p. 4847", "Figure 119-8, printed p. 4848"]
   },
   "derivation": {
     "laneMarkerSerialization": "Table 119-2 octets, LSB first",
     "laneMapping": "p. 4847 alternating 10-bit lane-pair order for k=0..11",
-    "pad": "133 PRBS9 bits, state[8] output and state[8] xor state[4] feedback",
+    "pad": "Accepted product PRBS9 convention: 133 bits, state[8] output and state[8] xor state[4] feedback. This orientation is a product choice, not a claimed normative reset or wire value.",
     "padSeedBits": "111111111",
-    "status": "product-owned tx_am_sf = 000",
-    "canonicalization": "UTF-8 JSON with recursively sorted object keys, compact separators, and canonicalArtifactSha256 omitted"
+    "status": "Accepted product tx_am_sf value = 000. Clause 119 defines field composition, but this is not claimed as a normative wire value.",
+    "canonicalization": "UTF-8 JSON; recursively sort object keys by Unicode code points, not locale collation; compact separators; JSON escape strings; omit every key named canonicalArtifactSha256 from the hashed form."
   },
-  "expectedMarkerBitsSha256": "64fb7be4d0549bbf9b8ebf1946db9a3da1491f96830403bae51bf698b149f201",
+  "referenceScript": {
+    "path": "scripts/marker-reference.py",
+    "revision": "marker-reference-v2",
+    "sha256": "feb9a7c3c9119a3389a177fd8847abf399bd19ccf98b498f78f3d9e8ceb21916",
+    "invocation": "python scripts/marker-reference.py --json",
+    "outputCanonicalization": "The script emits ASCII-only JSON with sort_keys=True and compact separators. Its bits field is an index-ascending 2056-character ASCII bit string, and sha256 hashes those ASCII bytes exactly."
+  },
+  "expectedMarkerBitsSha256": "d2d54fc33e0b658060e0a146ccd0bbf08b19250cb5a832b8a7a94f711ef976bd",
   "expectedPrbsStateAfterMarker": "000100000",
   "authorship": {
     "authorId": "/root/phy_am_final_alignment_light",
-    "reviewerId": "/root/phy_am_final_alignment_light",
-    "reviewType": "author self-check; not independent review",
-    "sourceReviewEvidence": "docs/inspector-profile.md records local source review by /root/ieee_source_admission_review_light"
+    "reviewerId": "/root/marker_reference_review_light",
+    "reviewDate": "2026-09-24",
+    "reviewType": "independent review of the standalone Python reference and recorded source transcription",
+    "reviewedScope": "Table 119-2 lane 5 byte 13 = 0xED, lane 12 byte 9 = 0xA2, LSB-first octets, alternating 10-bit mapping, product PRBS convention and product status=000.",
+    "sourceReviewEvidence": "Local licensed Clause 119 PDF hash and printed locators are recorded above. This review does not admit missing end-to-end PHY_XS or Clause 49/82 behavior."
   },
-  "canonicalArtifactSha256": "1492ad7e953927de52bf925dca837b3c1f3f28bc0f84304ecd334ac979d63386"
+  "canonicalArtifactSha256": "724c42e2e222dc5cb25f6c70a6fb3a01a7a71d7e276f29f53bc83aeab8424e89"
 }

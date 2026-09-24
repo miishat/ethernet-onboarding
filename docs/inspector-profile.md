@@ -39,15 +39,20 @@ that admission, but no expected output is treated as a verified vector.
 
 The experimental reference AM component uses the locally reviewed final Clause
 119 Table 119-2 lane encodings and 400G mapping procedure: 16 x 120-bit lane
-markers, a 133-bit PRBS9 pad, a product-owned zero 3-bit `tx_am_sf` selection,
-and a
+markers, a 133-bit PRBS9 pad using an accepted product orientation and seed, a
+product-owned zero 3-bit `tx_am_sf` selection, and a
 2056-bit group inserted every 163840 transcoded blocks at the beginning of a
 40-block FEC pair. Its product-owned all-Idle rate-match policy deletes 32
 complete 64-bit words for the eight-block reservation. This scoped correction
 does not verify the Clause 49 recurrence, Clause 82 controls, the current
 profile's end-to-end PHY_XS inputs or selected `tx_am_sf` behavior, or the
 IEEE-only profile. Clause 119 p. 4844 defines `tx_am_sf` composition; it is
-not an unavailable Clause 82 rule.
+not an unavailable Clause 82 rule. The PRBS orientation and seed, plus
+`tx_am_sf = 000`, are product choices in this experimental reference and are
+not asserted as normative wire values. The frozen AM output is checked against
+the standalone `scripts/marker-reference.py` reference, whose source, input
+state, output hash, review scope, and reviewer identity are recorded in the
+marker fixture manifest.
 
 The upgrade path is intentionally one-way. Complete every record in
 `docs/inspector-ieee-line-check.md` against an authorized final source,
@@ -108,7 +113,7 @@ This primitive does not accept Ethernet bits or claim a `400gbase-dr4-tx-v1` res
 | `encode66-control-tables` | **Blocked.** Clause 82 tables are not yet inspected. | Final control type table, sync-header, start/terminate placement and mixed-control fixtures. |
 | `transcode257-order` | **Verified.** Final 119.2.4.2, pp. 4841-4842, local Clause 119 PDF. | Complete control cases and a 257-bit boundary fixture. |
 | `scrambler-recurrence` | **Blocked.** Clause 49 is unavailable. | Final Clause 49.2.6 convention, predecessor-state representation and first-output fixture. |
-| `am-values-status-pad` | **Verified geometry.** Final 119.2.4.4.2, pp. 4846-4848: 2056 bits, 16 x 120-bit markers, 133-bit PRBS9 pad, 3 status bits, every 163840 blocks. | PRBS direction/history and independent fixture. |
+| `am-values-status-pad` | **Verified geometry.** Final 119.2.4.4.2, pp. 4846-4848: 2056 bits, 16 x 120-bit markers, 133-bit PRBS9 pad, 3 status bits, every 163840 blocks. | The recorded independent Python fixture uses product-selected PRBS orientation/seed and status `000`; these choices do not establish normative wire values. |
 | `rate-match-policy` | **Implementation-specific with admitted schedule.** | Must use an eight-block AM reservation every 163840 blocks and a 40-block FEC pair, plus Clause 82-legal deterministic deletion rules. |
 | `pre-fec-distribution` | **Verified.** Final 119.2.4.5, p. 4848, local Clause 119 PDF. | 10280-bit batch fixture and orientation adapter test. |
 | `rs-field-roots-parity` | **Unblocked in isolation.** ITU-T G.709.5 Annex A; final Clause 119 orientation is locally admitted. | Existing standalone primitive and a required orientation adapter fixture. |

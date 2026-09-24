@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
 import { scrambleBits } from "../src/inspector/engine/scramble";
 import { insertMarkers, planMarkers } from "../src/inspector/engine/markers";
 import { prepareStream } from "../src/inspector/engine/stream";
@@ -13,9 +15,18 @@ import fixtureManifest from "./fixtures/inspector/manifest.json";
 function canonicalJson(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
   if (value && typeof value === "object") {
-    return `{${Object.entries(value as Record<string, unknown>).filter(([key]) => key !== "canonicalArtifactSha256").sort(([left], [right]) => left.localeCompare(right)).map(([key, entry]) => `${JSON.stringify(key)}:${canonicalJson(entry)}`).join(",")}}`;
+    return `{${Object.entries(value as Record<string, unknown>).filter(([key]) => key !== "canonicalArtifactSha256").sort(([left], [right]) => compareUnicodeCodePoints(left, right)).map(([key, entry]) => `${JSON.stringify(key)}:${canonicalJson(entry)}`).join(",")}}`;
   }
   return JSON.stringify(value);
+}
+
+function compareUnicodeCodePoints(left: string, right: string): number {
+  const leftPoints = Array.from(left); const rightPoints = Array.from(right);
+  for (let index = 0; index < Math.min(leftPoints.length, rightPoints.length); index += 1) {
+    const difference = leftPoints[index].codePointAt(0)! - rightPoints[index].codePointAt(0)!;
+    if (difference !== 0) return difference;
+  }
+  return leftPoints.length - rightPoints.length;
 }
 
 const policy: RateMatchPolicy = {
@@ -37,6 +48,17 @@ describe("experimental reference scrambling and alignment markers", () => {
     expect(markerFixture.derivationArtifact.canonicalArtifactSha256).toBe(markerDerivation.canonicalArtifactSha256);
     const manifestEntry = fixtureManifest.fixtures.find((fixture) => fixture.id === markerFixture.id);
     expect(manifestEntry?.derivationArtifact.canonicalArtifactSha256).toBe(markerDerivation.canonicalArtifactSha256);
+  });
+
+  it("uses the standalone Python reference as the marker fixture oracle", () => {
+    const scriptPath = "scripts/marker-reference.py";
+    expect(createHash("sha256").update(readFileSync(scriptPath), "utf8").digest("hex")).toBe(markerDerivation.referenceScript.sha256);
+    const reference = spawnSync("python", [scriptPath, "--json"], { encoding: "utf8" });
+    expect(reference.status, reference.stderr).toBe(0);
+    const output = JSON.parse(reference.stdout) as { bits: string; sha256: string; prbsStateLsbToMsb: string };
+    expect(output.sha256).toBe(markerDerivation.expectedMarkerBitsSha256);
+    expect(output.bits).toBe(markerFixture.final400gFirstMarkerBits);
+    expect(output.prbsStateLsbToMsb).toBe(markerDerivation.expectedPrbsStateAfterMarker);
   });
 
   it("plans 2056-bit AM groups on 40-block FEC-pair boundaries at the final 400G cadence", () => {
