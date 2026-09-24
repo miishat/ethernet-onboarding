@@ -74,8 +74,9 @@ function markerBits(state: Uint8Array): Uint8Array {
     }
   }
   for (let bit = 1920; bit < 2053; bit += 1) marker[bit] = nextPrbs(state);
-  // tx_am_sf is product-owned in this reference because the source that
-  // defines status behavior is outside the admitted executable scope.
+  // Clause 119 defines tx_am_sf composition, but this experimental reference
+  // has no end-to-end PHY_XS inputs or selected status behavior, so it uses
+  // the product-owned zero value.
   marker[2053] = 0; marker[2054] = 0; marker[2055] = 0;
   return marker;
 }
