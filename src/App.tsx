@@ -6,6 +6,9 @@ import { useUrlNavigation } from "./navigation/useUrlNavigation";
 import { documentTitle } from "./navigation/documentTitle";
 import { closeInspector, openInspector } from "./inspector/stageMap";
 import { DEFAULT_FRAME } from "./inspector/defaults";
+import { DEFAULT_STREAM, REFERENCE_PMA_MAPPING } from "./inspector/defaults";
+import { REFERENCE_RATE_MATCH_POLICY } from "./inspector/engine/run";
+import { useInspectorRun } from "./inspector/useInspectorRun";
 import { buildMacFrame } from "./inspector/engine/mac";
 import { parseFrame } from "./inspector/engine/validation";
 import type { FrameDraft, FrameInput, MacFrame } from "./inspector/types";
@@ -29,6 +32,7 @@ export default function App() {
     const parsed = parseFrame(DEFAULT_FRAME);
     return parsed.ok ? buildMacFrame(parsed.value) : null;
   });
+  const inspectorRun = useInspectorRun();
   const catalog = useMemo(() => buildTopicCatalog(), []);
   const [recent, setRecent] = useState<string[][]>(() => {
     try {
@@ -210,7 +214,19 @@ export default function App() {
           draft={draft}
           onDraftChange={setDraft}
           mac={mac}
-          onApply={(input: FrameInput) => setMac(buildMacFrame(input))}
+          run={inspectorRun.run}
+          status={inspectorRun.status}
+          error={inspectorRun.error}
+          onApply={(input: FrameInput) => {
+            setMac(buildMacFrame(input));
+            inspectorRun.apply({
+              frame: input,
+              stream: { ...DEFAULT_STREAM },
+              profileId: "400gbase-dr4-tx-reference-pma-v1",
+              rateMatchPolicy: REFERENCE_RATE_MATCH_POLICY,
+              pmaMappingProfile: REFERENCE_PMA_MAPPING,
+            });
+          }}
         />
       ) : isFrame ? walkthrough : stack}
 
