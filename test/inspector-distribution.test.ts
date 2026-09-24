@@ -8,7 +8,7 @@ import {
   interleaveClause119,
   splitFecMessages,
 } from "../src/inspector/engine/distribute";
-import referenceFixture from "./fixtures/inspector/ieee-8023-2022-119a-400g-idle-am.json";
+import referenceFixture from "./fixtures/inspector/experimental-cl119-local-400g-idle-am-v1.json";
 
 function bitsFromString(bits: string): Uint8Array {
   return Uint8Array.from(bits, (bit) => Number(bit));
@@ -36,6 +36,12 @@ describe("Clause 119 pre-FEC distribution", () => {
   it("rejects an incomplete or overlong FEC pair", () => {
     expect(() => splitFecMessages(new Uint8Array(10279))).toThrow(/10280/);
     expect(() => splitFecMessages(new Uint8Array(10281))).toThrow(/10280/);
+  });
+
+  it("rejects nonbinary FEC-pair input", () => {
+    const bits = new Uint8Array(10280);
+    bits[257] = 2;
+    expect(() => splitFecMessages(bits)).toThrow(/binary/);
   });
 
   it("uses the first message symbol as the first RS encoder input", () => {
@@ -75,6 +81,7 @@ describe("Clause 119 pre-FEC distribution", () => {
 
   it("rejects malformed codewords and interleaved streams", () => {
     expect(() => interleaveClause119(new Uint16Array(543), new Uint16Array(544))).toThrow(/544/);
+    expect(() => interleaveClause119(Uint16Array.from({ length: 544 }, () => 1024), new Uint16Array(544))).toThrow(/0.*1023/);
     expect(() => distributePcsLanes(new Uint16Array(1087))).toThrow(/1088/);
   });
 
@@ -98,6 +105,11 @@ describe("Clause 119 pre-FEC distribution", () => {
 
     expect(sha256(new TextEncoder().encode(canonical))).toBe(referenceFixture.artifactSha256);
     expect(sha256(readFileSync(referencePath))).toBe(referenceFixture.reference.sha256);
+    expect(referenceFixture.review).toMatchObject({
+      reviewerId: "/root/phy_distribution_review_light",
+      reviewedOn: "2026-09-24",
+      result: "accepted-experimental-only",
+    });
     expect(Array.from(messageA)).toEqual(referenceFixture.messageA);
     expect(Array.from(messageB)).toEqual(referenceFixture.messageB);
     expect(Array.from(codewordA)).toEqual(referenceFixture.codewordA);

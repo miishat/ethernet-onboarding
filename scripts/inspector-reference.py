@@ -124,11 +124,12 @@ def output() -> dict[str, object]:
     }
     canonical = json.dumps(artifact, separators=(",", ":"), ensure_ascii=True).encode("ascii")
     return {
-        "id": "experimental-cl119-400g-am-fec-v1",
+        "id": "experimental-cl119-local-400g-am-fec-v1",
         "status": "experimental-candidate",
         "source": {
             "sourceId": "ieee-8023-2022-cl119-fec-local",
             "scope": "Clause 119.2.4.5 through 119.2.4.7, printed pp. 4848-4850; user-provided local copy",
+            "sourceSha256": "c6a2d53370057a3ad16166ef7918561cad8e7318f4ddf57106de22aa241731d5",
             "candidateLimits": "Annex 119A is unavailable. This fixture is local experimental evidence and cannot enable the IEEE-only profile.",
         },
         "inputState": {
@@ -143,6 +144,13 @@ def output() -> dict[str, object]:
             "revision": "cl119-fec-reference-v1",
             "sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
             "method": "Independent Python bit packing, polynomial long division, checkerboard interleave, and lane distribution. No TypeScript or expected fixture import.",
+        },
+        "review": {
+            "reviewerId": "/root/phy_distribution_review_light",
+            "reviewedOn": "2026-09-24",
+            "reviewedScope": "Clause 119.2.4.5 packing, 119.2.4.6 temporal RS orientation, 119.2.4.7 checkerboard and lane mapping, source hash, reference script hash, and artifact hash.",
+            "result": "accepted-experimental-only",
+            "limits": "The reviewer did not admit Annex 119A or IEEE-only profile support.",
         },
         "artifactSha256": hashlib.sha256(canonical).hexdigest(),
         **artifact,
