@@ -191,6 +191,8 @@ def pma_output() -> dict[str, object]:
         "inputPcsBits": input_bits,
         "startAbsoluteBit": 0,
         "nextAbsoluteBit": 64,
+        "startState": {"absoluteOutputBit": 0, "consumedBitsByPcsLane": [0] * 16},
+        "nextState": {"absoluteOutputBit": 64, "consumedBitsByPcsLane": [16] * 16},
         "pmdLaneBits": pmd_bits,
         "pam4": pam4,
     }

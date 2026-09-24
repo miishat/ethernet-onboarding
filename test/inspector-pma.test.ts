@@ -14,6 +14,10 @@ function fixturePcs(length: number): readonly Uint8Array[] {
   ));
 }
 
+function pcsFromBitStrings(bits: readonly string[]): readonly Uint8Array[] {
+  return bits.map((lane) => Uint8Array.from(lane, Number));
+}
+
 function joinLanes(first: readonly Uint8Array[], second: readonly Uint8Array[]): readonly Uint8Array[] {
   return first.map((lane, index) => Uint8Array.from([...lane, ...second[index]]));
 }
@@ -40,16 +44,19 @@ describe("reference 16-to-4 PMA mapping", () => {
     expect(result).toMatchObject({ startAbsoluteBit: 0, nextAbsoluteBit: 16 });
   });
 
-  it("preserves mux phase across equal PCS windows", () => {
+  it("preserves mux phase and per-PCSL offsets across an arbitrary output boundary", () => {
     const pcs = fixturePcs(16);
-    const whole = mapPhysicalLanes(pcs, REFERENCE_PMA_MAPPING, 0);
-    const firstPcs = pcs.map((lane) => lane.slice(0, 13));
-    const secondPcs = pcs.map((lane) => lane.slice(13));
-    const first = mapPhysicalLanes(firstPcs, REFERENCE_PMA_MAPPING, 0);
-    const second = mapPhysicalLanes(secondPcs, REFERENCE_PMA_MAPPING, first.nextAbsoluteBit);
+    const whole = mapPhysicalLanes(pcs, REFERENCE_PMA_MAPPING, 0, 64);
+    const first = mapPhysicalLanes(pcs, REFERENCE_PMA_MAPPING, 0, 13);
+    const second = mapPhysicalLanes(pcs, REFERENCE_PMA_MAPPING, first.nextState, 51);
 
     expect(joinLanes(first.lanes, second.lanes)).toEqual(whole.lanes);
     expect(second.nextAbsoluteBit).toBe(whole.nextAbsoluteBit);
+    expect(first.nextState.consumedBitsByPcsLane).toEqual([
+      4, 3, 3, 3, 4, 3, 3, 3, 4, 3, 3, 3, 4, 3, 3, 3,
+    ]);
+    expect(first.sourcePcsLaneTraceByPmdLane[0]).toEqual([0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0]);
+    expect(second.sourcePcsLaneTraceByPmdLane[0].slice(0, 4)).toEqual([1, 2, 3, 0]);
   });
 
   it("rejects incomplete schedules, nonbinary values, and unequal PCS lane lengths", () => {
@@ -58,6 +65,11 @@ describe("reference 16-to-4 PMA mapping", () => {
     expect(() => mapPhysicalLanes([...pcs.slice(0, 15), Uint8Array.of(0)], REFERENCE_PMA_MAPPING, 0)).toThrow(/equal length/);
     expect(() => mapPhysicalLanes([...pcs.slice(0, 15), Uint8Array.of(2, 0)], REFERENCE_PMA_MAPPING, 0)).toThrow(/binary/);
     expect(() => mapPhysicalLanes(pcs, { ...REFERENCE_PMA_MAPPING, periodBits: 3 } as never, 0)).toThrow(/period/);
+    expect(() => mapPhysicalLanes(pcs, REFERENCE_PMA_MAPPING, {
+      absoluteOutputBit: 0,
+      consumedBitsByPcsLane: [0],
+    }, 1)).toThrow(/16/);
+    expect(() => mapPhysicalLanes(pcs, REFERENCE_PMA_MAPPING, 0, 9)).toThrow(/available/);
   });
 
   it("maps MSB-first dibits to the declared normalized Gray levels", () => {
@@ -82,6 +94,8 @@ describe("reference 16-to-4 PMA mapping", () => {
       inputPcsBits: referenceFixture.inputPcsBits,
       startAbsoluteBit: referenceFixture.startAbsoluteBit,
       nextAbsoluteBit: referenceFixture.nextAbsoluteBit,
+      startState: referenceFixture.startState,
+      nextState: referenceFixture.nextState,
       pmdLaneBits: referenceFixture.pmdLaneBits,
       pam4: referenceFixture.pam4,
     });
@@ -92,5 +106,29 @@ describe("reference 16-to-4 PMA mapping", () => {
     expect(sha256(new TextEncoder().encode(canonical))).toBe(referenceFixture.artifactSha256);
     expect(sha256(readFileSync(referencePath))).toBe(referenceFixture.reference.sha256);
     expect(referenceFixture.pmdLaneBits.every((bits) => bits.length === 64)).toBe(true);
+
+    const physical = mapPhysicalLanes(
+      pcsFromBitStrings(referenceFixture.inputPcsBits),
+      REFERENCE_PMA_MAPPING,
+      referenceFixture.startAbsoluteBit,
+      64,
+    );
+    expect(physical.startAbsoluteBit).toBe(referenceFixture.startAbsoluteBit);
+    expect(physical.nextAbsoluteBit).toBe(referenceFixture.nextAbsoluteBit);
+    expect(physical.nextState).toEqual(referenceFixture.nextState);
+    expect(physical.lanes.map((lane) => Array.from(lane).join(""))).toEqual(referenceFixture.pmdLaneBits);
+    expect(physical.sourcePcsLaneTraceByPmdLane).toEqual([
+      Array.from({ length: 64 }, (_, index) => index % 4),
+      Array.from({ length: 64 }, (_, index) => 4 + index % 4),
+      Array.from({ length: 64 }, (_, index) => 8 + index % 4),
+      Array.from({ length: 64 }, (_, index) => 12 + index % 4),
+    ]);
+    expect(physical.lanes.map((lane) => mapPam4(lane, REFERENCE_PMA_MAPPING))).toEqual(
+      referenceFixture.pam4.map((expected) => ({
+        labels: expected.dibits,
+        normalizedLevels: Int8Array.from(expected.normalizedLevels),
+        unit: "normalized-level",
+      })),
+    );
   });
 });
