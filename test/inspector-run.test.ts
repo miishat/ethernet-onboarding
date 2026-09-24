@@ -62,6 +62,8 @@ describe("traceable experimental inspector run", () => {
     if (!run.ok) throw new Error(run.errors.run);
     expect(() => { (run.value.txScrambledAmBits as number[])[0] = 1; }).toThrow();
     expect(() => { (run.value.scramblerState as number[])[0] = 0; }).toThrow();
+    expect(() => { (run.value.mac.bytes as number[])[0] = 1; }).toThrow();
+    expect(() => { (run.value.snapshots[0].buffers[0].values as number[])[0] = 1; }).toThrow();
   });
 
   it("matches the independently generated default-run artifact while its admission is pending review", () => {
@@ -71,6 +73,11 @@ describe("traceable experimental inspector run", () => {
     const hashBits = (bits: Uint8Array) => createHash("sha256").update(Array.from(bits).join(""), "ascii").digest("hex");
 
     expect(fixture.status).toBe("pending-independent-review");
+    expect(fixture.artifact.input).toEqual({
+      frameDraft: DEFAULT_FRAME,
+      frameInput: { destination: [2, 0, 0, 0, 0, 2], source: [2, 0, 0, 0, 0, 1], etherType: 0x88b5, payload: Array.from({ length: 64 }, (_, index) => index) },
+      streamConfig: DEFAULT_STREAM,
+    });
     const referencePath = fileURLToPath(new URL("../scripts/inspector-reference.py", import.meta.url));
     expect(createHash("sha256").update(readFileSync(referencePath)).digest("hex")).toBe(fixture.reference.sha256);
     const independent = spawnSync("python", [referencePath, "--run-json"], { encoding: "utf8" });

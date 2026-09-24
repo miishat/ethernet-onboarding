@@ -326,6 +326,16 @@ def run_reference_output() -> dict[str, object]:
     levels = {"00": -3, "01": -1, "11": 1, "10": 3}
     pam4 = [[levels[f"{bits[index]}{bits[index + 1]}"] for index in range(0, len(bits), 2)] for bits in pmd_bits]
     artifact = {
+        "input": {
+            "frameDraft": {
+                "destination": "02:00:00:00:00:02",
+                "source": "02:00:00:00:00:01",
+                "etherType": "88B5",
+                "payloadHex": "".join(f"{octet:02X}" for octet in payload),
+            },
+            "frameInput": {"destination": destination, "source": source, "etherType": 0x88B5, "payload": payload},
+            "streamConfig": {"scramblerSeedHex": "3FFFFFFFFFFFFFF", "markerPrbsSeed": 0x1FF, "markerBlockPhase": 0, "lanePhase": 0, "prefixIdleOctets": 4096},
+        },
         "macHex": bytes(frame).hex(),
         "interfaceWordCount": 640,
         "deletedWordIndexes": deleted,

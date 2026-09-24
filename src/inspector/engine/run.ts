@@ -89,6 +89,16 @@ function symbolsToBits(lanes: readonly Uint16Array[]): readonly Uint8Array[] {
 
 function value<T>(result: Result<T>): T { if (!result.ok) throw new Error(result.errors.run); return result.value; }
 
+function publicMac(mac: ReturnType<typeof buildMacFrame>) {
+  return Object.freeze({
+    bytes: Object.freeze([...mac.bytes]),
+    withoutFcs: Object.freeze([...mac.withoutFcs]),
+    fcs: Object.freeze([...mac.fcs]),
+    fields: Object.freeze(mac.fields.map((field) => Object.freeze({ ...field }))),
+    paddingBytes: mac.paddingBytes,
+  });
+}
+
 export function buildInspectorRun(input: RunInput): Result<CompleteInspectorRun> {
   const estimated = estimateRunSize(input);
   if (!estimated.ok) return estimated;
@@ -148,7 +158,7 @@ export function buildInspectorRun(input: RunInput): Result<CompleteInspectorRun>
       edge(dataRef("pam4", "pam4-levels", 0, pam4.reduce((sum, lane) => sum + lane.normalizedLevels.length, 0)), "encoded", [dataRef("physical-lanes", "pmd-lanes", 0, pma.lanes.length * pma.lanes[0].length)]),
     ];
     return { ok: true, value: Object.freeze({
-      id: "experimental-reference-run-v1", profileId: input.profileId, stream: Object.freeze({ ...input.stream }), mac,
+      id: "experimental-reference-run-v1", profileId: input.profileId, stream: Object.freeze({ ...input.stream }), mac: publicMac(mac),
       snapshots: Object.freeze(snapshots), trace: Object.freeze(trace), codedBits: estimated.value.codedBits,
       deletions: prepared.deletions,
       txScrambledAmBits: Object.freeze([...marked.bits]),

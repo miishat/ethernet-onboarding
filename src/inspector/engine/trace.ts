@@ -23,7 +23,7 @@ export function snapshot(
   return Object.freeze({
     stage,
     unit,
-    buffers: Object.freeze([{ id, values: values.slice() }]),
+    buffers: Object.freeze([Object.freeze({ id, values: Object.freeze([...values]) })]),
     inputRefs: Object.freeze([]),
     outputRefs: Object.freeze([output]),
     explanation,

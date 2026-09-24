@@ -112,7 +112,7 @@ describe("reference 16-to-4 PMA mapping", () => {
       result: "accepted-experimental-only",
     });
     expect(sha256(new TextEncoder().encode(canonical))).toBe(referenceFixture.artifactSha256);
-    expect(sha256(readFileSync(referencePath))).toBe("a20b3a01e2af33a003dfff8dc5622164669c69a6db056f168684c3cb809eb09b");
+    expect(sha256(readFileSync(referencePath))).toBe("03adf2d85edbd537736a825501767f659684e760c626ccf014e77a3a90f0337e");
     const independent = spawnSync("python", [referencePath, "--pma-json"], { encoding: "utf8" });
     expect(independent.status, independent.stderr).toBe(0);
     expect(JSON.parse(independent.stdout).artifactSha256).toBe(referenceFixture.artifactSha256);

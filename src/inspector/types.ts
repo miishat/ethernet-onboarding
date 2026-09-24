@@ -142,7 +142,7 @@ export interface TraceEdge {
 export interface Snapshot {
   stage: InspectorStage;
   unit: "octet" | "bit" | "rs-symbol" | "pam4-symbol";
-  buffers: readonly { id: string; values: Uint8Array | Uint16Array }[];
+  buffers: readonly { id: string; values: readonly number[] }[];
   inputRefs: readonly DataRef[];
   outputRefs: readonly DataRef[];
   explanation: string;
@@ -185,7 +185,16 @@ export interface ExperimentalProvenance {
   pmaMappingProfileId: PmaMappingProfile["id"];
 }
 
-export interface CompleteInspectorRun extends InspectorRun {
+export interface PublicMacFrame {
+  readonly bytes: readonly number[];
+  readonly withoutFcs: readonly number[];
+  readonly fcs: readonly number[];
+  readonly fields: readonly FrameField[];
+  readonly paddingBytes: number;
+}
+
+export interface CompleteInspectorRun extends Omit<InspectorRun, "mac"> {
+  readonly mac: PublicMacFrame;
   readonly codedBits: number;
   readonly deletions: readonly RateMatchDeletion[];
   /** Immutable public copies. Internal engines retain typed arrays while composing. */
