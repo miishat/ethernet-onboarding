@@ -105,7 +105,7 @@ export interface PmaMappingProfile {
     readonly [8, 9, 10, 11],
     readonly [12, 13, 14, 15],
   ];
-  initialPhase: 0;
+  initialPhase: number;
   firstBitSignificance: "msb";
   grayLevels: Readonly<Record<"00" | "01" | "11" | "10", -3 | -1 | 1 | 3>>;
   precoder: { mode: "none" };
@@ -199,6 +199,7 @@ export interface LaneInspectionData {
   readonly physicalBits: readonly (readonly number[])[];
   readonly physicalSourcePcsLane: readonly (readonly number[])[];
   readonly physicalStartAbsoluteBit: number;
+  readonly physicalInitialPhase: number;
   readonly pam4: readonly (readonly { readonly dibit: "00" | "01" | "11" | "10"; readonly normalizedLevel: -3 | -1 | 1 | 3 }[])[];
 }
 

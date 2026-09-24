@@ -172,6 +172,7 @@ export function buildInspectorRun(input: RunInput): Result<CompleteInspectorRun>
         physicalBits: Object.freeze(pma.lanes.map((lane) => Object.freeze([...lane]))),
         physicalSourcePcsLane: Object.freeze(pma.sourcePcsLaneTraceByPmdLane.map((lane) => Object.freeze([...lane]))),
         physicalStartAbsoluteBit: pma.startAbsoluteBit,
+        physicalInitialPhase: input.pmaMappingProfile.initialPhase,
         pam4: Object.freeze(pam4.map((lane) => Object.freeze(lane.labels.map((dibit, index) => Object.freeze({ dibit, normalizedLevel: lane.normalizedLevels[index] as -3 | -1 | 1 | 3 }))))),
       }),
     }) };
