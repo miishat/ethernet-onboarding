@@ -21,4 +21,4 @@
 .data-window__value[data-linked="true"] { outline: 1px dashed var(--diagram); }
 .trace-details { color: var(--diagram); font: 12px var(--font-mono); }
 @media (max-width: 1100px) { .stage-rail { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-@media (max-width: 760px) { .inspector { padding: 20px 16px 40px; }.inspector__grid { grid-template-columns: 1fr; }.frame-editor__fields { grid-template-columns: 1fr; }.frame-editor__field:last-child { grid-column: auto; }.stage-rail { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 760px) { .inspector { padding: 20px 16px 40px; min-width: 0; overflow-x: clip; }.inspector__top { align-items: stretch; }.inspector__top .btn { align-self: flex-start; }.inspector__grid { grid-template-columns: 1fr; }.frame-editor__fields { grid-template-columns: 1fr; }.frame-editor__field:last-child { grid-column: auto; }.stage-rail { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

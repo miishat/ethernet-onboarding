@@ -600,6 +600,23 @@ svg g[role="button"]:focus-visible rect {
   }
 }
 
+@media (max-width: 760px) {
+  .header__inner {
+    padding: 0 16px;
+  }
+  .header__controls {
+    width: 100%;
+    margin-left: 0;
+    gap: 12px;
+  }
+  .header__controls > div {
+    min-width: 0;
+  }
+  .header__byline {
+    display: none;
+  }
+}
+
 @media (max-width: 900px) {
   .col-map {
     border-right: 0;

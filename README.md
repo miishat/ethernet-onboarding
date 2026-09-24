@@ -50,6 +50,22 @@ npm run preview  # serve the production build
 npm run typecheck
 ```
 
+### Frame inspector
+
+Select **Open inspector** in the header, or select **Inspect this stage** while
+following a frame. The inspector keeps its stage in the URL and returns to the
+same walkthrough step. Editing frame fields does not change applied values until
+you select **Apply frame**.
+
+The current 400G calculation is an experimental reference using candidate
+contracts and a project-owned reference 16-to-4 PMA mapping. It shows that
+provenance at each calculated stage. The IEEE-only 400G TX profile stays blocked
+until the missing final source material is reviewed. See
+[docs/inspector-missing-sources.md](docs/inspector-missing-sources.md) for the
+documents needed to complete that review.
+
+Run browser verification with `npm run test:e2e` after installing dependencies.
+
 ## Project structure
 
 ```
