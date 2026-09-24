@@ -18,7 +18,7 @@ export default function FrameInspector({ stage, onStageChange, onExit, draft, on
   const selectedField = mac?.fields.find((field) => field.id === selected) || mac?.fields[0];
   const unavailable = !run && stage !== "mac";
   return <main className="inspector" aria-label="Frame inspector">
-    <div className="inspector__top"><div><p className="inspector-eyebrow">400G PHY profile · verification blocked</p><h1>MAC frame inspector</h1><p>TX example context. This inspector builds only the independently usable MAC frame and FCS. It does not claim 400G TX support.</p></div><button className="btn" type="button" onClick={onExit}>Return to learning</button></div>
+    <div className="inspector__top"><div><p className="inspector-eyebrow">Experimental candidate calculation</p><h1>MAC frame inspector</h1><p>Applied values use the project-owned reference mapping and candidate contracts. The IEEE-only 400G TX profile remains verification-blocked.</p></div><button className="btn" type="button" onClick={onExit}>Return to learning</button></div>
     <StageRail stage={stage} onStageChange={onStageChange} profileId={run?.profileId} />
     {status === "running" ? <p className="inspector__pending" aria-live="polite">Calculating applied frame…</p> : null}{error ? <p role="alert" className="frame-editor__error">{error}</p> : null}
     {unavailable ? <section className="inspector__unavailable" aria-label="Unavailable calculation" aria-live="polite"><h2>{stage.replace(/-/g, " ")}</h2><p>Calculation not available yet. Apply a frame using the experimental reference contract to inspect calculated values. The IEEE-only profile remains verification-blocked.</p></section> : stage !== "mac" && run ? <StageWorkspace run={run} stage={stage} /> : <>

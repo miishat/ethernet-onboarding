@@ -167,6 +167,13 @@ export function buildInspectorRun(input: RunInput): Result<CompleteInspectorRun>
       fecMessages: Object.freeze(fecMessages),
       codewords: Object.freeze(codewords),
       provenance: Object.freeze({ labels: LABELS, rateMatchPolicyId: input.rateMatchPolicy.id, pmaMappingProfileId: input.pmaMappingProfile.id }),
+      laneInspection: Object.freeze({
+        pcsSymbols: Object.freeze(pcsSymbols.map((lane) => Object.freeze([...lane]))),
+        physicalBits: Object.freeze(pma.lanes.map((lane) => Object.freeze([...lane]))),
+        physicalSourcePcsLane: Object.freeze(pma.sourcePcsLaneTraceByPmdLane.map((lane) => Object.freeze([...lane]))),
+        physicalStartAbsoluteBit: pma.startAbsoluteBit,
+        pam4: Object.freeze(pam4.map((lane) => Object.freeze(lane.labels.map((dibit, index) => Object.freeze({ dibit, normalizedLevel: lane.normalizedLevels[index] as -3 | -1 | 1 | 3 }))))),
+      }),
     }) };
   } catch (error) {
     return runError(error instanceof Error ? error.message : "Unable to construct experimental inspector run.");

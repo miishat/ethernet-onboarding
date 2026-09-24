@@ -193,6 +193,15 @@ export interface PublicMacFrame {
   readonly paddingBytes: number;
 }
 
+/** Public, immutable lane views retained alongside flattened snapshots for UI inspection. */
+export interface LaneInspectionData {
+  readonly pcsSymbols: readonly (readonly number[])[];
+  readonly physicalBits: readonly (readonly number[])[];
+  readonly physicalSourcePcsLane: readonly (readonly number[])[];
+  readonly physicalStartAbsoluteBit: number;
+  readonly pam4: readonly (readonly { readonly dibit: "00" | "01" | "11" | "10"; readonly normalizedLevel: -3 | -1 | 1 | 3 }[])[];
+}
+
 export interface CompleteInspectorRun extends Omit<InspectorRun, "mac"> {
   readonly mac: PublicMacFrame;
   readonly codedBits: number;
@@ -206,4 +215,5 @@ export interface CompleteInspectorRun extends Omit<InspectorRun, "mac"> {
   /** Per complete FEC pair, ordered A then B. */
   readonly codewords: readonly (readonly [readonly number[], readonly number[]])[];
   readonly provenance: ExperimentalProvenance;
+  readonly laneInspection: LaneInspectionData;
 }

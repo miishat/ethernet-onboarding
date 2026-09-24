@@ -1,5 +1,9 @@
-import type { Snapshot } from "../inspector/types";
-import DataWindow from "./DataWindow";
-export default function LaneView({ snapshot, physical = false }: { snapshot: Snapshot; physical?: boolean }) {
-  return <section className="lane-view" aria-label={physical ? "Physical lane values" : "PCS lane values"}><p>{physical ? "Reference PMA mapping. Values include the selected source PCS lane and mux phase." : "PCS lane output. Symbols serialize bit zero first."}</p><DataWindow snapshot={snapshot} /></section>;
+import { useState } from "react";
+import type { CompleteInspectorRun } from "../inspector/types";
+const WINDOW = 32;
+export default function LaneView({ run, physical = false }: { run: CompleteInspectorRun; physical?: boolean }) {
+  const [lane, setLane] = useState(0); const [start, setStart] = useState(0);
+  const rows = physical ? run.laneInspection.physicalBits[lane] : run.laneInspection.pcsSymbols[lane];
+  const end = Math.min(rows.length, start + WINDOW);
+  return <section className="lane-view" aria-label={physical ? "Physical lane values" : "PCS lane values"}><p>{physical ? "Reference PMA mapping with absolute output bit, source PCS lane, and mux phase." : "PCS lane symbols serialize bit zero first."}</p><label>Lane <select value={lane} onChange={(event) => { setLane(Number(event.target.value)); setStart(0); }}>{Array.from({ length: physical ? 4 : 16 }, (_, value) => <option key={value} value={value}>{physical ? "PMD" : "PCS"} lane {value}</option>)}</select></label><p>Showing {start + 1}–{end} of {rows.length} values</p><div className="lane-rows">{rows.slice(start, end).map((value, offset) => { const absolute = start + offset; const source = physical ? run.laneInspection.physicalSourcePcsLane[lane][absolute] : undefined; return <button type="button" key={absolute} className="data-window__value"><small>{physical ? `Output bit ${run.laneInspection.physicalStartAbsoluteBit + absolute}` : `Symbol ${absolute}`}</small><code>{physical ? `bit ${value} · PCS ${source} · phase ${(run.laneInspection.physicalStartAbsoluteBit + absolute) % 4}` : `0x${value.toString(16).padStart(3, "0")} · ${value.toString(2).padStart(10, "0").split("").reverse().join("")}`}</code></button>; })}</div><div className="data-window__controls"><button type="button" disabled={start === 0} onClick={() => setStart(Math.max(0, start - WINDOW))}>Previous</button><button type="button" disabled={end === rows.length} onClick={() => setStart(Math.min(rows.length - 1, start + WINDOW))}>Next</button></div></section>;
 }
