@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import StageWorkspace from "../src/components/StageWorkspace";
 import type { CompleteInspectorRun } from "../src/inspector/types";
@@ -17,5 +18,39 @@ describe("stage workspace", () => {
     expect(screen.getByText(/Showing 1–32 of 500/)).toBeTruthy();
     expect(screen.getByText(/Experimental reference using candidate contracts/)).toBeTruthy();
     expect(screen.getByText(/0x000 · 0000000000/)).toBeTruthy();
+  });
+
+  it("opens the linked nonzero PMD lane and PAM4 window", async () => {
+    const user = userEvent.setup();
+    const focused = {
+      ...run,
+      snapshots: [
+        { ...run.snapshots[0], stage: "physical-lanes", buffers: [{ id: "pmd-lanes", values: Array.from({ length: 4 * 96 }, (_, index) => index % 2) }] },
+        { ...run.snapshots[0], stage: "pam4", unit: "pam4-symbol", buffers: [{ id: "pam4-levels", values: Array.from({ length: 4 * 48 }, () => 0) }] },
+      ],
+      laneInspection: {
+        ...run.laneInspection,
+        physicalBits: Array.from({ length: 4 }, () => Array.from({ length: 96 }, (_, index) => index % 2)),
+        physicalSourcePcsLane: Array.from({ length: 4 }, () => Array.from({ length: 96 }, () => 0)),
+        pam4: Array.from({ length: 4 }, () => Array.from({ length: 48 }, () => ({ dibit: "00" as const, normalizedLevel: -3 as const }))),
+      },
+      trace: [
+        { output: { stage: "physical-lanes", bufferId: "pmd-lanes", start: 2 * 96 + 70, count: 1 }, relation: "copied" as const, inputs: [{ stage: "pcs-lanes", bufferId: "pcs-lanes", start: 0, count: 1 }] },
+        { output: { stage: "pam4", bufferId: "pam4-levels", start: 2 * 48 + 35, count: 1 }, relation: "encoded" as const, inputs: [{ stage: "physical-lanes", bufferId: "pmd-lanes", start: 2 * 96 + 70, count: 2 }] },
+      ],
+    } as unknown as CompleteInspectorRun;
+    const selection = { stage: "pcs-lanes", bufferId: "pcs-lanes", start: 0, count: 1 } as const;
+    const { rerender } = render(<StageWorkspace run={focused} stage="physical-lanes" selected={selection} />);
+    const physicalSelect = screen.getAllByRole("combobox").at(-1)!;
+    expect((physicalSelect as HTMLSelectElement).value).toBe("2");
+    expect(screen.getByText(/Showing 65–96 of 96/)).toBeTruthy();
+    expect(screen.getByText("Output bit 70").closest("button")?.dataset.linked).toBe("true");
+    expect(screen.getByText("Output bit 72").closest("button")?.dataset.linked).toBeUndefined();
+    await user.selectOptions(physicalSelect, "1");
+    expect((physicalSelect as HTMLSelectElement).value).toBe("1");
+
+    rerender(<StageWorkspace run={focused} stage="pam4" selected={{ stage: "physical-lanes", bufferId: "pmd-lanes", start: 2 * 96 + 70, count: 1 }} />);
+    expect((screen.getAllByRole("combobox").at(-1) as HTMLSelectElement).value).toBe("2");
+    expect(screen.getByText(/Showing 33–48 of 48/)).toBeTruthy();
   });
 });

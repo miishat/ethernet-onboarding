@@ -154,9 +154,32 @@ export function buildInspectorRun(input: RunInput): Result<CompleteInspectorRun>
       edge(dataRef("markers", "tx-scrambled-am", 0, marked.bits.length), "inserted", [dataRef("scramble", "scrambled", 0, scrambled.bits.length)]),
       edge(dataRef("fec", "pcs-symbols", 0, pcsSymbols.length * pcsSymbols[0].length), "encoded", [dataRef("markers", "tx-scrambled-am", 0, marked.bits.length)]),
       edge(dataRef("pcs-lanes", "pcs-lanes", 0, pcsBits.length * pcsBits[0].length), "copied", [dataRef("fec", "pcs-symbols", 0, pcsSymbols.length * pcsSymbols[0].length)]),
-      edge(dataRef("physical-lanes", "pmd-lanes", 0, pma.lanes.length * pma.lanes[0].length), "copied", [dataRef("pcs-lanes", "pcs-lanes", 0, pcsBits.length * pcsBits[0].length)]),
-      edge(dataRef("pam4", "pam4-levels", 0, pam4.reduce((sum, lane) => sum + lane.normalizedLevels.length, 0)), "encoded", [dataRef("physical-lanes", "pmd-lanes", 0, pma.lanes.length * pma.lanes[0].length)]),
     ];
+    // The PMA mux and dibit mapper preserve an exact source identity. Keep one
+    // edge per output unit so an inspector selection never implies a whole-buffer
+    // correspondence through a transform that has a deterministic item mapping.
+    const pcsLaneBits = pcsBits[0].length;
+    const pmdLaneBits = pma.lanes[0].length;
+    for (let pmdLane = 0; pmdLane < pma.lanes.length; pmdLane += 1) {
+      const consumedByPcsLane = Array.from({ length: pcsBits.length }, () => 0);
+      for (let offset = 0; offset < pmdLaneBits; offset += 1) {
+        const sourceLane = pma.sourcePcsLaneTraceByPmdLane[pmdLane][offset];
+        const sourceOffset = consumedByPcsLane[sourceLane]++;
+        trace.push(edge(
+          dataRef("physical-lanes", "pmd-lanes", pmdLane * pmdLaneBits + offset, 1),
+          "copied",
+          [dataRef("pcs-lanes", "pcs-lanes", sourceLane * pcsLaneBits + sourceOffset, 1)],
+        ));
+      }
+      const pam4LaneSymbols = pam4[pmdLane].normalizedLevels.length;
+      for (let symbol = 0; symbol < pam4LaneSymbols; symbol += 1) {
+        trace.push(edge(
+          dataRef("pam4", "pam4-levels", pmdLane * pam4LaneSymbols + symbol, 1),
+          "encoded",
+          [dataRef("physical-lanes", "pmd-lanes", pmdLane * pmdLaneBits + symbol * 2, 2)],
+        ));
+      }
+    }
     return { ok: true, value: Object.freeze({
       id: "experimental-reference-run-v1", profileId: input.profileId, stream: Object.freeze({ ...input.stream }), mac: publicMac(mac),
       snapshots: Object.freeze(snapshots), trace: Object.freeze(trace), codedBits: estimated.value.codedBits,
