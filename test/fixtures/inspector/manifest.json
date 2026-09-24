@@ -48,6 +48,15 @@
       "encoding": "Systematic standalone codeword: 514 message symbols followed by 30 parity symbols. No Ethernet packing, distribution, interleave, or lane mapping is represented.",
       "sha256": "97c170acb976375dd0bad722dce2e2eeeb789c39789084445f4e16742c003d46",
       "verificationScope": "Repository-local Python shift-and-reduce multiplication and polynomial long division. Internal reviewer /root/task8a_review_light reviewed 7eff8ee..cf2f893 on 2026-09-21 with separate read-only GF arithmetic, checking reduction, roots alpha^0 through alpha^29, systematic order, and all 30 root evaluations. Source script revision standalone-rs544-reference-v1, SHA-256 083dc7677840434f252ecc39552885e79446994191eff3c27864a73777c14028. No external implementation or Ethernet profile result is claimed."
+    },
+    {
+      "id": "experimental-cl119-400g-am-fec-v1",
+      "file": "ieee-8023-2022-119a-400g-idle-am.json",
+      "sourceId": "ieee-8023-2022-cl119-fec-local",
+      "status": "experimental-candidate",
+      "inputState": "Reviewed final Clause 119 2056-bit alignment marker followed by 8224 deterministic nonzero project fixture bits. The fixture includes the full input bit string, marker PRBS state, messages, codewords, interleaved symbols, and lane symbols.",
+      "encoding": "Clause 119.2.4.5 10-bit LSB-first packing, temporal m<513>-first encoder order, Clause 119.2.4.7 checkerboard interleave, and low-to-high PCS lane distribution.",
+      "verificationScope": "Standalone Python reference has no TypeScript or stored-fixture import. It uses the reviewed local marker generator and final local Clause 119 source scope. Annex 119A is unavailable, so this is an independent local experimental fixture only and does not enable the IEEE-only profile. A reviewer record is required before expected output admission."
     }
   ],
   "candidateSources": [
@@ -140,7 +149,8 @@
     "independent-vectors"
   ],
   "independentReference": {
-    "status": "not-implemented",
-    "reason": "A reference implementation cannot certify unknown rules. No independently reviewed Python results are available for this profile."
+    "status": "experimental-fixture-pending-review",
+    "fixtureId": "experimental-cl119-400g-am-fec-v1",
+    "reason": "A local standalone reference freezes experimental Clause 119 FEC outputs. It requires an independent review and cannot certify unknown rules or enable the IEEE-only profile."
   }
 }

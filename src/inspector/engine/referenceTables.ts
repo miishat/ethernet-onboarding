@@ -50,6 +50,14 @@ export const REFERENCE_SOURCES = Object.freeze([
     lineCheckUpgradePath: "Replace every candidate contract with reviewed IEEE Std 802.3-2022 line evidence and independently review a 400G fixture before enabling the IEEE-only profile.",
   }),
   Object.freeze({
+    id: "ieee-8023-2022-cl119-fec-local",
+    edition: "IEEE Std 802.3-2022",
+    sourceUrl: "knowledge_base_ieee/8023-2022-4836-4874-Clause-119_compressed.pdf",
+    retrievedOn: "2026-09-23",
+    verificationScope: "User-provided local Clause 119.2.4.5 through 119.2.4.7, printed pp. 4848-4850: 10280-bit packing, RS temporal orientation, checkerboard interleave, 16 PCS lanes, and first-symbol bit order. Annex 119A remains unavailable, so the associated local fixture is experimental and cannot enable IEEE-only support.",
+    availability: "experimental-reference-fixture",
+  }),
+  Object.freeze({
     id: "ieee-bs-d14-cl119-locator",
     edition: "IEEE P802.3bs/D1.4, 7 April 2016, marked-up contribution",
     sourceUrl: "https://www.ieee802.org/3/bs/public/16_05/ofelt_3bs_03_0516.pdf",
