@@ -10,7 +10,8 @@ function connectedTrace(trace: readonly import("../inspector/types").TraceEdge[]
   for (let cursor = 0; cursor < refs.length; cursor += 1) {
     for (const item of trace) {
       if (edges.includes(item) || !(overlaps(item.output, refs[cursor]) || item.inputs.some((input) => overlaps(input, refs[cursor])))) continue;
-      edges.push(item); refs.push(item.output, ...item.inputs);
+      edges.push(item);
+      if (item.precision === "exact") refs.push(item.output, ...item.inputs);
     }
   }
   return { edges, refs };
@@ -23,5 +24,5 @@ export default function StageWorkspace({ run, stage, selected, onSelect }: { run
   const connected = trace.edges;
   const linked = selected ? [selected, ...trace.refs] : [];
   const content = stage === "pcs-lanes" ? <LaneView run={run} selected={selected} linked={linked} onSelect={onSelect} /> : stage === "physical-lanes" ? <LaneView run={run} physical selected={selected} linked={linked} onSelect={onSelect} /> : stage === "pam4" ? <Pam4View run={run} selected={selected} linked={linked} onSelect={onSelect} /> : <DataWindow snapshot={snapshot} selected={selected} linked={linked} onSelect={onSelect} />;
-  return <section className="stage-workspace" aria-label={`${stage === "pcs-lanes" ? "PCS lanes" : stage.replace(/-/g, " ")} workspace`}><div className="inspector-section-head"><div><p className="inspector-eyebrow">{reference ? "reference PMA mapping" : "IEEE-derived PCS candidate"}</p><h2>{stage.replace(/-/g, " ")}</h2></div><span>{snapshot.explanation}</span></div><div className="provenance">{run.provenance.labels.map((label) => <span key={label}>{label}</span>)} {snapshot.referenceIds.map((id) => <code key={id}>{id}</code>)}</div>{selected ? <p className="trace-details" aria-live="polite">Selected {selected.stage} {selected.bufferId} at absolute index {selected.start}. {connected.length ? `Trace: ${connected.map((edge) => edge.relation).join(", ")}.` : "No connected trace edge."}</p> : null}{content}</section>;
+  return <section className="stage-workspace" aria-label={`${stage === "pcs-lanes" ? "PCS lanes" : stage.replace(/-/g, " ")} workspace`}><div className="inspector-section-head"><div><p className="inspector-eyebrow">{reference ? "reference PMA mapping" : "IEEE-derived PCS candidate"}</p><h2>{stage.replace(/-/g, " ")}</h2></div><span>{snapshot.explanation}</span></div><div className="provenance">{run.provenance.labels.map((label) => <span key={label}>{label}</span>)} {snapshot.referenceIds.map((id) => <code key={id}>{id}</code>)}</div>{selected ? <p className="trace-details" aria-live="polite">Selected {selected.stage} {selected.bufferId} at absolute index {selected.start}. {connected.length ? `Trace: ${connected.map((edge) => `${edge.relation} (${edge.precision})`).join(", ")}.` : "No connected trace edge."}</p> : null}{content}</section>;
 }

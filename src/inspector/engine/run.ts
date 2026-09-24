@@ -169,6 +169,7 @@ export function buildInspectorRun(input: RunInput): Result<CompleteInspectorRun>
           dataRef("physical-lanes", "pmd-lanes", pmdLane * pmdLaneBits + offset, 1),
           "copied",
           [dataRef("pcs-lanes", "pcs-lanes", sourceLane * pcsLaneBits + sourceOffset, 1)],
+          "exact",
         ));
       }
       const pam4LaneSymbols = pam4[pmdLane].normalizedLevels.length;
@@ -177,6 +178,7 @@ export function buildInspectorRun(input: RunInput): Result<CompleteInspectorRun>
           dataRef("pam4", "pam4-levels", pmdLane * pam4LaneSymbols + symbol, 1),
           "encoded",
           [dataRef("physical-lanes", "pmd-lanes", pmdLane * pmdLaneBits + symbol * 2, 2)],
+          "exact",
         ));
       }
     }

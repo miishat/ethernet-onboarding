@@ -137,6 +137,8 @@ export interface TraceEdge {
   output: DataRef;
   inputs: readonly DataRef[];
   relation: "copied" | "encoded" | "depends-on" | "inserted";
+  /** Exact edges support value highlighting; aggregate edges provide context only. */
+  precision: "exact" | "aggregate";
 }
 
 export interface Snapshot {

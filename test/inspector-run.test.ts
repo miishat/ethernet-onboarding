@@ -62,9 +62,10 @@ describe("traceable experimental inspector run", () => {
     if (!result.ok) throw new Error(result.errors.run);
     const run = result.value;
     const pmdBit = run.trace.find((item) => item.output.stage === "physical-lanes" && item.output.start === 2 * 2720 + 70);
-    expect(pmdBit).toMatchObject({ output: { count: 1 }, inputs: [{ stage: "pcs-lanes", bufferId: "pcs-lanes", count: 1 }] });
+    expect(pmdBit).toMatchObject({ output: { count: 1 }, precision: "exact", inputs: [{ stage: "pcs-lanes", bufferId: "pcs-lanes", count: 1 }] });
     const pam4Symbol = run.trace.find((item) => item.output.stage === "pam4" && item.output.start === 2 * 1360 + 35);
-    expect(pam4Symbol).toMatchObject({ output: { count: 1 }, inputs: [{ stage: "physical-lanes", bufferId: "pmd-lanes", start: 2 * 2720 + 70, count: 2 }] });
+    expect(pam4Symbol).toMatchObject({ output: { count: 1 }, precision: "exact", inputs: [{ stage: "physical-lanes", bufferId: "pmd-lanes", start: 2 * 2720 + 70, count: 2 }] });
+    expect(run.trace.filter((item) => item.precision === "aggregate")).not.toHaveLength(0);
   });
 
   it("does not expose mutable run-state arrays", () => {

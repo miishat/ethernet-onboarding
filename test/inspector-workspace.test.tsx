@@ -27,6 +27,7 @@ describe("stage workspace", () => {
       snapshots: [
         { ...run.snapshots[0], stage: "physical-lanes", buffers: [{ id: "pmd-lanes", values: Array.from({ length: 4 * 96 }, (_, index) => index % 2) }] },
         { ...run.snapshots[0], stage: "pam4", unit: "pam4-symbol", buffers: [{ id: "pam4-levels", values: Array.from({ length: 4 * 48 }, () => 0) }] },
+        { ...run.snapshots[0], stage: "fec", unit: "rs-symbol", buffers: [{ id: "pcs-symbols", values: Array.from({ length: 384 }, (_, index) => index) }] },
       ],
       laneInspection: {
         ...run.laneInspection,
@@ -35,8 +36,9 @@ describe("stage workspace", () => {
         pam4: Array.from({ length: 4 }, () => Array.from({ length: 48 }, () => ({ dibit: "00" as const, normalizedLevel: -3 as const }))),
       },
       trace: [
-        { output: { stage: "physical-lanes", bufferId: "pmd-lanes", start: 2 * 96 + 70, count: 1 }, relation: "copied" as const, inputs: [{ stage: "pcs-lanes", bufferId: "pcs-lanes", start: 0, count: 1 }] },
-        { output: { stage: "pam4", bufferId: "pam4-levels", start: 2 * 48 + 35, count: 1 }, relation: "encoded" as const, inputs: [{ stage: "physical-lanes", bufferId: "pmd-lanes", start: 2 * 96 + 70, count: 2 }] },
+        { output: { stage: "physical-lanes", bufferId: "pmd-lanes", start: 2 * 96 + 70, count: 1 }, relation: "copied" as const, precision: "exact" as const, inputs: [{ stage: "pcs-lanes", bufferId: "pcs-lanes", start: 0, count: 1 }] },
+        { output: { stage: "pam4", bufferId: "pam4-levels", start: 2 * 48 + 35, count: 1 }, relation: "encoded" as const, precision: "exact" as const, inputs: [{ stage: "physical-lanes", bufferId: "pmd-lanes", start: 2 * 96 + 70, count: 2 }] },
+        { output: { stage: "pcs-lanes", bufferId: "pcs-lanes", start: 0, count: 960 }, relation: "copied" as const, precision: "aggregate" as const, inputs: [{ stage: "fec", bufferId: "pcs-symbols", start: 0, count: 384 }] },
       ],
     } as unknown as CompleteInspectorRun;
     const selection = { stage: "pcs-lanes", bufferId: "pcs-lanes", start: 0, count: 1 } as const;
@@ -52,5 +54,9 @@ describe("stage workspace", () => {
     rerender(<StageWorkspace run={focused} stage="pam4" selected={{ stage: "physical-lanes", bufferId: "pmd-lanes", start: 2 * 96 + 70, count: 1 }} />);
     expect((screen.getAllByRole("combobox").at(-1) as HTMLSelectElement).value).toBe("2");
     expect(screen.getByText(/Showing 33–48 of 48/)).toBeTruthy();
+
+    rerender(<StageWorkspace run={focused} stage="fec" selected={{ stage: "physical-lanes", bufferId: "pmd-lanes", start: 2 * 96 + 70, count: 1 }} />);
+    expect(screen.getAllByText("0").find((element) => element.tagName === "CODE")?.closest("button")?.dataset.linked).toBeUndefined();
+    expect(screen.getByText(/copied \(aggregate\)/)).toBeTruthy();
   });
 });

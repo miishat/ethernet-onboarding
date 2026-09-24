@@ -7,8 +7,8 @@ export function dataRef(stage: InspectorStage, bufferId: string, start: number, 
   return Object.freeze({ stage, bufferId, start, count });
 }
 
-export function edge(output: DataRef, relation: TraceEdge["relation"], inputs: readonly DataRef[] = []): TraceEdge {
-  return Object.freeze({ output, relation, inputs: Object.freeze([...inputs]) });
+export function edge(output: DataRef, relation: TraceEdge["relation"], inputs: readonly DataRef[] = [], precision: TraceEdge["precision"] = "aggregate"): TraceEdge {
+  return Object.freeze({ output, relation, inputs: Object.freeze([...inputs]), precision });
 }
 
 export function snapshot(
