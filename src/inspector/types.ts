@@ -188,8 +188,13 @@ export interface ExperimentalProvenance {
 export interface CompleteInspectorRun extends InspectorRun {
   readonly codedBits: number;
   readonly deletions: readonly RateMatchDeletion[];
-  readonly txScrambledAmBits: Uint8Array;
-  readonly scramblerState: Uint8Array;
-  readonly markerState: Uint8Array;
+  /** Immutable public copies. Internal engines retain typed arrays while composing. */
+  readonly txScrambledAmBits: readonly number[];
+  readonly scramblerState: readonly number[];
+  readonly markerState: readonly number[];
+  /** Per complete FEC pair, ordered A then B. */
+  readonly fecMessages: readonly (readonly [readonly number[], readonly number[]])[];
+  /** Per complete FEC pair, ordered A then B. */
+  readonly codewords: readonly (readonly [readonly number[], readonly number[]])[];
   readonly provenance: ExperimentalProvenance;
 }

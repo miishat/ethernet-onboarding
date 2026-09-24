@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { spawnSync } from "node:child_process";
 import { DEFAULT_FRAME, DEFAULT_STREAM, MAX_CODED_BITS, REFERENCE_PMA_MAPPING } from "../src/inspector/defaults";
 import { buildInspectorRun, estimateRunSize, REFERENCE_RATE_MATCH_POLICY } from "../src/inspector/engine/run";
 import { parseFrame } from "../src/inspector/engine/validation";
@@ -54,6 +57,13 @@ describe("traceable experimental inspector run", () => {
     expect(run.value.deletions.every((deletion) => deletion.reason === "alignment-marker-reservation" || deletion.reason === "trailing-fec-completion")).toBe(true);
   });
 
+  it("does not expose mutable run-state arrays", () => {
+    const run = buildInspectorRun(input());
+    if (!run.ok) throw new Error(run.errors.run);
+    expect(() => { (run.value.txScrambledAmBits as number[])[0] = 1; }).toThrow();
+    expect(() => { (run.value.scramblerState as number[])[0] = 0; }).toThrow();
+  });
+
   it("matches the independently generated default-run artifact while its admission is pending review", () => {
     const run = buildInspectorRun(input());
     if (!run.ok) throw new Error(run.errors.run);
@@ -61,12 +71,30 @@ describe("traceable experimental inspector run", () => {
     const hashBits = (bits: Uint8Array) => createHash("sha256").update(Array.from(bits).join(""), "ascii").digest("hex");
 
     expect(fixture.status).toBe("pending-independent-review");
+    const referencePath = fileURLToPath(new URL("../scripts/inspector-reference.py", import.meta.url));
+    expect(createHash("sha256").update(readFileSync(referencePath)).digest("hex")).toBe(fixture.reference.sha256);
+    const independent = spawnSync("python", [referencePath, "--run-json"], { encoding: "utf8" });
+    expect(independent.status, independent.stderr).toBe(0);
+    const independentArtifact = JSON.parse(independent.stdout);
+    expect(independentArtifact).toEqual(fixture);
     expect(Buffer.from(run.value.mac.bytes).toString("hex")).toBe(fixture.artifact.macHex);
     expect(run.value.deletions.map((deletion) => deletion.originalWordIndex)).toEqual(fixture.artifact.deletedWordIndexes);
     expect(hashBits(buffer("encode66") as Uint8Array)).toBe(fixture.artifact.stageHashes.encode66);
     expect(hashBits(buffer("transcode257") as Uint8Array)).toBe(fixture.artifact.stageHashes.transcode257);
     expect(hashBits(buffer("scramble") as Uint8Array)).toBe(fixture.artifact.stageHashes.scramble);
-    expect(hashBits(run.value.txScrambledAmBits)).toBe(fixture.artifact.stageHashes.markers);
+    expect(hashBits(Uint8Array.from(run.value.txScrambledAmBits))).toBe(fixture.artifact.stageHashes.markers);
+    const hashJson = (value: unknown) => createHash("sha256").update(JSON.stringify(value), "utf8").digest("hex");
+    expect(run.value.fecMessages.map(hashJson)).toEqual(fixture.artifact.stageHashes.messages);
+    expect(run.value.codewords.map(hashJson)).toEqual(fixture.artifact.stageHashes.codewords);
+    const laneHashes = (stage: string, width: number, transform = (value: number) => value) => {
+      const values = Array.from(buffer(stage) as Uint8Array);
+      return Array.from({ length: values.length / width }, (_, lane) => hashBits(Uint8Array.from(values.slice(lane * width, (lane + 1) * width).map(transform))));
+    };
+    expect(laneHashes("pcs-lanes", 2720)).toEqual(fixture.artifact.stageHashes.pcsLanes);
+    expect(laneHashes("physical-lanes", 10880)).toEqual(fixture.artifact.stageHashes.pmdLanes);
+    const pam4Values = Array.from(buffer("pam4") as Uint8Array);
+    expect(Array.from({ length: 4 }, (_, lane) => hashJson(pam4Values.slice(lane * 5440, (lane + 1) * 5440).map((value) => value - 3))))
+      .toEqual(fixture.artifact.stageHashes.pam4);
     expect(Array.from(buffer("physical-lanes") as Uint8Array).slice(0, 32).join("")).toBe(fixture.artifact.selectedBoundaryValues.firstPmdBits);
   });
 });

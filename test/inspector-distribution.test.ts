@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import { describe, expect, it } from "vitest";
@@ -104,6 +105,7 @@ describe("Clause 119 pre-FEC distribution", () => {
     const referencePath = fileURLToPath(new URL("../scripts/inspector-reference.py", import.meta.url));
 
     expect(sha256(new TextEncoder().encode(canonical))).toBe(referenceFixture.artifactSha256);
+    expect(sha256(readFileSync(referencePath))).toBe("a20b3a01e2af33a003dfff8dc5622164669c69a6db056f168684c3cb809eb09b");
     const independent = spawnSync("python", [referencePath, "--json"], { encoding: "utf8" });
     expect(independent.status, independent.stderr).toBe(0);
     expect(JSON.parse(independent.stdout).artifactSha256).toBe(referenceFixture.artifactSha256);

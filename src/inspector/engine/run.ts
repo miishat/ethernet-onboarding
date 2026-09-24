@@ -109,10 +109,16 @@ export function buildInspectorRun(input: RunInput): Result<CompleteInspectorRun>
     const marked = value(insertMarkers(scrambled.bits, markerPlan, Uint8Array.from({ length: 9 }, (_, bit) => (input.stream.markerPrbsSeed >>> bit) & 1)));
     if (marked.bits.length % 10280 !== 0) return runError("Run completion failed to produce complete 40-block FEC pairs.");
     const pcsSymbols: Uint16Array[] = Array.from({ length: 16 }, () => new Uint16Array(estimated.value.fecPairCount * 68));
+    const fecMessages: Array<readonly [readonly number[], readonly number[]]> = [];
+    const codewords: Array<readonly [readonly number[], readonly number[]]> = [];
     for (let pair = 0; pair < estimated.value.fecPairCount; pair += 1) {
       const bits = marked.bits.slice(pair * 10280, (pair + 1) * 10280);
       const messages = splitFecMessages(bits);
-      const interleaved = interleaveClause119(encodeClause119Codeword(messages.messageA), encodeClause119Codeword(messages.messageB));
+      const codewordA = encodeClause119Codeword(messages.messageA);
+      const codewordB = encodeClause119Codeword(messages.messageB);
+      fecMessages.push(Object.freeze([Object.freeze([...messages.messageA]), Object.freeze([...messages.messageB]) ]));
+      codewords.push(Object.freeze([Object.freeze([...codewordA]), Object.freeze([...codewordB]) ]));
+      const interleaved = interleaveClause119(codewordA, codewordB);
       const lanes = distributePcsLanes(interleaved);
       lanes.forEach((lane, laneIndex) => pcsSymbols[laneIndex].set(lane, pair * 68));
     }
@@ -144,7 +150,12 @@ export function buildInspectorRun(input: RunInput): Result<CompleteInspectorRun>
     return { ok: true, value: Object.freeze({
       id: "experimental-reference-run-v1", profileId: input.profileId, stream: Object.freeze({ ...input.stream }), mac,
       snapshots: Object.freeze(snapshots), trace: Object.freeze(trace), codedBits: estimated.value.codedBits,
-      deletions: prepared.deletions, txScrambledAmBits: marked.bits, scramblerState: scrambled.state, markerState: marked.state,
+      deletions: prepared.deletions,
+      txScrambledAmBits: Object.freeze([...marked.bits]),
+      scramblerState: Object.freeze([...scrambled.state]),
+      markerState: Object.freeze([...marked.state]),
+      fecMessages: Object.freeze(fecMessages),
+      codewords: Object.freeze(codewords),
       provenance: Object.freeze({ labels: LABELS, rateMatchPolicyId: input.rateMatchPolicy.id, pmaMappingProfileId: input.pmaMappingProfile.id }),
     }) };
   } catch (error) {

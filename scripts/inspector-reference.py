@@ -318,7 +318,7 @@ def run_reference_output() -> dict[str, object]:
     for schedule in schedules:
         consumed = [0] * 16
         lane_bits: list[int] = []
-        for time in range(len(pcs_bits[0])):
+        for time in range(len(pcs_bits[0]) * 4):
             source_lane = schedule[time % 4]
             lane_bits.append(pcs_bits[source_lane][consumed[source_lane]])
             consumed[source_lane] += 1
@@ -358,7 +358,7 @@ def run_reference_output() -> dict[str, object]:
         "status": "pending-independent-review",
         "provenanceLabels": ["Experimental reference using candidate contracts", "Candidate IEEE source", "Independent local fixture", "Not IEEE verified or standards conformant"],
         "policies": {"rateMatch": "product-owned-reference-am-rate-match-v1", "pma": "reference-16x4-bit-mux-v1", "marker": "product-owned-reference-am-values-v1"},
-        "reference": {"implementation": "scripts/inspector-reference.py", "revision": "default-run-reference-v1", "method": "Independent Python MAC through PAM4 pipeline. It imports no TypeScript or stored expected fixture."},
+        "reference": {"implementation": "scripts/inspector-reference.py", "revision": "default-run-reference-v1", "sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(), "method": "Independent Python MAC through PAM4 pipeline. It imports no TypeScript or stored expected fixture."},
         "review": {"result": "pending", "limits": "Expected output is not admitted until independent review and cannot enable the IEEE-only profile."},
         "artifact": artifact,
         "artifactSha256": hashlib.sha256(json.dumps(artifact, separators=(",", ":"), ensure_ascii=True).encode("ascii")).hexdigest(),
