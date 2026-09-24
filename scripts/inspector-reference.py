@@ -13,6 +13,7 @@ import hashlib
 import json
 import subprocess
 import sys
+import zlib
 from pathlib import Path
 
 
@@ -218,6 +219,172 @@ def pma_output() -> dict[str, object]:
             "sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
             "method": "Independent Python schedule mux and Gray mapping. No TypeScript or stored expected fixture import.",
         },
+        "review": {"reviewerId": None, "reviewedOn": None, "result": "pending", "limits": "Expected output remains pending independent review and cannot enable the IEEE-only profile."},
+        "artifactSha256": hashlib.sha256(json.dumps(artifact, separators=(",", ":"), ensure_ascii=True).encode("ascii")).hexdigest(),
+        **artifact,
+    }
+
+
+def lsb_bits(octets: list[int]) -> list[int]:
+    return [(octet >> bit) & 1 for octet in octets for bit in range(8)]
+
+
+def control66(octets: list[int], mask: int) -> list[int]:
+    if mask == 0:
+        return [0, 1] + lsb_bits(octets)
+    if mask == 0xff and all(octet == 7 for octet in octets):
+        return [1, 0] + lsb_bits([0x1e]) + [0] * 56
+    if mask == 1 and octets[0] == 0xfb:
+        return [1, 0] + lsb_bits([0x78]) + lsb_bits(octets[1:])
+    terminate = octets.index(0xfd) if 0xfd in octets else -1
+    types = [0x87, 0x99, 0xaa, 0xb4, 0xcc, 0xd2, 0xe1, 0xff]
+    if terminate >= 0 and mask == ((0xff << terminate) & 0xff) and all(octet == 7 for octet in octets[terminate + 1:]):
+        payload = lsb_bits(octets[:terminate])
+        payload += [0] * (56 - len(payload))
+        return [1, 0] + lsb_bits([types[terminate]]) + payload
+    raise ValueError("unsupported candidate control placement")
+
+
+def transcode(blocks: list[list[int]]) -> list[int]:
+    payload = [bit for block in blocks for bit in block[2:]]
+    if all(block[:2] == [0, 1] for block in blocks):
+        return [1] + payload
+    if all(block[0] != block[1] for block in blocks):
+        lead = [block[1] for block in blocks]
+        first_control = next(index for index, block in enumerate(blocks) if block[0] == 1)
+        return [0] + lead + payload[:first_control * 64 + 4] + payload[first_control * 64 + 8:]
+    raise ValueError("invalid sync header")
+
+
+def scramble(input_bits: list[int], state: list[int]) -> tuple[list[int], list[int]]:
+    result: list[int] = []
+    history = state[:]
+    for bit in input_bits:
+        output_bit = bit ^ history[19] ^ history[0]
+        result.append(output_bit)
+        history = history[1:] + [output_bit]
+    return result, history
+
+
+def sha_bits(bits: list[int]) -> str:
+    return hashlib.sha256("".join(map(str, bits)).encode("ascii")).hexdigest()
+
+
+def run_reference_output() -> dict[str, object]:
+    """Full default experimental run, implemented without TypeScript or fixtures."""
+    destination = [2, 0, 0, 0, 0, 2]
+    source = [2, 0, 0, 0, 0, 1]
+    payload = list(range(64))
+    without_fcs = destination + source + [0x88, 0xb5] + payload
+    fcs_value = zlib.crc32(bytes(without_fcs)) & 0xffffffff
+    frame = without_fcs + list(fcs_value.to_bytes(4, "little"))
+    raw: list[tuple[int, bool]] = [(7, True)] * 4096
+    raw += [(0xfb, True)] + [(0x55, False)] * 6 + [(0xd5, False)]
+    raw += [(octet, False) for octet in frame] + [(0xfd, True)]
+    while len(raw) % 32:
+        raw.append((7, True))
+    words = [raw[offset:offset + 8] for offset in range(0, len(raw), 8)]
+    # Zero phase reserves eight transcoded blocks, then completes four FEC pairs.
+    while len(words) < 640:
+        words.append([(7, True)] * 8)
+    deleted = list(range(32))
+    words = [word for index, word in enumerate(words) if index not in deleted]
+    blocks66 = []
+    for word in words:
+        octets = [item[0] for item in word]
+        mask = sum((1 << index) for index, item in enumerate(word) if item[1])
+        blocks66.append(control66(octets, mask))
+    blocks257 = [transcode(blocks66[index:index + 4]) for index in range(0, len(blocks66), 4)]
+    pre_scramble = [bit for block in blocks257 for bit in block]
+    seed = [int(bit) for bit in f"{int('3FFFFFFFFFFFFFF', 16):058b}"]
+    scrambled, scrambler_state = scramble(pre_scramble, seed)
+    marker_text, marker = corrected_marker_bits()
+    marked = [int(bit) for bit in marker_text] + scrambled
+    pcs_symbols = [[] for _ in range(16)]
+    messages_hashes: list[str] = []
+    codeword_hashes: list[str] = []
+    for pair in range(4):
+        message_a, message_b = split_messages("".join(map(str, marked[pair * 10280:(pair + 1) * 10280])))
+        codeword_a, codeword_b = encode(message_a), encode(message_b)
+        interleaved = interleave(codeword_a, codeword_b)
+        lanes = lanes_from(interleaved)
+        for lane in range(16):
+            pcs_symbols[lane].extend(lanes[lane])
+        messages_hashes.append(hashlib.sha256(json.dumps([message_a, message_b], separators=(",", ":")).encode("ascii")).hexdigest())
+        codeword_hashes.append(hashlib.sha256(json.dumps([codeword_a, codeword_b], separators=(",", ":")).encode("ascii")).hexdigest())
+    pcs_bits = [[(symbol >> bit) & 1 for symbol in lane for bit in range(10)] for lane in pcs_symbols]
+    schedules = ([0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11], [12, 13, 14, 15])
+    pmd_bits: list[list[int]] = []
+    for schedule in schedules:
+        consumed = [0] * 16
+        lane_bits: list[int] = []
+        for time in range(len(pcs_bits[0])):
+            source_lane = schedule[time % 4]
+            lane_bits.append(pcs_bits[source_lane][consumed[source_lane]])
+            consumed[source_lane] += 1
+        pmd_bits.append(lane_bits)
+    levels = {"00": -3, "01": -1, "11": 1, "10": 3}
+    pam4 = [[levels[f"{bits[index]}{bits[index + 1]}"] for index in range(0, len(bits), 2)] for bits in pmd_bits]
+    artifact = {
+        "macHex": bytes(frame).hex(),
+        "interfaceWordCount": 640,
+        "deletedWordIndexes": deleted,
+        "transcodedBlockCount": len(blocks257),
+        "scramblerPredecessorState": "3FFFFFFFFFFFFFF",
+        "scramblerStateAfter": "".join(map(str, scrambler_state)),
+        "markerPrbsSeed": "0x1ff",
+        "markerStateAfter": marker["prbsStateLsbToMsb"],
+        "fecPairCount": 4,
+        "stageHashes": {
+            "encode66": sha_bits([bit for block in blocks66 for bit in block]),
+            "transcode257": sha_bits(pre_scramble),
+            "scramble": sha_bits(scrambled),
+            "markers": sha_bits(marked),
+            "pcsLanes": [sha_bits(bits) for bits in pcs_bits],
+            "pmdLanes": [sha_bits(bits) for bits in pmd_bits],
+            "pam4": [hashlib.sha256(json.dumps(level, separators=(",", ":")).encode("ascii")).hexdigest() for level in pam4],
+            "messages": messages_hashes,
+            "codewords": codeword_hashes,
+        },
+        "selectedBoundaryValues": {
+            "first66Bits": "".join(map(str, blocks66[0])),
+            "first257Bits": "".join(map(str, blocks257[0])),
+            "firstPmdBits": "".join(map(str, pmd_bits[0][:32])),
+            "firstPam4Levels": pam4[0][:16],
+        },
+    }
+    return {
+        "id": "default-frame-reference-pma-v1",
+        "status": "pending-independent-review",
+        "provenanceLabels": ["Experimental reference using candidate contracts", "Candidate IEEE source", "Independent local fixture", "Not IEEE verified or standards conformant"],
+        "policies": {"rateMatch": "product-owned-reference-am-rate-match-v1", "pma": "reference-16x4-bit-mux-v1", "marker": "product-owned-reference-am-values-v1"},
+        "reference": {"implementation": "scripts/inspector-reference.py", "revision": "default-run-reference-v1", "method": "Independent Python MAC through PAM4 pipeline. It imports no TypeScript or stored expected fixture."},
+        "review": {"result": "pending", "limits": "Expected output is not admitted until independent review and cannot enable the IEEE-only profile."},
+        "artifact": artifact,
+        "artifactSha256": hashlib.sha256(json.dumps(artifact, separators=(",", ":"), ensure_ascii=True).encode("ascii")).hexdigest(),
+    }
+    return {
+        "id": "reference-pma-16x4-v1",
+        "status": "pending-independent-review",
+        "source": {
+            "sourceId": "project-owned-reference-pma-v1",
+            "scope": "Selected 16:4 bit mux, MSB-first dibits, Gray normalized levels, and no precoder.",
+            "candidateLimits": "IEEE Clause 120 permits implementation-specific PMA ordering. This fixture does not claim a universal IEEE PMA order, measured voltage, optical power, or standards conformance.",
+        },
+        "mapping": {
+            "periodBits": 4,
+            "sourcePcsLaneByPmdLane": schedules,
+            "initialPhase": 0,
+            "firstBitSignificance": "msb",
+            "grayLevels": gray_levels,
+            "precoder": {"mode": "none"},
+        },
+        "reference": {
+            "implementation": "scripts/inspector-reference.py",
+            "revision": "reference-pma-16x4-v1",
+            "sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+            "method": "Independent Python schedule mux and Gray mapping. No TypeScript or stored expected fixture import.",
+        },
         "review": {
             "reviewerId": None,
             "reviewedOn": None,
@@ -235,6 +402,8 @@ if __name__ == "__main__":
     data = output()
     if sys.argv[1:] == ["--pma-json"]:
         print(json.dumps(pma_output(), ensure_ascii=True, sort_keys=True, separators=(",", ":")))
+    elif sys.argv[1:] == ["--run-json"]:
+        print(json.dumps(run_reference_output(), ensure_ascii=True, sort_keys=True, separators=(",", ":")))
     elif sys.argv[1:] == ["--json"]:
         print(json.dumps(data, ensure_ascii=True, sort_keys=True, separators=(",", ":")))
     elif len(sys.argv) == 1:

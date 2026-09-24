@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
-import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { spawnSync } from "node:child_process";
 import { describe, expect, it } from "vitest";
 import { REFERENCE_PMA_MAPPING } from "../src/inspector/defaults";
 import { mapPam4 } from "../src/inspector/engine/pam4";
@@ -111,7 +111,9 @@ describe("reference 16-to-4 PMA mapping", () => {
       result: "accepted-experimental-only",
     });
     expect(sha256(new TextEncoder().encode(canonical))).toBe(referenceFixture.artifactSha256);
-    expect(sha256(readFileSync(referencePath))).toBe(referenceFixture.reference.sha256);
+    const independent = spawnSync("python", [referencePath, "--pma-json"], { encoding: "utf8" });
+    expect(independent.status, independent.stderr).toBe(0);
+    expect(JSON.parse(independent.stdout).artifactSha256).toBe(referenceFixture.artifactSha256);
     expect(referenceFixture.pmdLaneBits.every((bits) => bits.length === 64)).toBe(true);
 
     const physical = mapPhysicalLanes(

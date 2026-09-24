@@ -29,7 +29,7 @@ describe("inspector profile capability gate", () => {
     expect(PROFILE_VERIFICATION.unresolvedRuleIds.length).toBeGreaterThan(0);
   });
 
-  it("keeps IEEE stages blocked while declaring the experimental reference PAM4 contract", () => {
+  it("keeps IEEE stages blocked while exposing the experimental reference calculation", () => {
     const ieeePcs = getStageSupport("400gbase-r-tx-v1", "pcs-lanes");
     const ieeePhysical = getStageSupport("400gbase-r-tx-v1", "physical-lanes");
     const referencePam4 = getStageSupport(
@@ -49,7 +49,7 @@ describe("inspector profile capability gate", () => {
       supported: true,
       provenance: "reference-mapping",
     });
-    expect(referencePam4.reason).toMatch(/declared.*contract.*not.*calculation/i);
+    expect(referencePam4.reason).toMatch(/implemented.*not.*IEEE verified.*standards conformant/i);
   });
 
   it("labels the declared reference mapping as experimental and exposes both declared PMA stages", () => {

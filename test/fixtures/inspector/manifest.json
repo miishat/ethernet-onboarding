@@ -6,6 +6,14 @@
   "retrievedOn": "2026-09-20",
   "fixtures": [
     {
+      "id": "default-frame-reference-pma-v1",
+      "file": "default-frame-reference-pma-v1.json",
+      "sourceId": "project-owned-experimental-run-v1",
+      "status": "pending-independent-review",
+      "inputState": "DEFAULT_FRAME, DEFAULT_STREAM, zero marker block phase, product-owned rate-match policy, selected 16:4 PMA mapping, and four complete FEC pairs.",
+      "verificationScope": "Independent local Python MAC-to-PAM4 artifact with stage hashes and selected boundaries. Expected output remains pending review and cannot enable the IEEE-only profile."
+    },
+    {
       "id": "reference-pma-16x4-v1",
       "file": "reference-pma-16x4-v1.json",
       "sourceId": "project-owned-reference-pma-v1",

@@ -157,3 +157,39 @@ export interface InspectorRun {
   snapshots: readonly Snapshot[];
   trace: readonly TraceEdge[];
 }
+
+export interface RunSize {
+  interfaceWords: number;
+  transcodedBlocks: number;
+  markerGroups: number;
+  fecPairCount: number;
+  codedBits: number;
+}
+
+export interface RunInput {
+  frame: FrameInput;
+  stream: StreamConfig;
+  profileId: "400gbase-dr4-tx-reference-pma-v1";
+  rateMatchPolicy: RateMatchPolicy;
+  pmaMappingProfile: PmaMappingProfile;
+}
+
+export interface ExperimentalProvenance {
+  labels: readonly [
+    "Experimental reference using candidate contracts",
+    "Candidate IEEE source",
+    "Independent local fixture",
+    "Not IEEE verified or standards conformant",
+  ];
+  rateMatchPolicyId: string;
+  pmaMappingProfileId: PmaMappingProfile["id"];
+}
+
+export interface CompleteInspectorRun extends InspectorRun {
+  readonly codedBits: number;
+  readonly deletions: readonly RateMatchDeletion[];
+  readonly txScrambledAmBits: Uint8Array;
+  readonly scramblerState: Uint8Array;
+  readonly markerState: Uint8Array;
+  readonly provenance: ExperimentalProvenance;
+}

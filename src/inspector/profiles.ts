@@ -24,15 +24,15 @@ export const PROFILE_VERIFICATION = Object.freeze({
 
 /**
  * Declares the project-owned reference PMA contract for future consumers.
- * `declared-contract-only` means no stage calculation is implemented or IEEE verified.
+ * This calculation is implemented under a project-owned experimental contract.
  */
 export const EXPERIMENTAL_REFERENCE_CALCULATION_CONTRACT: Readonly<CalculationContract> = Object.freeze({
   id: "400gbase-dr4-tx-reference-pma-v1",
   label: "Experimental 400GBASE-DR4 with Reference 16-to-4 mapping",
   provenance: "reference-mapping",
-  declaredStages: Object.freeze(["physical-lanes", "pam4"] as const),
-  executionStatus: "declared-contract-only",
-  reason: "Experimental reference mapping is a declared contract, not an implemented calculation. It is not IEEE verified or standards conformant.",
+  declaredStages: Object.freeze(["mac", "encode66", "transcode257", "scramble", "markers", "fec", "pcs-lanes", "physical-lanes", "pam4"] as const),
+  executionStatus: "implemented",
+  reason: "Experimental reference calculation is implemented with candidate and project-owned contracts. It is not IEEE verified or standards conformant.",
   referenceIds: Object.freeze([
     "400gbase-dr4-tx-reference-pma-v1",
     "ieee-bs-d14-cl119-locator",
@@ -44,8 +44,8 @@ export const EXPERIMENTAL_REFERENCE_CALCULATION_CONTRACT: Readonly<CalculationCo
 });
 
 /**
- * Reports declared contract availability for a stage. A supported experimental
- * declaration never asserts that the corresponding calculation is implemented.
+ * Reports experimental calculation availability for a stage. It never asserts
+ * IEEE verification or standards conformance.
  */
 export function getStageSupport(profileId: ProfileId, stage: InspectorStage): StageSupport {
   if (
