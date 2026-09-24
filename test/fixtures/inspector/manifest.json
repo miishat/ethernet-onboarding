@@ -6,6 +6,14 @@
   "retrievedOn": "2026-09-20",
   "fixtures": [
     {
+      "id": "reference-pma-16x4-v1",
+      "file": "reference-pma-16x4-v1.json",
+      "sourceId": "project-owned-reference-pma-v1",
+      "status": "pending-independent-review",
+      "inputState": "Sixteen recoverable 16-bit PCS lane patterns, absolute PMD output phase 0, four product-owned 4-bit source schedules, MSB-first dibits, Gray normalized levels, and no precoder.",
+      "verificationScope": "Expected PMA and PAM4 output is frozen from an independent Python implementation but remains pending independent review. It never establishes a universal IEEE PMA order, measured voltage, optical power, standards conformance, or IEEE-only profile support."
+    },
+    {
       "id": "pcs-d14-reference-v1",
       "file": "pcs-d14-reference-v1.json",
       "sourceId": "ieee-bs-d14-cl119-locator",

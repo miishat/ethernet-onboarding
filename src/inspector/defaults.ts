@@ -21,13 +21,14 @@ export const MAX_CODED_BITS = 262_144;
 
 /**
  * Project-owned schedule declaration for the experimental reference contract.
- * It is not an IEEE-defined PMA order and has no admitted output fixture yet.
+ * It is not an IEEE-defined PMA order. Its frozen fixture remains pending an
+ * independent review and cannot enable the IEEE-only profile.
  */
 export const REFERENCE_PMA_MAPPING: Readonly<PmaMappingProfile> = Object.freeze({
   id: "reference-16x4-bit-mux-v1",
   kind: "implementation-specific-reference",
   sourceRevision: "project-owned-reference-pma-v1",
-  fixtureId: "independent-local-fixture-pending",
+  fixtureId: "reference-pma-16x4-v1",
   periodBits: 4,
   sourcePcsLaneByPmdLane: Object.freeze([
     Object.freeze([0, 1, 2, 3] as const),

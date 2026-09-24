@@ -157,11 +157,85 @@ def output() -> dict[str, object]:
     }
 
 
+def pma_fixture_pcs_bits(length: int) -> list[str]:
+    """Independent project fixture input, one recoverable pattern per PCSL."""
+    return [
+        "".join(str(((lane * 11 + bit * 7 + 3) >> (bit % 4)) & 1) for bit in range(length))
+        for lane in range(16)
+    ]
+
+
+def pma_output() -> dict[str, object]:
+    """Project-owned 16:4 bit schedule and MSB-first Gray PAM4 labels."""
+    input_bits = pma_fixture_pcs_bits(16)
+    schedules = ([0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11], [12, 13, 14, 15])
+    pmd_bits: list[str] = []
+    for schedule in schedules:
+        consumed = [0] * 16
+        output_bits: list[str] = []
+        for time in range(64):
+            source_lane = schedule[time % 4]
+            output_bits.append(input_bits[source_lane][consumed[source_lane]])
+            consumed[source_lane] += 1
+        pmd_bits.append("".join(output_bits))
+
+    gray_levels = {"00": -3, "01": -1, "11": 1, "10": 3}
+    pam4 = [
+        {
+            "dibits": [bits[index:index + 2] for index in range(0, len(bits), 2)],
+            "normalizedLevels": [gray_levels[bits[index:index + 2]] for index in range(0, len(bits), 2)],
+        }
+        for bits in pmd_bits
+    ]
+    artifact = {
+        "inputPcsBits": input_bits,
+        "startAbsoluteBit": 0,
+        "nextAbsoluteBit": 64,
+        "pmdLaneBits": pmd_bits,
+        "pam4": pam4,
+    }
+    return {
+        "id": "reference-pma-16x4-v1",
+        "status": "pending-independent-review",
+        "source": {
+            "sourceId": "project-owned-reference-pma-v1",
+            "scope": "Selected 16:4 bit mux, MSB-first dibits, Gray normalized levels, and no precoder.",
+            "candidateLimits": "IEEE Clause 120 permits implementation-specific PMA ordering. This fixture does not claim a universal IEEE PMA order, measured voltage, optical power, or standards conformance.",
+        },
+        "mapping": {
+            "periodBits": 4,
+            "sourcePcsLaneByPmdLane": schedules,
+            "initialPhase": 0,
+            "firstBitSignificance": "msb",
+            "grayLevels": gray_levels,
+            "precoder": {"mode": "none"},
+        },
+        "reference": {
+            "implementation": "scripts/inspector-reference.py",
+            "revision": "reference-pma-16x4-v1",
+            "sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+            "method": "Independent Python schedule mux and Gray mapping. No TypeScript or stored expected fixture import.",
+        },
+        "review": {
+            "reviewerId": None,
+            "reviewedOn": None,
+            "result": "pending",
+            "limits": "Expected output remains pending independent review and cannot enable the IEEE-only profile.",
+        },
+        "artifactSha256": hashlib.sha256(
+            json.dumps(artifact, separators=(",", ":"), ensure_ascii=True).encode("ascii")
+        ).hexdigest(),
+        **artifact,
+    }
+
+
 if __name__ == "__main__":
     data = output()
-    if sys.argv[1:] == ["--json"]:
+    if sys.argv[1:] == ["--pma-json"]:
+        print(json.dumps(pma_output(), ensure_ascii=True, sort_keys=True, separators=(",", ":")))
+    elif sys.argv[1:] == ["--json"]:
         print(json.dumps(data, ensure_ascii=True, sort_keys=True, separators=(",", ":")))
     elif len(sys.argv) == 1:
         print(json.dumps(data, ensure_ascii=True, indent=2))
     else:
-        raise SystemExit("usage: inspector-reference.py [--json]")
+        raise SystemExit("usage: inspector-reference.py [--json | --pma-json]")
