@@ -376,11 +376,11 @@ def run_reference_output() -> dict[str, object]:
     }
     return {
         "id": "default-frame-reference-pma-v1",
-        "status": "pending-independent-review",
+        "status": "independently-reviewed-experimental-only",
         "provenanceLabels": ["Experimental reference using candidate contracts", "Candidate IEEE source", "Independent local fixture", "Not IEEE verified or standards conformant"],
         "policies": {"rateMatch": "product-owned-reference-am-rate-match-v1", "pma": "reference-16x4-bit-mux-v1", "marker": "product-owned-reference-am-values-v1"},
         "reference": {"implementation": "scripts/inspector-reference.py", "revision": "default-run-reference-v1", "sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(), "method": "Independent Python MAC through PAM4 pipeline. It imports no TypeScript or stored expected fixture."},
-        "review": {"result": "pending", "limits": "Expected output is not admitted until independent review and cannot enable the IEEE-only profile."},
+        "review": {"reviewerId": "/root/inspector_run_review_light", "reviewedOn": "2026-09-24", "reviewedCommit": "8dedfd1", "scope": "Full default experimental MAC-to-PAM4 state and policies, FEC messages/codewords, PCS/PMD/PAM4 stage hashes, canonical artifact and script hashes, and transitive marker-reference dependency.", "result": "accepted-experimental-only", "limits": "This review does not admit Annex 119A, IEEE-only profile support, or standards conformance."},
         "artifact": artifact,
         "artifactSha256": hashlib.sha256(canonical_json_bytes(artifact)).hexdigest(),
     }

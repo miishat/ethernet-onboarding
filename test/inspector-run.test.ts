@@ -105,7 +105,13 @@ describe("traceable experimental inspector run", () => {
     const buffer = (stage: string) => run.value.snapshots.find((snapshot) => snapshot.stage === stage)?.buffers[0].values;
     const hashBits = (bits: Uint8Array) => createHash("sha256").update(Array.from(bits).join(""), "ascii").digest("hex");
 
-    expect(fixture.status).toBe("pending-independent-review");
+    expect(fixture.status).toBe("independently-reviewed-experimental-only");
+    expect(fixture.review).toMatchObject({
+      reviewerId: "/root/inspector_run_review_light",
+      reviewedOn: "2026-09-24",
+      reviewedCommit: "8dedfd1",
+      result: "accepted-experimental-only",
+    });
     expect(fixture.artifact.input).toEqual({
       frameDraft: DEFAULT_FRAME,
       frameInput: { destination: [2, 0, 0, 0, 0, 2], source: [2, 0, 0, 0, 0, 1], etherType: 0x88b5, payload: Array.from({ length: 64 }, (_, index) => index) },
