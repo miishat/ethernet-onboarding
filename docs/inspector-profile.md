@@ -60,9 +60,20 @@ provenance with final IEEE provenance. Only that review can make
 `400gbase-dr4-tx-v1` eligible for enablement. It does not retroactively make
 experimental output standards conformant.
 
-`types.ts` supplies the interfaces in Task 2. `PROFILE`, `PROFILE_VERIFICATION`, `DEFAULT_FRAME`, and `DEFAULT_STREAM` are frozen. Consumers should copy a default into editable state and call `getProfileSupport(rate, dir, gen)` before constructing any complete run. The separate verification state does not change the agreed `Profile` interface. Rejections explain an unsupported rate, direction or lane generation before reporting the verification block for the intended tuple.
+`types.ts` supplies the shared interfaces. `PROFILE`, `PROFILE_VERIFICATION`,
+`DEFAULT_FRAME`, and `DEFAULT_STREAM` are frozen. The application checks the
+selected rate, direction, and lane generation before constructing an
+experimental run. `getProfileSupport(rate, dir, gen)` remains the IEEE-only
+verification gate and returns false until its source requirements pass.
 
-`DataRef` uses a zero-based half-open interval `[start, start + count)` in its buffer's units. A buffer ID is resolved within its stage. Octet and bit buffers use `Uint8Array`; RS-symbol buffers can use `Uint16Array`. A bit buffer has one bit per element, not packed octets. `MacFrame.bytes` denotes destination through FCS; `withoutFcs` omits FCS and neither buffer includes preamble, SFD or idles. These are application representation decisions, not substitute serialization rules. A later implementation must not label a partial run as the complete named profile.
+`DataRef` uses a zero-based half-open interval `[start, start + count)` in its
+buffer's units. A buffer ID is resolved within its stage. Engine octet and bit
+buffers use `Uint8Array`; RS-symbol buffers can use `Uint16Array`. Public run
+snapshots expose frozen number arrays so displayed values cannot be mutated.
+A bit buffer has one bit per element, not packed octets. `MacFrame.bytes`
+denotes destination through FCS; `withoutFcs` omits FCS and neither buffer
+includes preamble, SFD or idles. These are application representation
+decisions, not substitute serialization rules.
 
 ## Teaching defaults and bounded execution
 
@@ -72,7 +83,14 @@ The requested initialization is `scramblerSeedHex = 3FFFFFFFFFFFFFF` (58 one bit
 
 The proposed phase convention is: marker phase zero is absolute transcoded 257-bit block index `0`, at the boundary immediately before an alignment-marker group reservation. `absoluteStreamBlock` counts contiguous pre-insertion transcoded 257-bit block positions from that boundary and is carried across chunks and windows. Lane phase zero names the first distribution unit assigned to logical lane zero at the same boundary. Final Clause 119 evidence fixes the AM cadence at 163840 blocks, its reservation at eight blocks or 2056 bits, and its FEC boundary at 40 blocks. A `RateMatchPolicy` is still required because individual removable inputs depend on unavailable Clause 82 legality rules. In particular, zero phase does not imply that 4096 prefix idles can simply be added after a marker.
 
-After verification, a run must add Idles according to its selected `RateMatchPolicy` until it finishes the final FEC codeword pair and lane-distribution group without truncating the requested frame. `MAX_CODED_BITS = 262144` is an application limit on total coded output across lanes, including prefix, markers, frame, parity and trailing completion. A future run builder must calculate the required size and reject an over-cap request with a `run` error before allocating output; it must never truncate a frame. There is no run builder yet, so this task does not claim that cap enforcement is implemented. Later marker boundaries require a phase-controlled window with carried state and recorded deletions, not storing a full marker period or resetting state at the window boundary.
+The experimental run adds Idles according to its selected `RateMatchPolicy`
+until it finishes a FEC codeword pair and lane-distribution group without
+truncating the requested frame. `MAX_CODED_BITS = 262144` limits total coded
+output across lanes, including prefix, markers, frame, parity, and trailing
+completion. The run builder estimates the required size and rejects an
+over-limit request before allocating stage output. Marker, scrambler, and PMA
+state carry across windows. These implementation guarantees do not admit the
+missing IEEE-only rules.
 
 ## Source ledger
 
@@ -136,7 +154,15 @@ Each decision produces a `RateMatchDeletion` entry containing the original word,
 
 ## Fixture policy and unblock procedure
 
-`test/fixtures/inspector/manifest.json` distinguishes **candidate sources** from accepted fixtures. Its standalone RS fixture does not establish a 400G PCS profile, and no 400G profile fixture is accepted. Candidate hashes cover the exact downloaded HTTP response bytes, including labels and line endings, not interpreted protocol bits. Hashes establish source integrity only. Candidate `inputState` records the relevant published labels and explicitly unresolved conventions; it does not pretend the teaching seed generated those examples. No tests fetch the network or regenerate expected outputs. The separate `ieee-8023-2022-source-manifest.json` is a blocked source-record template, not an accepted fixture or a copy of Annex 119A.
+`test/fixtures/inspector/manifest.json` distinguishes candidate sources,
+independently reviewed local experimental fixtures, and final IEEE fixtures.
+The standalone RS fixture does not establish a 400G PCS profile. The reviewed
+400G local fixtures establish only the named experimental reference behavior;
+no Annex 119A fixture is admitted. Candidate source hashes cover exact
+downloaded bytes, including labels and line endings, not interpreted protocol
+bits. Tests do not fetch the network. The separate
+`ieee-8023-2022-source-manifest.json` remains a blocked source-record
+template, not a copy of Annex 119A.
 
 To unblock this task, complete the IEEE Reading Room or licensed-copy final line check, resolve each final-profile rule with exact clause/table/page citations, select the implementation-owned `RateMatchPolicy` and any `PmaMappingProfile`, and admit independently verified fixtures. For an independently implemented Python reference, record its source/revision and reviewer, all input bytes and initial state, the precise serialization convention, complete rate-match ledger, PMA absolute-phase state, output artifact hash and stage-specific verification scope. Keep it independent of production TypeScript, commit the reviewed expected outputs once, and compare against those stored outputs during tests. Include mixed start/terminate blocks, marker boundaries, nontrivial RS parity, the full two-codeword lane permutation, and selected lane/PAM4 ordering, rather than relying on round trips or all-zero examples.
 

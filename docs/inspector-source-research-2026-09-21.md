@@ -50,25 +50,23 @@ context only. They neither replace nor expand the final local evidence.
 | DR4 scope | L124 124.1 and Table 124-1, p. 4987 | Verified | DR4 is PAM4 and requires Clauses 119 and 120. |
 | Annex 119A fixture | unavailable | Blocked | Do not admit source rows, source hash, state, or expected fixture output. |
 
-## Task 4 policy conflict
+## Task 4 policy correction
 
-The current Task 4 candidate is not an IEEE representation. Its two reserved
-257-bit blocks every 40 input blocks, `fecPairBlocks: 2`, and local 514-bit AM
-conflict with final Clause 119. A standards-facing policy must instead use an
-eight-block, 2056-bit AM group every 163840 257-bit blocks and retain the
-40-block FEC-pair boundary. The standard permits rate matching by removing
-eligible control characters or ordered sets, but the local extracts do not
-provide Clause 82 legality. A deterministic product-owned `RateMatchPolicy`
-is still required and cannot authorize deletion until that input legality is
-available.
+The earlier Task 4 candidate reserved two 257-bit blocks every 40 input
+blocks, set `fecPairBlocks: 2`, and used a local 514-bit AM. It conflicted with
+final Clause 119 and has been replaced. The experimental implementation uses
+an eight-block, 2056-bit AM group every 163840 257-bit blocks at a 40-block
+FEC-pair boundary. Its deterministic Idle deletion policy is project-owned.
+Clause 82 input legality remains unavailable, so this policy is not admitted
+for the IEEE-only profile.
 
 ## Experimental reference ruling
 
-`400gbase-dr4-tx-reference-pma-v1` remains metadata for a future
-project-owned experimental pipeline. It must retain its candidate-source and
-independent-fixture labels and cannot enable the IEEE-only profile. The 800G
-machine-readable material remains quarantined evidence and is not an Annex
-119A substitute.
+`400gbase-dr4-tx-reference-pma-v1` now executes a project-owned experimental
+pipeline for the exact 400G transmit, 100G-per-physical-lane context. It
+retains candidate-source and independently reviewed local-fixture labels and
+cannot enable the IEEE-only profile. The 800G machine-readable material
+remains quarantined evidence and is not an Annex 119A substitute.
 
 ## Unblock requirements
 

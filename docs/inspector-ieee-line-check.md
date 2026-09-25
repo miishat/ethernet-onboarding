@@ -48,8 +48,9 @@ The verified records do not enable `400gbase-dr4-tx-v1`. The missing Clause
 49 recurrence, Clause 82 control rules, full Clause 117/81 stream chain, and
 independently reviewed Annex 119A fixture keep the IEEE-only capability false.
 
-The current Task 4 candidate conflicts with the admitted 400G structure: it
-reserves two blocks every 40 blocks and uses a 514-bit local AM. The final
-structure is an eight-block, 2056-bit AM group every 163840 blocks, aligned to
-a 40-block FEC pair. A product-owned deletion policy remains necessary and
-must remove only Clause 82-legal inputs.
+An earlier Task 4 candidate reserved two blocks every 40 blocks and used a
+514-bit local AM. The experimental implementation now uses the locally
+reviewed eight-block, 2056-bit AM group every 163840 blocks, aligned to a
+40-block FEC pair. Its Idle deletion policy is project-owned. Clause 82 input
+legality has not been admitted, so this correction does not enable the
+IEEE-only profile.
