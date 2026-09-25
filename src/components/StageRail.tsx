@@ -8,7 +8,7 @@ const stages: readonly { id: InspectorStage; label: string }[] = [
 ];
 
 export default function StageRail({ stage, onStageChange, profileId = "400gbase-dr4-tx-reference-pma-v1" }: { stage: InspectorStage; onStageChange: (stage: InspectorStage) => void; profileId?: ProfileId }) {
-  return <nav className="stage-rail" aria-label="Frame processing stages">{stages.map((item, index) => <button key={item.id} type="button" aria-pressed={stage === item.id} onClick={() => onStageChange(item.id)}>
+  return <nav className="stage-rail" aria-label="Frame processing stages">{stages.map((item, index) => <button key={item.id} type="button" aria-current={stage === item.id ? "step" : undefined} aria-pressed={stage === item.id} onClick={() => onStageChange(item.id)}>
     <span>{index + 1}</span>{item.label}{!getStageSupport(profileId, item.id).supported ? <small>Calculation not available yet</small> : null}
   </button>)}</nav>;
 }
