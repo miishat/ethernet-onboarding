@@ -105,12 +105,12 @@ export default function TopicExplorer({ catalog, dir, recent, onSelect }: Props)
       <div className="control-label">Discover</div>
       <button ref={trigger} className="btn" aria-expanded={open} aria-controls="topic-explorer"
         aria-keyshortcuts="Control+k Meta+k" onClick={() => open ? close() : setOpen(true)}>
-        Search topics
+        Search Topics
       </button>
       <section ref={panel} id="topic-explorer" className="topic-explorer" hidden={!open}
         aria-labelledby="topic-explorer-heading" style={{ "--topic-panel-top": `${panelTop}px` } as CSSProperties}>
         <div className="topic-explorer__head">
-          <h2 id="topic-explorer-heading">Search topics</h2>
+          <h2 id="topic-explorer-heading">Search Topics</h2>
           <button className="btn" onClick={close}>Close search</button>
         </div>
         <label className="topic-explorer__label" htmlFor="topic-explorer-query">Find a topic, term, or clause</label>

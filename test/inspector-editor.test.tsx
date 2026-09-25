@@ -76,7 +76,7 @@ describe("frame inspector", () => {
   it("updates the displayed FCS only after applying an edited App frame", async () => {
     const user = userEvent.setup();
     renderApp();
-    await user.click(screen.getByRole("button", { name: "Open inspector" }));
+    await user.click(screen.getByRole("button", { name: "Open Inspector Beta" }));
     const before = screen.getByRole("button", { name: /^FCS /i }).textContent;
     const payload = screen.getByRole("textbox", { name: /Payload hex/i });
     await user.clear(payload);
@@ -103,7 +103,7 @@ describe("frame inspector", () => {
     window.history.replaceState({}, "", "/?view=frame&step=5");
     const user = userEvent.setup();
     renderApp();
-    await user.click(screen.getByRole("button", { name: "Open inspector" }));
+    await user.click(screen.getByRole("button", { name: "Open Inspector Beta" }));
 
     expect(screen.getByRole("region", { name: "Unavailable calculation" }).textContent).toMatch(/Calculation not available yet/);
     await user.click(screen.getByRole("button", { name: "Return to learning" }));

@@ -9,7 +9,7 @@ describe("TopicExplorer", () => {
     const html = renderToStaticMarkup(createElement(TopicExplorer, {
       catalog: buildTopicCatalog(), dir: "tx", recent: [], onSelect: () => {},
     }));
-    expect(html).toContain("Search topics");
+    expect(html).toContain("Search Topics");
     expect(html).toContain('aria-expanded="false"');
     expect(html).toContain('aria-controls="topic-explorer"');
     expect(html).not.toContain('role="dialog"');

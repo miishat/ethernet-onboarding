@@ -163,7 +163,7 @@ test("uses the newest distinct draft when Apply is pressed rapidly", async ({ pa
 
 test("opens the inspector from the header", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Open inspector" }).click();
+  await page.getByRole("button", { name: "Open Inspector Beta" }).click();
   await expect(page).toHaveURL(/view=inspector.*inspectStage=mac.*from=stack/);
   await expect(page.getByRole("main", { name: "Frame inspector" })).toBeVisible();
 });

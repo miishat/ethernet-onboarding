@@ -263,6 +263,7 @@ svg g[role="button"]:focus-visible rect {
   align-items: center;
   justify-content: center;
 }
+.header__beta { margin-left: 5px; font: 600 12px var(--font-mono); color: var(--signal); }
 
 /* --- Segmented control --- */
 .seg {
