@@ -1,8 +1,10 @@
 .inspector { width: min(1440px, 100%); margin: 0 auto; padding: 28px 26px 64px; flex: 1; }
 .inspector__top, .inspector-section-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
 .inspector__top { margin-bottom: 24px; }
+.inspector__top > div { flex: 1; min-width: 0; }
 .inspector h1, .inspector h2 { margin: 0; letter-spacing: -.02em; }
-.inspector__top p:not(.inspector-eyebrow), .field-details p { color: var(--dim); max-width: 75ch; line-height: 1.6; }
+.inspector__top p:not(.inspector-eyebrow) { color: var(--dim); line-height: 1.6; }
+.field-details p { color: var(--dim); max-width: 75ch; line-height: 1.6; }
 .inspector-eyebrow { font: 11px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--signal); margin: 0 0 7px; }
 .stage-rail { display: grid; grid-template-columns: repeat(9, minmax(105px, 1fr)); gap: 7px; margin-bottom: 24px; }
 .stage-rail button { min-width: 0; text-align: left; padding: 10px; border: 1px solid var(--rule); background: var(--ink2); color: var(--dim); border-radius: 7px; font: 12px var(--font-mono); cursor: pointer; }

@@ -1,5 +1,13 @@
 import { expect, test } from "@playwright/test";
 
+test("keeps the inspector introduction on one line at desktop width", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto("/?view=inspector&inspectStage=mac&from=stack");
+  const introduction = page.locator(".inspector__top p:not(.inspector-eyebrow)");
+  const metrics = await introduction.evaluate((element) => ({ height: element.getBoundingClientRect().height, lineHeight: Number.parseFloat(getComputedStyle(element).lineHeight) }));
+  expect(metrics.height).toBeLessThan(metrics.lineHeight * 1.5);
+});
+
 test("aligns MAC details with the editor and supports compact or extended samples", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/?view=inspector&inspectStage=mac&from=stack");
@@ -106,7 +114,7 @@ test("opens a stage deep link, preserves applied output until Apply, and exposes
   await expect(page.getByText("Candidate IEEE source")).toBeVisible();
   await expect(page.getByText("Independent local fixture")).toBeVisible();
   await expect(page.getByText("Not IEEE verified or standards conformant")).toBeVisible();
-  await expect(page.getByText(/IEEE-only 400G TX profile remains verification-blocked/i)).toBeVisible();
+  await expect(page.getByText(/IEEE-only 400G TX remains verification-blocked/i)).toBeVisible();
 });
 
 test("blocks experimental calculations for unsupported inspector deep links", async ({ page }) => {
