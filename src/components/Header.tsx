@@ -86,7 +86,7 @@ export default function Header({ rate, setRate, dir, setDir, gen, setGen, steppi
           </button>
         </div>
         <div>
-          <div className="control-label">MAC Inspector</div>
+          <div className="control-label">Frame Inspector</div>
           <button className="btn btn--ghost-signal" onClick={openInspector}>Open Inspector <span className="header__beta">Beta</span></button>
         </div>
         <div>
