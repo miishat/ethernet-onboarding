@@ -31,6 +31,7 @@ export default function App() {
     : "Experimental calculation is available only for 400G TX at 100G per lane. The IEEE-only profile remains verification-blocked.";
   const [visited, setVisited] = useState<Set<string>>(() => new Set());
   const [draft, setDraft] = useState<FrameDraft>({ ...DEFAULT_FRAME });
+  const [prefixIdleOctets, setPrefixIdleOctets] = useState(256);
   const [mac, setMac] = useState<MacFrame | null>(() => {
     const parsed = parseFrame(DEFAULT_FRAME);
     return parsed.ok ? buildMacFrame(parsed.value) : null;
@@ -216,6 +217,8 @@ export default function App() {
           onExit={() => navigate(closeInspector(navigation), "push")}
           draft={draft}
           onDraftChange={setDraft}
+          prefixIdleOctets={prefixIdleOctets}
+          onPrefixIdleOctetsChange={setPrefixIdleOctets}
           mac={mac}
           run={experimentalCalculationReason ? null : inspectorRun.run}
           status={experimentalCalculationReason ? "idle" : inspectorRun.status}
@@ -226,7 +229,7 @@ export default function App() {
             setMac(buildMacFrame(input));
             inspectorRun.apply({
               frame: input,
-              stream: { ...DEFAULT_STREAM },
+              stream: { ...DEFAULT_STREAM, prefixIdleOctets },
               profileId: "400gbase-dr4-tx-reference-pma-v1",
               rateMatchPolicy: REFERENCE_RATE_MATCH_POLICY,
               pmaMappingProfile: REFERENCE_PMA_MAPPING,

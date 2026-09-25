@@ -1,5 +1,29 @@
 import { expect, test } from "@playwright/test";
 
+test("aligns MAC details with the editor and supports compact or extended samples", async ({ page }) => {
+  await page.goto("/?view=inspector&inspectStage=mac&from=stack");
+  const editor = page.locator(".frame-editor");
+  const details = page.locator(".field-details");
+  const editorBox = await editor.boundingBox();
+  const detailsBox = await details.boundingBox();
+  expect(editorBox).not.toBeNull();
+  expect(detailsBox).not.toBeNull();
+  expect(Math.abs(detailsBox!.x - editorBox!.x)).toBeLessThan(2);
+  expect(detailsBox!.y).toBeGreaterThan(editorBox!.y + editorBox!.height);
+
+  const sample = page.getByLabel("Stream sample");
+  await expect(sample).toHaveValue("256");
+  await page.getByRole("button", { name: "Apply frame" }).click();
+  await page.getByRole("button", { name: "64B/66B" }).click();
+  await expect(page.getByText(/Showing 1–64 of 8448 bits/)).toBeVisible();
+  await page.getByRole("button", { name: "MAC frame" }).click();
+  await sample.selectOption("4096");
+  await expect(page.getByText("Unapplied edits")).toBeVisible();
+  await page.getByRole("button", { name: "Apply frame" }).click();
+  await page.getByRole("button", { name: "64B/66B" }).click();
+  await expect(page.getByText(/Showing 1–64 of 40128 bits/)).toBeVisible();
+});
+
 async function applyAndOpenStage(page: import("@playwright/test").Page, stage: "FEC" | "PAM4") {
   await page.getByRole("button", { name: "Apply frame" }).click();
   await page.getByRole("button", { name: stage }).click();

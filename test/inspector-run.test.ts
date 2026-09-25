@@ -31,6 +31,15 @@ function canonicalJson(value: unknown): string {
 }
 
 describe("traceable experimental inspector run", () => {
+  it("keeps a compact sample complete while reducing the encoded view", () => {
+    const estimated = estimateRunSize(input(256));
+    expect(estimated).toMatchObject({ ok: true, value: { fecPairCount: 1 } });
+    const run = buildInspectorRun(input(256));
+    if (!run.ok) throw new Error(run.errors.run);
+    expect(run.value.snapshots.find((snapshot) => snapshot.stage === "encode66")?.buffers[0].values.length).toBe(8448);
+    expect(run.value.txScrambledAmBits.length).toBe(10280);
+  });
+
   it("estimates and accepts an exact bounded complete FEC-pair run", () => {
     const estimated = estimateRunSize(input());
     expect(estimated).toMatchObject({ ok: true, value: { codedBits: expect.any(Number), fecPairCount: expect.any(Number) } });

@@ -7,6 +7,7 @@ import type { CompleteInspectorRun } from "../src/inspector/types";
 
 const run = {
   mac: { fcs: [0, 1, 2, 3] },
+  stream: { prefixIdleOctets: 256 },
   snapshots: [{ stage: "pcs-lanes", unit: "bit", buffers: [{ id: "pcs-lanes", values: Array.from({ length: 500 }, (_, i) => i % 2) }], inputRefs: [], outputRefs: [], explanation: "Sixteen PCS lane bit streams.", referenceIds: ["fixture"] }],
   trace: [{ output: { stage: "pcs-lanes", bufferId: "pcs-lanes", start: 0, count: 500 }, relation: "copied", inputs: [{ stage: "fec", bufferId: "pcs-symbols", start: 0, count: 500 }] }], profileId: "400gbase-dr4-tx-reference-pma-v1", provenance: { labels: ["Experimental reference using candidate contracts", "Candidate IEEE source", "Independent local fixture", "Not IEEE verified or standards conformant"] },
   laneInspection: { pcsSymbols: [Array.from({ length: 500 }, (_, i) => i)], physicalBits: [[0]], physicalSourcePcsLane: [[0]], physicalStartAbsoluteBit: 0, physicalInitialPhase: 0, pam4: [[{ dibit: "00", normalizedLevel: -3 }] ] },
