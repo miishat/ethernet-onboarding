@@ -48,6 +48,18 @@ describe("traceable experimental inspector run", () => {
     expect(buildInspectorRun(tooLarge)).toEqual(estimated);
   });
 
+  it("rejects the blocked IEEE-only profile before constructing a run", () => {
+    const ieeeOnly = { ...input(), profileId: "400gbase-dr4-tx-v1" as const };
+    expect(estimateRunSize(ieeeOnly)).toMatchObject({
+      ok: false,
+      errors: { run: expect.stringMatching(/experimental reference calculation contract/i) },
+    });
+    expect(buildInspectorRun(ieeeOnly)).toMatchObject({
+      ok: false,
+      errors: { run: expect.stringMatching(/experimental reference calculation contract/i) },
+    });
+  });
+
   it("keeps the requested MAC frame whole and records half-open trace edges", () => {
     const run = buildInspectorRun(input());
     if (!run.ok) throw new Error(run.errors.run);
