@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 test("aligns MAC details with the editor and supports compact or extended samples", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/?view=inspector&inspectStage=mac&from=stack");
   const editor = page.locator(".frame-editor");
   const details = page.locator(".field-details");
@@ -8,8 +9,12 @@ test("aligns MAC details with the editor and supports compact or extended sample
   const detailsBox = await details.boundingBox();
   expect(editorBox).not.toBeNull();
   expect(detailsBox).not.toBeNull();
-  expect(Math.abs(detailsBox!.x - editorBox!.x)).toBeLessThan(2);
-  expect(detailsBox!.y).toBeGreaterThan(editorBox!.y + editorBox!.height);
+  expect(detailsBox!.x).toBeGreaterThan(editorBox!.x + editorBox!.width);
+  expect(Math.abs(detailsBox!.y - editorBox!.y)).toBeLessThan(2);
+  const byteView = page.locator(".byte-view");
+  const byteBox = await byteView.boundingBox();
+  expect(byteBox!.y).toBeGreaterThan(detailsBox!.y);
+  expect(await byteView.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
 
   const sample = page.getByLabel("Stream sample");
   await expect(sample).toHaveValue("256");
@@ -22,6 +27,28 @@ test("aligns MAC details with the editor and supports compact or extended sample
   await page.getByRole("button", { name: "Apply frame" }).click();
   await page.getByRole("button", { name: "64B/66B" }).click();
   await expect(page.getByText(/Showing 1–64 of 40128 bits/)).toBeVisible();
+});
+
+test("switches between grouped and indexed values across inspector stages", async ({ page }) => {
+  await page.goto("/?view=inspector&inspectStage=mac&from=stack");
+  await page.getByRole("button", { name: "Apply frame" }).click();
+  await page.getByRole("button", { name: "64B/66B" }).click();
+  await expect(page.getByRole("group", { name: "Value view" })).toBeVisible();
+  await page.getByRole("button", { name: "Grouped" }).click();
+  await expect(page.getByText(/Block 0/)).toBeVisible();
+  await page.getByRole("button", { name: /Block 0/ }).click();
+  await page.getByLabel("encode66 values").locator(".data-window__value").first().click();
+  await expect(page.getByText(/Selected encode66/)).toBeVisible();
+  await page.getByRole("button", { name: "Indexed" }).click();
+  await expect(page.getByText(/Bits 0–63/)).toBeVisible();
+  await page.getByRole("button", { name: "Physical lanes" }).click();
+  await expect(page.getByRole("button", { name: "Indexed" })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByLabel("Lane", { exact: true })).toHaveCSS("background-color", /rgb\(/);
+  await page.getByRole("button", { name: "PAM4" }).click();
+  await expect(page.getByLabel("PMD lane", { exact: true })).toHaveCSS("background-color", /rgb\(/);
+  await expect(page.getByRole("button", { name: "Previous" })).toHaveClass(/btn/);
+  await page.getByRole("button", { name: "Grouped" }).click();
+  await expect(page.getByText("Symbols 0–7")).toBeVisible();
 });
 
 async function applyAndOpenStage(page: import("@playwright/test").Page, stage: "FEC" | "PAM4") {

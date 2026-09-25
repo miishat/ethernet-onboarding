@@ -1,12 +1,17 @@
 import { useEffect, useState } from "react";
 import type { CompleteInspectorRun, DataRef } from "../inspector/types";
+import type { ValueView } from "./StageWorkspace";
+
 const WINDOW = 32;
 function overlaps(a: DataRef, b: DataRef) { return a.stage === b.stage && a.bufferId === b.bufferId && a.start < b.start + b.count && b.start < a.start + a.count; }
-export default function LaneView({ run, physical = false, selected, linked = [], onSelect }: { run: CompleteInspectorRun; physical?: boolean; selected?: DataRef | null; linked?: readonly DataRef[]; onSelect?: (ref: DataRef) => void }) {
-  const [lane, setLane] = useState(0); const [start, setStart] = useState(0);
+
+export default function LaneView({ run, physical = false, view = "indexed", selected, linked = [], onSelect }: { run: CompleteInspectorRun; physical?: boolean; view?: ValueView; selected?: DataRef | null; linked?: readonly DataRef[]; onSelect?: (ref: DataRef) => void }) {
+  const [lane, setLane] = useState(0);
+  const [start, setStart] = useState(0);
   const rows = physical ? run.laneInspection.physicalBits[lane] : run.laneInspection.pcsSymbols[lane];
   const end = Math.min(rows.length, start + WINDOW);
-  const stage = physical ? "physical-lanes" : "pcs-lanes"; const bufferId = physical ? "pmd-lanes" : "pcs-lanes";
+  const stage = physical ? "physical-lanes" : "pcs-lanes";
+  const bufferId = physical ? "pmd-lanes" : "pcs-lanes";
   const laneBitLength = run.laneInspection.physicalBits[0].length;
   const focus = linked.find((ref) => ref.stage === stage && ref.bufferId === bufferId);
   useEffect(() => {
@@ -17,5 +22,18 @@ export default function LaneView({ run, physical = false, selected, linked = [],
     setLane(focusedLane);
     setStart(Math.floor(item / WINDOW) * WINDOW);
   }, [focus?.start, physical, laneBitLength, rows.length]);
-  return <section className="lane-view" aria-label={physical ? "Physical lane values" : "PCS lane values"}><p>{physical ? "Reference PMA mapping with absolute output bit, source PCS lane, and mux phase." : "PCS lane symbols serialize bit zero first."}</p><label>Lane <select value={lane} onChange={(event) => { setLane(Number(event.target.value)); setStart(0); }}>{Array.from({ length: physical ? 4 : 16 }, (_, value) => <option key={value} value={value}>{physical ? "PMD" : "PCS"} lane {value}</option>)}</select></label><p>Showing {start + 1}–{end} of {rows.length} values</p><div className="lane-rows">{rows.slice(start, end).map((value, offset) => { const absolute = start + offset; const source = physical ? run.laneInspection.physicalSourcePcsLane[lane][absolute] : undefined; const ref = { stage, bufferId, start: physical ? lane * rows.length + absolute : lane * rows.length * 10 + absolute * 10, count: physical ? 1 : 10 } as DataRef; const linkedRow = linked.some((item) => overlaps(item, ref)); return <button type="button" data-linked={linkedRow || undefined} aria-pressed={selected?.stage === stage && selected.bufferId === bufferId && selected.start === ref.start} key={absolute} onClick={() => onSelect?.(ref)} className="data-window__value"><small>{physical ? `Output bit ${run.laneInspection.physicalStartAbsoluteBit + absolute}` : `Symbol ${absolute}`}</small><code>{physical ? `bit ${value} · PCS ${source} · phase ${(run.laneInspection.physicalInitialPhase + run.laneInspection.physicalStartAbsoluteBit + absolute) % 4}` : `0x${value.toString(16).padStart(3, "0")} · ${value.toString(2).padStart(10, "0").split("").reverse().join("")}`}</code></button>; })}</div><div className="data-window__controls"><button type="button" disabled={start === 0} onClick={() => setStart(Math.max(0, start - WINDOW))}>Previous</button><button type="button" disabled={end === rows.length} onClick={() => setStart(Math.min(rows.length - 1, start + WINDOW))}>Next</button></div></section>;
+  const renderValue = (absolute: number) => {
+    const value = rows[absolute];
+    const source = physical ? run.laneInspection.physicalSourcePcsLane[lane][absolute] : undefined;
+    const ref = { stage, bufferId, start: physical ? lane * rows.length + absolute : lane * rows.length * 10 + absolute * 10, count: physical ? 1 : 10 } as DataRef;
+    return <button type="button" data-linked={linked.some((item) => overlaps(item, ref)) || undefined} aria-pressed={selected?.stage === stage && selected.bufferId === bufferId && selected.start === ref.start} key={absolute} onClick={() => onSelect?.(ref)} className="data-window__value"><small>{physical ? `Output bit ${run.laneInspection.physicalStartAbsoluteBit + absolute}` : `Symbol ${absolute}`}</small><code>{physical ? `bit ${value} · PCS ${source} · phase ${(run.laneInspection.physicalInitialPhase + run.laneInspection.physicalStartAbsoluteBit + absolute) % 4}` : `0x${value.toString(16).padStart(3, "0")} · ${value.toString(2).padStart(10, "0").split("").reverse().join("")}`}</code></button>;
+  };
+  const groups = Array.from({ length: Math.ceil((end - start) / 8) }, (_, index) => ({ from: start + index * 8, to: Math.min(end, start + (index + 1) * 8) }));
+  return <section className="lane-view" aria-label={physical ? "Physical lane values" : "PCS lane values"}>
+    <p>{physical ? "Reference PMA mapping with absolute output bit, source PCS lane, and mux phase." : "PCS lane symbols serialize bit zero first."}</p>
+    <label className="inspector-select">Lane <select aria-label="Lane" value={lane} onChange={(event) => { setLane(Number(event.target.value)); setStart(0); }}>{Array.from({ length: physical ? 4 : 16 }, (_, value) => <option key={value} value={value}>{physical ? "PMD" : "PCS"} lane {value}</option>)}</select></label>
+    <p>Showing {start + 1}–{end} of {rows.length} values</p>
+    {view === "grouped" ? <div className="lane-groups">{groups.map(({ from, to }) => <div className="lane-group" key={from}><strong>{physical ? "Bits" : "Symbols"} {from}–{to - 1}</strong><div className="lane-rows">{Array.from({ length: to - from }, (_, index) => renderValue(from + index))}</div></div>)}</div> : <div className="lane-rows">{Array.from({ length: end - start }, (_, index) => renderValue(start + index))}</div>}
+    <div className="data-window__controls"><button className="btn" type="button" disabled={start === 0} onClick={() => setStart(Math.max(0, start - WINDOW))}>Previous</button><button className="btn" type="button" disabled={end === rows.length} onClick={() => setStart(Math.min(rows.length - 1, start + WINDOW))}>Next</button></div>
+  </section>;
 }
