@@ -26,6 +26,9 @@ export default function App() {
   const [navigation, navigate] = useUrlNavigation();
   const { rate, dir, gen, path, stepIndex } = navigation;
   const isFrame = navigation.view === "frame";
+  const experimentalCalculationReason = rate === "400G" && dir === "tx" && gen === "100"
+    ? null
+    : "Experimental calculation is available only for 400G TX at 100G per lane. The IEEE-only profile remains verification-blocked.";
   const [visited, setVisited] = useState<Set<string>>(() => new Set());
   const [draft, setDraft] = useState<FrameDraft>({ ...DEFAULT_FRAME });
   const [mac, setMac] = useState<MacFrame | null>(() => {
@@ -214,10 +217,12 @@ export default function App() {
           draft={draft}
           onDraftChange={setDraft}
           mac={mac}
-          run={inspectorRun.run}
-          status={inspectorRun.status}
-          error={inspectorRun.error}
+          run={experimentalCalculationReason ? null : inspectorRun.run}
+          status={experimentalCalculationReason ? "idle" : inspectorRun.status}
+          error={experimentalCalculationReason ? null : inspectorRun.error}
+          calculationUnavailableReason={experimentalCalculationReason}
           onApply={(input: FrameInput) => {
+            if (experimentalCalculationReason) return;
             setMac(buildMacFrame(input));
             inspectorRun.apply({
               frame: input,

@@ -57,6 +57,22 @@ describe("frame editor", () => {
 });
 
 describe("frame inspector", () => {
+  it("explains why an unsupported inspector context cannot apply an experimental run", () => {
+    render(<FrameInspector
+      stage="mac"
+      onStageChange={vi.fn()}
+      onExit={vi.fn()}
+      draft={DEFAULT_FRAME}
+      onDraftChange={vi.fn()}
+      mac={defaultMac()}
+      onApply={vi.fn()}
+      calculationUnavailableReason="Experimental calculation is available only for 400G TX at 100G per lane."
+    />);
+
+    expect((screen.getByRole("button", { name: "Apply frame" }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getByText(/400G TX at 100G per lane/)).toBeTruthy();
+  });
+
   it("updates the displayed FCS only after applying an edited App frame", async () => {
     const user = userEvent.setup();
     renderApp();

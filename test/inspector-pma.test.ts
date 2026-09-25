@@ -76,6 +76,21 @@ describe("reference 16-to-4 PMA mapping", () => {
     expect(() => mapPhysicalLanes(pcs, REFERENCE_PMA_MAPPING, 0, 9)).toThrow(/available/);
   });
 
+  it("rejects a longer PMA period that repeats a PCS lane instead of covering every lane once", () => {
+    const repeated = {
+      ...REFERENCE_PMA_MAPPING,
+      periodBits: 8,
+      sourcePcsLaneByPmdLane: [
+        [0, 1, 2, 3, 0, 1, 2, 3],
+        [4, 5, 6, 7, 4, 5, 6, 7],
+        [8, 9, 10, 11, 8, 9, 10, 11],
+        [12, 13, 14, 15, 12, 13, 14, 15],
+      ],
+    } as never;
+
+    expect(() => mapPhysicalLanes(fixturePcs(2), repeated, 0)).toThrow(/exactly once per cycle/);
+  });
+
   it("maps MSB-first dibits to the declared normalized Gray levels", () => {
     const result = mapPam4(Uint8Array.of(0, 0, 0, 1, 1, 1, 1, 0), REFERENCE_PMA_MAPPING);
 

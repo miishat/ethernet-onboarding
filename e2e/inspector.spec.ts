@@ -39,6 +39,30 @@ test("opens a stage deep link, preserves applied output until Apply, and exposes
   await expect(page.getByText(/IEEE-only 400G TX profile remains verification-blocked/i)).toBeVisible();
 });
 
+test("blocks experimental calculations for unsupported inspector deep links", async ({ page }) => {
+  for (const query of [
+    "?rate=800G&view=inspector&inspectStage=fec&from=stack",
+    "?dir=rx&view=inspector&inspectStage=fec&from=stack",
+    "?lane=200&view=inspector&inspectStage=fec&from=stack",
+  ]) {
+    await page.goto(`/${query}`);
+    await expect(page.getByLabel("Unavailable calculation")).toContainText(/available only for 400G TX at 100G per lane/i);
+    await page.getByRole("button", { name: "MAC frame" }).click();
+    await expect(page.getByRole("button", { name: "Apply frame" })).toBeDisabled();
+  }
+});
+
+test("hides an applied experimental run after the route changes to an unsupported context", async ({ page }) => {
+  await page.goto("/?view=inspector&inspectStage=mac&from=stack");
+  await page.getByRole("button", { name: "Apply frame" }).click();
+  await page.getByRole("button", { name: "FEC" }).click();
+  await expect(page.getByLabel("fec values")).toBeVisible();
+
+  await page.getByRole("group", { name: "MAC data rate" }).getByRole("button", { name: "800G" }).click();
+  await expect(page.getByLabel("Unavailable calculation")).toContainText(/available only for 400G TX at 100G per lane/i);
+  await expect(page.getByLabel("fec values")).toHaveCount(0);
+});
+
 test("uses the newest distinct draft when Apply is pressed rapidly", async ({ page, context }) => {
   const reference = await context.newPage();
   await reference.goto("/?view=inspector&inspectStage=mac&from=stack");

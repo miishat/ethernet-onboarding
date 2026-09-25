@@ -1,6 +1,6 @@
 # Inspector profile contract: verification blocked
 
-Status updated 2026-09-23: **IEEE verification partially admitted; profile still blocked.** `getProfileSupport` returns `supported: false` for every IEEE-only selection, including `400G / tx / 100`. User-provided local final copies admit scoped Clause 117, 119, 120, and 124 facts. Clause 49, Clause 82, and Annex 119A are absent, so the recurrence, control rules, full stream chain, and fixture remain blocked. The experimental reference contract declares a project-owned PMA and PAM4 interface for future consumers. `getStageSupport` reports that declaration only. It does not report an implemented calculation, IEEE verification, or standards conformance. See `docs/inspector-source-research-2026-09-21.md`.
+Status updated 2026-09-24: **IEEE verification partially admitted; profile still blocked.** `getProfileSupport` returns `supported: false` for every IEEE-only selection, including `400G / tx / 100`. User-provided local final copies admit scoped Clause 117, 119, 120, and 124 facts. Clause 49, Clause 82, and Annex 119A are absent, so the recurrence, control rules, full stream chain, and fixture remain blocked. A separately labeled experimental run builder exists only for `400G / tx / 100` and uses project-owned candidate contracts. It does not enable IEEE verification or standards conformance. See `docs/inspector-source-research-2026-09-21.md`.
 
 The scoped facts were independently reviewed by `/root/ieee_source_admission_review_light` against commit `887f6c3` on 2026-09-23. The review accepted the facts with two required bookkeeping corrections. It did not complete Task 1 or authorize profile enablement.
 
@@ -10,9 +10,8 @@ The reserved profile ID is `400gbase-dr4-tx-v1`. The selected target edition is 
 
 ## Experimental reference profile
 
-`400gbase-dr4-tx-reference-pma-v1` is a declared-contract-only profile for a future
-project-owned experimental pipeline. Its declared physical-lane and PAM4 contract
-availability is not executable calculation support. Once implemented, it may use retained candidate contracts
+`400gbase-dr4-tx-reference-pma-v1` is an implemented project-owned experimental
+pipeline for the exact `400G / tx / 100` context. It uses retained candidate contracts
 and a project-owned reference PMA mapping, but it must never be labeled
 `IEEE-derived`, `IEEE verified`, `standards conformant`, or `400GBASE-DR4`
 without its experimental qualifier.

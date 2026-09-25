@@ -37,10 +37,15 @@ function assertProfile(profile: PmaMappingProfile): void {
         throw new RangeError("PMA schedules must reference PCS lanes 0 through 15.");
       }
     }
+    if (new Set(schedule).size !== schedule.length) {
+      throw new RangeError("Each PMD schedule must assign a PCS lane exactly once per cycle.");
+    }
   }
   const sources = profile.sourcePcsLaneByPmdLane.flat();
-  if (new Set(sources).size !== 16) {
-    throw new RangeError("PMA schedules must assign each PCS lane exactly once per period.");
+  const expectedOccurrences = profile.periodBits / 4;
+  if (!Number.isInteger(expectedOccurrences) || sources.length !== profile.periodBits * 4 ||
+      Array.from({ length: 16 }, (_, lane) => sources.filter((source) => source === lane).length).some((count) => count !== expectedOccurrences)) {
+    throw new RangeError("PMA schedules must assign every PCS lane exactly once per declared 16-lane cycle.");
   }
 }
 

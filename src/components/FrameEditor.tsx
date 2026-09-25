@@ -7,6 +7,7 @@ interface Props {
   draft: FrameDraft;
   onDraftChange: (draft: FrameDraft) => void;
   onApply: (input: FrameInput) => void;
+  applyUnavailableReason?: string | null;
 }
 
 const fields: readonly { id: keyof FrameDraft; label: string; hint: string; multiline?: boolean }[] = [
@@ -16,7 +17,7 @@ const fields: readonly { id: keyof FrameDraft; label: string; hint: string; mult
   { id: "payloadHex", label: "Payload hex", hint: "Whole hexadecimal octets. Whitespace is allowed.", multiline: true },
 ];
 
-export default function FrameEditor({ draft, onDraftChange, onApply }: Props) {
+export default function FrameEditor({ draft, onDraftChange, onApply, applyUnavailableReason = null }: Props) {
   const [errors, setErrors] = useState<Partial<Record<keyof FrameDraft, string>>>({});
 
   const apply = () => {
@@ -43,6 +44,6 @@ export default function FrameEditor({ draft, onDraftChange, onApply }: Props) {
         {errors[id] ? <span id={`${id}-error`} className="frame-editor__error" role="alert">{errors[id]}</span> : null}
       </label>)}
     </div>
-    <div className="frame-editor__actions"><button className="btn btn--primary" type="button" onClick={apply}>Apply frame</button><span aria-live="polite">{Object.keys(errors).length ? "Fix the highlighted input." : "Applies only when you choose Apply frame."}</span></div>
+    <div className="frame-editor__actions"><button className="btn btn--primary" type="button" onClick={apply} disabled={!!applyUnavailableReason}>Apply frame</button><span aria-live="polite">{applyUnavailableReason || (Object.keys(errors).length ? "Fix the highlighted input." : "Applies only when you choose Apply frame.")}</span></div>
   </section>;
 }
