@@ -20,6 +20,16 @@ function input(prefixIdleOctets = DEFAULT_STREAM.prefixIdleOctets) {
   };
 }
 
+function canonicalJson(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
+  if (value && typeof value === "object") {
+    return `{${Object.entries(value as Record<string, unknown>)
+      .sort(([left], [right]) => left < right ? -1 : left > right ? 1 : 0)
+      .map(([key, entry]) => `${JSON.stringify(key)}:${canonicalJson(entry)}`).join(",")}}`;
+  }
+  return JSON.stringify(value);
+}
+
 describe("traceable experimental inspector run", () => {
   it("estimates and accepts an exact bounded complete FEC-pair run", () => {
     const estimated = estimateRunSize(input());
@@ -103,6 +113,12 @@ describe("traceable experimental inspector run", () => {
     });
     const referencePath = fileURLToPath(new URL("../scripts/inspector-reference.py", import.meta.url));
     expect(createHash("sha256").update(readFileSync(referencePath)).digest("hex")).toBe(fixture.reference.sha256);
+    expect(createHash("sha256").update(canonicalJson(fixture.artifact), "ascii").digest("hex")).toBe(fixture.artifactSha256);
+    const markerPath = fileURLToPath(new URL("../scripts/marker-reference.py", import.meta.url));
+    expect(createHash("sha256").update(readFileSync(markerPath)).digest("hex")).toBe(fixture.artifact.markerReference.scriptSha256);
+    const marker = spawnSync("python", [markerPath, "--json"], { encoding: "utf8" });
+    expect(marker.status, marker.stderr).toBe(0);
+    expect(JSON.parse(marker.stdout)).toMatchObject({ sha256: fixture.artifact.markerReference.outputBitsSha256, prbsStateLsbToMsb: fixture.artifact.markerReference.outputPrbsStateLsbToMsb });
     const independent = spawnSync("python", [referencePath, "--run-json"], { encoding: "utf8" });
     expect(independent.status, independent.stderr).toBe(0);
     const independentArtifact = JSON.parse(independent.stdout);

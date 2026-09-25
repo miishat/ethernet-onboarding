@@ -105,7 +105,7 @@ describe("Clause 119 pre-FEC distribution", () => {
     const referencePath = fileURLToPath(new URL("../scripts/inspector-reference.py", import.meta.url));
 
     expect(sha256(new TextEncoder().encode(canonical))).toBe(referenceFixture.artifactSha256);
-    expect(sha256(readFileSync(referencePath))).toBe("03adf2d85edbd537736a825501767f659684e760c626ccf014e77a3a90f0337e");
+    expect(sha256(readFileSync(referencePath))).toBe("961a257634bc9590b9c6638600c9072ae5c1af5ec6720149b5210e1ea84dc1db");
     const independent = spawnSync("python", [referencePath, "--json"], { encoding: "utf8" });
     expect(independent.status, independent.stderr).toBe(0);
     expect(JSON.parse(independent.stdout).artifactSha256).toBe(referenceFixture.artifactSha256);

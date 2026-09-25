@@ -23,6 +23,11 @@ MESSAGE_SYMBOLS = 514
 PARITY_SYMBOLS = 30
 
 
+def canonical_json_bytes(value: object) -> bytes:
+    """Portable fixture serialization: ASCII JSON with recursively sorted keys."""
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("ascii")
+
+
 def multiply(left: int, right: int) -> int:
     value = 0
     while right:
@@ -344,6 +349,12 @@ def run_reference_output() -> dict[str, object]:
         "scramblerStateAfter": "".join(map(str, scrambler_state)),
         "markerPrbsSeed": "0x1ff",
         "markerStateAfter": marker["prbsStateLsbToMsb"],
+        "markerReference": {
+            "script": "scripts/marker-reference.py",
+            "scriptSha256": hashlib.sha256(Path(__file__).with_name("marker-reference.py").read_bytes()).hexdigest(),
+            "outputBitsSha256": marker["sha256"],
+            "outputPrbsStateLsbToMsb": marker["prbsStateLsbToMsb"],
+        },
         "fecPairCount": 4,
         "stageHashes": {
             "encode66": sha_bits([bit for block in blocks66 for bit in block]),
@@ -371,7 +382,7 @@ def run_reference_output() -> dict[str, object]:
         "reference": {"implementation": "scripts/inspector-reference.py", "revision": "default-run-reference-v1", "sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(), "method": "Independent Python MAC through PAM4 pipeline. It imports no TypeScript or stored expected fixture."},
         "review": {"result": "pending", "limits": "Expected output is not admitted until independent review and cannot enable the IEEE-only profile."},
         "artifact": artifact,
-        "artifactSha256": hashlib.sha256(json.dumps(artifact, separators=(",", ":"), ensure_ascii=True).encode("ascii")).hexdigest(),
+        "artifactSha256": hashlib.sha256(canonical_json_bytes(artifact)).hexdigest(),
     }
     return {
         "id": "reference-pma-16x4-v1",

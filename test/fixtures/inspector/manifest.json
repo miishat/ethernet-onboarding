@@ -11,6 +11,11 @@
       "sourceId": "project-owned-experimental-run-v1",
       "status": "pending-independent-review",
       "inputState": "DEFAULT_FRAME, DEFAULT_STREAM, zero marker block phase, product-owned rate-match policy, selected 16:4 PMA mapping, and four complete FEC pairs.",
+      "dependencies": {
+        "markerReferenceScript": "scripts/marker-reference.py",
+        "markerReferenceScriptSha256": "feb9a7c3c9119a3389a177fd8847abf399bd19ccf98b498f78f3d9e8ceb21916",
+        "markerOutputBitsSha256": "d2d54fc33e0b658060e0a146ccd0bbf08b19250cb5a832b8a7a94f711ef976bd"
+      },
       "verificationScope": "Independent local Python MAC-to-PAM4 artifact with stage hashes and selected boundaries. Expected output remains pending review and cannot enable the IEEE-only profile."
     },
     {
@@ -18,6 +23,7 @@
       "file": "reference-pma-16x4-v1.json",
       "sourceId": "project-owned-reference-pma-v1",
       "status": "independently-reviewed-experimental-only",
+      "referenceScriptSha256": "961a257634bc9590b9c6638600c9072ae5c1af5ec6720149b5210e1ea84dc1db",
       "inputState": "Sixteen recoverable 16-bit PCS lane patterns, absolute PMD output phase 0, four product-owned 4-bit source schedules, MSB-first dibits, Gray normalized levels, and no precoder.",
       "review": {
         "reviewerId": "/root/phy_pma_review_light",
@@ -32,6 +38,7 @@
       "file": "pcs-d14-reference-v1.json",
       "sourceId": "ieee-bs-d14-cl119-locator",
       "status": "experimental-candidate",
+      "referenceScriptSha256": "961a257634bc9590b9c6638600c9072ae5c1af5ec6720149b5210e1ea84dc1db",
       "verificationScope": "Experimental finite PCS reference only. D1.4 pages 98-101 provide candidate serialization, headers and transcoding. The product-owned control policy fills only the table absent from the extract. This fixture is not IEEE verified or standards conformant."
     },
     {
@@ -76,6 +83,7 @@
       "file": "experimental-cl119-local-400g-idle-am-v1.json",
       "sourceId": "ieee-8023-2022-cl119-fec-local",
       "status": "experimental-candidate",
+      "referenceScriptSha256": "961a257634bc9590b9c6638600c9072ae5c1af5ec6720149b5210e1ea84dc1db",
       "inputState": "Reviewed final Clause 119 2056-bit alignment marker followed by 8224 deterministic nonzero project fixture bits. The fixture includes the full input bit string, marker PRBS state, messages, codewords, interleaved symbols, and lane symbols.",
       "encoding": "Clause 119.2.4.5 10-bit LSB-first packing, temporal m<513>-first encoder order, Clause 119.2.4.7 checkerboard interleave, and low-to-high PCS lane distribution.",
       "review": {
