@@ -15,9 +15,14 @@ test("aligns MAC details with the editor and supports compact or extended sample
   const byteBox = await byteView.boundingBox();
   expect(byteBox!.y).toBeGreaterThan(detailsBox!.y);
   expect(await byteView.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
+  const destinationCard = byteView.locator(".byte-view__bytes button").filter({ hasText: "Destination" });
+  const payloadCard = byteView.locator(".byte-view__bytes button").filter({ hasText: "Payload" });
+  expect(Math.abs((await destinationCard.boundingBox())!.height - (await payloadCard.boundingBox())!.height)).toBeLessThan(20);
+  await expect(payloadCard).toContainText("…");
 
   const sample = page.getByLabel("Stream sample");
   await expect(sample).toHaveValue("256");
+  await expect(sample).toHaveCSS("appearance", "none");
   await page.getByRole("button", { name: "Apply frame" }).click();
   await page.getByRole("button", { name: "64B/66B" }).click();
   await expect(page.getByText(/Showing 1–64 of 8448 bits/)).toBeVisible();
@@ -27,6 +32,20 @@ test("aligns MAC details with the editor and supports compact or extended sample
   await page.getByRole("button", { name: "Apply frame" }).click();
   await page.getByRole("button", { name: "64B/66B" }).click();
   await expect(page.getByText(/Showing 1–64 of 40128 bits/)).toBeVisible();
+});
+
+test("keeps padded MAC field cards in complete rows", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/?view=inspector&inspectStage=mac&from=stack");
+  await page.locator("textarea").fill("00 01 02 03");
+  await page.getByRole("button", { name: "Apply frame" }).click();
+  const cards = page.locator(".byte-view__bytes button");
+  await expect(cards).toHaveCount(6);
+  const payload = await cards.nth(3).boundingBox();
+  const pad = await cards.nth(4).boundingBox();
+  const fcs = await cards.nth(5).boundingBox();
+  expect(Math.abs(payload!.y - pad!.y)).toBeLessThan(2);
+  expect(Math.abs(pad!.y - fcs!.y)).toBeLessThan(2);
 });
 
 test("switches between grouped and indexed values across inspector stages", async ({ page }) => {
@@ -43,9 +62,9 @@ test("switches between grouped and indexed values across inspector stages", asyn
   await expect(page.getByText(/Bits 0–63/)).toBeVisible();
   await page.getByRole("button", { name: "Physical lanes" }).click();
   await expect(page.getByRole("button", { name: "Indexed" })).toHaveAttribute("aria-pressed", "true");
-  await expect(page.getByLabel("Lane", { exact: true })).toHaveCSS("background-color", /rgb\(/);
+  await expect(page.getByLabel("Lane", { exact: true })).toHaveCSS("appearance", "none");
   await page.getByRole("button", { name: "PAM4" }).click();
-  await expect(page.getByLabel("PMD lane", { exact: true })).toHaveCSS("background-color", /rgb\(/);
+  await expect(page.getByLabel("PMD lane", { exact: true })).toHaveCSS("appearance", "none");
   await expect(page.getByRole("button", { name: "Previous" })).toHaveClass(/btn/);
   await page.getByRole("button", { name: "Grouped" }).click();
   await expect(page.getByText("Symbols 0–7")).toBeVisible();

@@ -46,7 +46,7 @@ export default function FrameEditor({ draft, onDraftChange, onApply, prefixIdleO
         {errors[id] ? <span id={`${id}-error`} className="frame-editor__error" role="alert">{errors[id]}</span> : null}
       </label>)}
     </div>
-    <label className="frame-editor__sample"><span>Stream sample</span><select value={prefixIdleOctets} onChange={(event) => onPrefixIdleOctetsChange?.(Number(event.target.value))}><option value={256}>Compact, 256 Idle bytes</option><option value={4096}>Extended, 4,096 Idle bytes</option></select><small>Compact uses the shortest lead-in supported by this calculation. Both samples keep complete alignment and FEC units.</small></label>
+    <label className="frame-editor__sample"><span>Stream sample</span><span className="inspector-select__control"><select value={prefixIdleOctets} onChange={(event) => onPrefixIdleOctetsChange?.(Number(event.target.value))}><option value={256}>Compact, 256 Idle bytes</option><option value={4096}>Extended, 4,096 Idle bytes</option></select></span><small>Compact uses the shortest lead-in supported by this calculation. Both samples keep complete alignment and FEC units.</small></label>
     <div className="frame-editor__actions"><button className="btn btn--primary" type="button" onClick={apply} disabled={!!applyUnavailableReason}>Apply frame</button><span aria-live="polite">{applyUnavailableReason || (Object.keys(errors).length ? "Fix the highlighted input." : "Applies only when you choose Apply frame.")}</span></div>
   </section>;
 }
