@@ -22,6 +22,8 @@ test("aligns MAC details with the editor and supports compact or extended sample
   const byteView = page.locator(".byte-view");
   const byteBox = await byteView.boundingBox();
   expect(byteBox!.y).toBeGreaterThan(detailsBox!.y);
+  const outputBox = await page.locator(".inspector__output").boundingBox();
+  expect(Math.abs((editorBox!.y + editorBox!.height) - (outputBox!.y + outputBox!.height))).toBeLessThan(2);
   expect(await byteView.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
   const destinationCard = byteView.locator(".byte-view__bytes button").filter({ hasText: "Destination" });
   const payloadCard = byteView.locator(".byte-view__bytes button").filter({ hasText: "Payload" });
