@@ -50,6 +50,7 @@ describe("stage workspace", () => {
     expect(screen.getByText(/Showing 65–96 of 96/)).toBeTruthy();
     expect(screen.getByText("Output bit 70").closest("button")?.dataset.linked).toBe("true");
     expect(screen.getByText("Output bit 72").closest("button")?.dataset.linked).toBeUndefined();
+    expect(screen.getByText(/Related values from PCS lanes are outlined in Physical lanes/)).toBeTruthy();
     await user.selectOptions(physicalSelect, "1");
     expect((physicalSelect as HTMLSelectElement).value).toBe("1");
 
@@ -59,7 +60,7 @@ describe("stage workspace", () => {
 
     rerender(<StageWorkspace run={focused} stage="fec" selected={{ stage: "physical-lanes", bufferId: "pmd-lanes", start: 2 * 96 + 70, count: 1 }} />);
     expect(screen.getAllByText("0").find((element) => element.tagName === "CODE")?.closest("button")?.dataset.linked).toBeUndefined();
-    expect(screen.getByText(/Related values are outlined/)).toBeTruthy();
+    expect(screen.getByText(/No exact match in FEC/)).toBeTruthy();
     expect(screen.queryByText(/copied \(aggregate\)/)).toBeNull();
   });
 });

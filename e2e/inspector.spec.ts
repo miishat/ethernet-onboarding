@@ -82,6 +82,18 @@ test("keeps stage explanation on one line and explains a selection", async ({ pa
   await expect(page.locator(".trace-details")).not.toContainText(/Trace:|absolute index|copied \(exact\)/);
 });
 
+test("explains when a carried selection has no exact match in another stage", async ({ page }) => {
+  await page.goto("/?view=inspector&inspectStage=mac&from=stack");
+  await page.getByRole("button", { name: "Apply frame" }).click();
+  await page.getByRole("button", { name: "PCS lanes" }).click();
+  await page.getByLabel("Lane", { exact: true }).selectOption("0");
+  await page.locator(".lane-rows .data-window__value").first().click();
+  await page.getByRole("button", { name: "64B/66B" }).click();
+  await expect(page.locator(".trace-details")).toContainText(/No exact match in 64B\/66B/);
+  await expect(page.locator(".trace-details")).toContainText(/Select a value here/);
+  await expect(page.locator(".trace-details")).not.toContainText(/Related values are outlined/);
+});
+
 test("switches between grouped and indexed values across inspector stages", async ({ page }) => {
   await page.goto("/?view=inspector&inspectStage=mac&from=stack");
   await page.getByRole("button", { name: "Apply frame" }).click();
@@ -91,7 +103,7 @@ test("switches between grouped and indexed values across inspector stages", asyn
   await expect(page.getByText(/Block 0/)).toBeVisible();
   await page.getByRole("button", { name: /Block 0/ }).click();
   await page.getByLabel("encode66 values").locator(".data-window__value").first().click();
-  await expect(page.getByText(/Selected value 0 in encode66/)).toBeVisible();
+  await expect(page.getByText(/Selected value 0 in 64B\/66B/)).toBeVisible();
   await page.getByRole("button", { name: "Indexed" }).click();
   await expect(page.getByText(/Bits 0–63/)).toBeVisible();
   await page.getByRole("button", { name: "Physical lanes" }).click();
