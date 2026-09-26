@@ -135,7 +135,7 @@ export const DATA: Record<string, StackNode> = {
   /* ------------------------------------------------------------------- RS */
   rs: {
     id: "rs", name: "Reconciliation Sublayer", alias: "RS, and the xxMII beneath it", zone: "framing", written: true,
-    clause: { "400G": "Clause 81, 117", "800G": "Clause 81, 118", "1.6T": "Clause 174 (draft)" },
+    clause: { "400G": "Clause 117", "800G": "Clause 170", "1.6T": "Clause 170 (draft)" },
     face: { "400G": "400GMII", "800G": "800GMII", "1.6T": "1.6TMII" },
     summary: "Adapts the MAC to a fixed-width parallel interface.",
     intro:
@@ -151,7 +151,7 @@ export const DATA: Record<string, StackNode> = {
     subs: [
       {
         id: "rs-mii", name: "The xxMII bus", alias: "data and control lanes", dir: "both", written: true,
-        clause: { "400G": "Clause 81, 117", "800G": "Clause 81, 118", "1.6T": "Clause 174 (draft)" },
+        clause: { "400G": "Clause 117", "800G": "Clause 170", "1.6T": "Clause 170 (draft)" },
         summary: "A parallel bus of octet lanes, each with a control flag.",
         intro:
           "A media independent interface (MII) represents data in parallel byte lanes. Each byte position has a control flag that distinguishes an ordinary data octet from a control character. Here, a byte lane means a position within the parallel word; it is different from a PCS lane or a physical serial lane.\n\nStart and Terminate mark packet boundaries, while Idle represents the gap between packets. Ordered sets carry signalling such as faults and contain a defined sequence of control and data characters. Terminate can occur at different byte positions, but Start must use a position permitted by the relevant MII specification.\n\nThe RS adjusts idles to meet that Start-alignment rule. The PCS below the interface then encodes groups of eight interface octets and their control information into 66-bit blocks. This is where the parallel byte representation becomes a coded block stream.",
@@ -199,14 +199,14 @@ export const DATA: Record<string, StackNode> = {
 
       {
         id: "rs-fault", name: "Local and remote fault", alias: "LF and RF", dir: "both", written: true,
-        clause: { "400G": "Clause 81.3.4", "800G": "Clause 81.3.4", "1.6T": "Clause 174 (draft)" },
+        clause: { "400G": "Clause 117.3", "800G": "Clause 170", "1.6T": "Clause 170 (draft)" },
         summary: "How a broken receive direction is reported back to the far end.",
         intro:
           "An Ethernet link has two directions. One endpoint can lose its receive path while the opposite direction still carries data. Local Fault and Remote Fault signalling allow that endpoint to tell its peer that reception has failed.\n\nWhen the PHY indicates Local Fault to the RS, the RS stops transmitting MAC data and sends Remote Fault toward the peer. The peer receiving Remote Fault stops its own MAC data transmission and sends idles. This behavior helps both endpoints recognize that the link is unavailable.\n\nLocal Fault means a problem was detected in the local receive direction. Remote Fault means the peer reports a problem receiving from this endpoint. These names describe where the fault is observed, not which component caused it. Clause 81.3.4 defines the behavior for the relevant higher-rate interfaces and supports bidirectional operation; the 1.6T interface is described in the draft material referenced here.",
         params: {
-          "400G": [["Specified in", "Clause 81.3.4, following Clause 46"], ["Local fault means", "a fault on my receive path"], ["Remote fault means", "the far end cannot receive from me"], ["On local fault, the RS", "stops MAC data, transmits remote fault"], ["On remote fault, the RS", "stops frames, sends only idles"], ["Unidirectional operation", "not supported"], ["Status exposed via", "MDIO registers, Clause 45"]],
-          "800G": [["Specified in", "Clause 81.3.4"]],
-          "1.6T": [["Specified in", "Clause 174", { draft: true }]],
+          "400G": [["Specified in", "Clause 117.3, using the Clause 81 state diagram"], ["Local fault means", "a fault on my receive path"], ["Remote fault means", "the far end cannot receive from me"], ["On local fault, the RS", "stops MAC data, transmits remote fault"], ["On remote fault, the RS", "stops frames, sends only idles"], ["Unidirectional operation", "not supported"], ["Status exposed via", "MDIO registers, Clause 45"]],
+          "800G": [["Specified in", "Clause 170"]],
+          "1.6T": [["Specified in", "Clause 170", { draft: true }]],
         },
         sections: [
           {
@@ -233,10 +233,10 @@ export const DATA: Record<string, StackNode> = {
   pcs: {
     id: "pcs", name: "PCS", alias: "Physical Coding Sublayer", zone: "coding", written: true,
     clause: { "400G": "Clause 119", "800G": "Clause 172", "1.6T": "Clause 175 (draft)" },
-    face: { "400G": "16 PCS lanes", "800G": "two flows", "1.6T": "two flows" },
+    face: { "400G": "16 PCS lanes", "800G": "32 PCS lanes", "1.6T": "16 PCS lanes" },
     summary: "Codes the stream, marks it, and splits it across lanes.",
     intro:
-      "The Physical Coding Sublayer (PCS) converts MII data and control characters into a coded stream that the receiver can reconstruct. For 400GBASE-R, the transmit sequence is 64B/66B encoding, 256B/257B transcoding, scrambling, alignment-marker insertion, distribution into FEC messages, RS-FEC encoding, and distribution onto [[PCS lanes]]. The receive path reverses these operations after recovering and aligning the lanes.\n\nPCS lanes are logical streams. The PMA maps them onto a supported physical interface, so the PCS lane count can differ from the number of electrical or optical lanes. For example, the 400GBASE-R PCS uses 16 logical lanes even when the physical interface uses four lanes.\n\n800GBASE-R uses two flows with processing derived from the 400G PCS. The referenced 1.6T draft also uses two flows, but its details should not be inferred by simply doubling every 800G value. The 1.6T lane count remains unconfirmed in this application's source set.\n\nAt these rates, [[RS-FEC]] is specified as part of the PCS. This map draws it separately to make its role easier to study. The separate box does not imply an additional IEEE sublayer boundary between PCS processing and its RS-FEC functions.",
+      "The Physical Coding Sublayer (PCS) converts MII data and control characters into a coded stream that the receiver can reconstruct. For 400GBASE-R, the transmit sequence is 64B/66B encoding, 256B/257B transcoding, scrambling, alignment-marker insertion, distribution into FEC messages, RS-FEC encoding, and distribution onto [[PCS lanes]]. The receive path reverses these operations after recovering and aligning the lanes.\n\nPCS lanes are logical streams. The PMA maps them onto a supported physical interface, so the PCS lane count can differ from the number of electrical or optical lanes. For example, the 400GBASE-R PCS uses 16 logical lanes even when the physical interface uses four lanes.\n\n800GBASE-R uses two flows with processing derived from the 400G PCS. The referenced 1.6T draft also uses two flows, but its details should not be inferred by simply doubling every 800G value. P802.3dj/D3.2 Clause 175 specifies 16 PCS lanes and four interleaved FEC codewords.\n\nAt these rates, [[RS-FEC]] is specified as part of the PCS. This map draws it separately to make its role easier to study. The separate box does not imply an additional IEEE sublayer boundary between PCS processing and its RS-FEC functions.",
     terms: {
       "PCS lanes":
         "A logical stream produced by a particular PCS definition. A compatible PMA maps logical lanes onto its specified interface. PCS lanes, MII byte positions and physical serial lanes are different kinds of lane.",
@@ -255,14 +255,15 @@ export const DATA: Record<string, StackNode> = {
         ["Flows", "2 (flow 0 even blocks, flow 1 odd)"],
         ["Alignment markers", "32"],
         ["FEC codewords", "4"],
-        ["PCS lanes", "32", { inferred: true }],
+        ["PCS lanes", "32"],
         ["Multiplexing below", "32:8 restricted bit-level (Clause 173)"],
       ],
       "1.6T": [
         ["PCS clause", "175", { draft: true }],
         ["Flows", "2", { draft: true }],
         ["FEC messages", "Ma, Mb, Mc, Md", { draft: true }],
-        ["PCS lane count", "not confirmed - see the distribution page", { draft: true }],
+        ["FEC codewords", "4, interleaved on a 10-bit basis", { draft: true }],
+        ["PCS lanes", "16 at 106.25 Gb/s each", { draft: true }],
       ],
     },
     subs: [
@@ -394,7 +395,7 @@ export const DATA: Record<string, StackNode> = {
         clause: { "400G": "Clause 119.2.4.4", "800G": "Clause 172", "1.6T": "Clause 175 (draft)" },
         summary: "Per-lane fingerprints for identification, deskew and monitoring.",
         intro:
-          "Logical lanes may reach the receiver with different delays and in a different order. Alignment markers provide a recurring reference that lets the receiver identify each PCS lane and line up corresponding positions before rebuilding codewords.\n\nIn 400GBASE-R, each lane's marker is a 120-bit field with common and lane-specific elements. The 16 markers are inserted together as an [[alignment marker group]] before FEC encoding and lane distribution. After distribution, the receiver can search for the markers independently on each logical lane.\n\nThe common elements help locate the recurring pattern; the lane-specific elements identify the logical lane. Once the markers are found, the receiver measures relative delay and uses buffering to remove it. The table distinguishes the verified 400G structure from details not confirmed for 1.6T.",
+          "Logical lanes may reach the receiver with different delays and in a different order. Alignment markers provide a recurring reference that lets the receiver identify each PCS lane and line up corresponding positions before rebuilding codewords.\n\nIn 400GBASE-R, each lane's marker is a 120-bit field with common and lane-specific elements. The 16 markers are inserted together as an [[alignment marker group]] before FEC encoding and lane distribution. After distribution, the receiver can search for the markers independently on each logical lane.\n\nThe common elements help locate the recurring pattern; the lane-specific elements identify the logical lane. Once the markers are found, the receiver measures relative delay and uses buffering to remove it. P802.3dj/D3.2 Clause 175 also specifies 16 markers for its 16 PCS lanes.",
         terms: {
           "lane skew": "The arrival-time spread between lanes carrying one logical stream. The standard specifies maximum skew and skew variation, and the deskew buffer is sized from those numbers.",
           "alignment marker group": "The set of per-lane markers sent together, plus padding and status, sized to a whole number of 257-bit blocks so it fits the downstream arithmetic cleanly.",
@@ -410,7 +411,7 @@ export const DATA: Record<string, StackNode> = {
             ["Insertion period", "every 163,840 x 257-bit blocks"],
           ],
           "800G": [["Markers", "32"], ["Per flow", "marker encodings defined for flow 0 and flow 1"], ["Elements", "15 per marker"]],
-          "1.6T": [["Structure", "not yet confirmed", { draft: true }]],
+          "1.6T": [["Markers", "16, one per PCS lane", { draft: true }], ["Group", "split evenly between two flows", { draft: true }]],
         },
         sections: [
           {
@@ -428,11 +429,11 @@ export const DATA: Record<string, StackNode> = {
           {
             id: "pcs-am-period", name: "How often markers appear",
             body:
-              "For 400GBASE-R, successive alignment-marker groups begin 163,840 × 257-bit units apart. A FEC message contains the equivalent of 20 such units, so that interval corresponds to 163,840 / 20 = 8192 codewords across the interleaved stream. It includes the marker group itself.\n\nThe corresponding 200GBASE-R interval is 81,920 units, or 4096 codewords. These are Clause 119 values; the 1.6T marker interval is not confirmed in this application's source set.\n\nThe 400G high-symbol-error-rate indicator also uses an 8192-codeword observation window. Sharing an interval does not require implementations to use the same physical counter.",
+              "For 400GBASE-R, successive alignment-marker groups begin 163,840 × 257-bit units apart. A FEC message contains the equivalent of 20 such units, so that interval corresponds to 163,840 / 20 = 8192 codewords across the interleaved stream. It includes the marker group itself.\n\nThe corresponding 200GBASE-R interval is 81,920 units, or 4096 codewords. These are Clause 119 values; the 1.6T draft specifies 655,360 units across both flows, or 32,768 codewords.\n\nThe 400G high-symbol-error-rate indicator also uses an 8192-codeword observation window. Sharing an interval does not require implementations to use the same physical counter.",
             params: {
               "400G": [["Period", "163,840 x 257-bit blocks"], ["In codewords", "8192"], ["200GbE period", "81,920 blocks = 4096 codewords"], ["Also used as", "the hi_ser measurement window"]],
               "800G": [["Window", "8192 codewords per 400G flow, results OR'd"]],
-              "1.6T": [["Marker interval", "not confirmed in this source set", { draft: true }]],
+              "1.6T": [["Marker interval", "655,360 x 257-bit blocks = 32,768 codewords", { draft: true }], ["Per flow", "327,680 blocks", { draft: true }]],
             },
           },
           {
@@ -901,7 +902,7 @@ export const DATA: Record<string, StackNode> = {
         clause: { "400G": "Clause 120.5.2", "800G": "Clause 173", "1.6T": "Clause 176 (draft)" },
         summary: "Folding PCS lanes onto physical lanes, two different ways.",
         intro:
-          "Lane multiplexing changes the number of serial streams carrying the data. For example, a PMA can map several lower-rate logical streams onto fewer higher-rate interface lanes. The receive PMA reverses the specified mapping.\n\nBit multiplexing selects individual bits from its input streams. Symbol multiplexing preserves the defined symbol-aligned units. This distinction affects whether a burst on a serial lane spreads across many Reed-Solomon symbols or remains within fewer of them.\n\nClause 173 defines the referenced 800G 32:8 restricted bit-level mapping. Clause 176 defines the symbol-multiplexing PMA used for the relevant 200G-per-lane interfaces, including the referenced 1.6T 16:8 and 16:16 variants. These PMA variants describe mappings; they are not a substitute for a confirmed PCS lane count.",
+          "Lane multiplexing changes the number of serial streams carrying the data. For example, a PMA can map several lower-rate logical streams onto fewer higher-rate interface lanes. The receive PMA reverses the specified mapping.\n\nBit multiplexing selects individual bits from its input streams. Symbol multiplexing preserves the defined symbol-aligned units. This distinction affects whether a burst on a serial lane spreads across many Reed-Solomon symbols or remains within fewer of them.\n\nClause 173 defines the referenced 800G 32:8 restricted bit-level mapping. Clause 176 defines the symbol-multiplexing PMA used for the relevant 200G-per-lane interfaces, including the referenced 1.6T 16:8 and 16:16 variants. These PMA variants describe mappings below the 16-lane 1.6T PCS.",
         params: {
           "400G": [["Scheme", "bit multiplexing"], ["100GbE example", "2:1, Clause 120.5.2"]],
           "800G": [["Scheme", "32:8 restricted bit-level"], ["Clause", "173"]],
@@ -1313,7 +1314,7 @@ export const DATA: Record<string, StackNode> = {
     face: { all: "a reference point" },
     summary: "Relates a timestamp reference plane to the delay through the PHY.",
     intro:
-      "Time synchronization needs a consistent definition of when a packet crosses a reference plane. Processing inside the PHY can delay that event relative to where an implementation records a timestamp. Clause 90 TimeSync provides mechanisms for relating timing to the relevant PHY reference.\n\nThe applicable sublayers report transmit and receive path data delays, including minimum and maximum values. This lets a system account for known processing delay and assess its uncertainty. The mechanism is shown alongside the data path rather than as another coding stage.\n\nThe referenced 1.6T PCS delay definition uses the start of a set of interleaved FEC codewords as a reporting reference. The inner FEC has its own delay reporting. That reference wording should not be used to infer a total 1.6T codeword count, which is not confirmed here.",
+      "Time synchronization needs a consistent definition of when a packet crosses a reference plane. Processing inside the PHY can delay that event relative to where an implementation records a timestamp. Clause 90 TimeSync provides mechanisms for relating timing to the relevant PHY reference.\n\nThe applicable sublayers report transmit and receive path data delays, including minimum and maximum values. This lets a system account for known processing delay and assess its uncertainty. The mechanism is shown alongside the data path rather than as another coding stage.\n\nThe referenced 1.6T PCS delay definition uses the start of a set of interleaved FEC codewords as a reporting reference. The inner FEC has its own delay reporting. Clause 175 specifies four interleaved outer FEC codewords.",
     params: {"400G":[["Mechanism","Clause 90 reference point"],["Needs","known, bounded PHY delay"]],"800G":[["Mechanism","Clause 90 reference point"]],"1.6T":[["PCS reporting","175.6, at the specified interleaved-codeword reference",{"draft":true}],["Values","maximum and minimum path data delay",{"draft":true}],["Inner FEC","separate delay reporting",{"draft":true}],["Mechanism","Clause 90.7"]]},
     subs: [
       {

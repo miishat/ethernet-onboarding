@@ -5,7 +5,8 @@
 > and PMA (§10). Pass 3 researched and wrote PMD, Medium and MACsec (§11).
 > Pass 4 researched and wrote the skew budget, AUI, COM and link training (§12).
 > Pass 5 researched and wrote flow control, fault signalling, form factors,
-> linear optics and time sync (§13). Nine sub-pages remain outlines.
+> linear optics and time sync (§13). The September 2026 audit checked supplied
+> IEEE excerpts and corrected clause routing and previously unknown PCS counts.
 
 Purpose: establish a verified fact base before writing page content, and record
 exactly what is *not* verified so it never gets asserted.
@@ -51,8 +52,7 @@ pre-FEC distribution → RS-FEC encode → interleave → distribute to PCS lane
   insertion does not raise the line rate.
 - AM group is aligned to the start of two FEC messages.
 - **Insertion period: every 163,840 × 257-bit blocks for 400GbE** (= 8192 codewords);
-  81,920 for 200GbE. See §6 note 3 — one draft excerpt conflicts, but the
-  163,840 figure is arithmetically consistent (8192 CW × 20 blocks/CW).
+  81,920 for 200GbE. Both values are confirmed by published Clause 119.
 - AMs are processed **before FEC correction**, because deskew and reorder must
   precede decode. AM lock therefore tolerates mismatches in some marker bits.
 - Sixteen independent alignment-marker lock processes, one per lane.
@@ -103,8 +103,8 @@ Status: **FIRM** except where noted.
 - 800GBASE-R at 100G per lane uses **end-to-end ("Type-1") FEC** — one FEC spanning
   both AUIs and the PMD link.
 
-**PCS lane count = 32** is **LIKELY**, inferred from the 32 alignment markers plus the
-32:8 multiplexing function. Not yet confirmed from clause text directly.
+**PCS lane count = 32 is FIRM** in published IEEE 802.3df Clause 172.1.3, which explicitly
+specifies 32 PCS lanes at 26.5625 Gb/s each.
 
 Sources: ieee802.org/3/publication/df Clause 172 AM tables; dawe_3df_02_230523;
 dawe_3df_04_230926; 802.3df D1.1 comment responses; 802.3dj D2.3 comments.
@@ -119,9 +119,9 @@ The amendment adds **Clause 174 through Clause 187** and **Annex 174A through 18
 
 | Clause | Content |
 |---|---|
-| 174 (+ Annex 174A) | error requirements / BER-to-FLR relationships |
+| 174 | Introduction to 1.6 Tb/s networks, including architecture and PHY requirements |
 | **175** | **1.6TBASE-R PCS** |
-| **176** | **xBASE-R SM-PMA** (symbol-multiplexing PMA); 176A electrical link training; 176B partitioning; 176D C2M |
+| **176** | **xBASE-R SM-PMA** (symbol-multiplexing PMA); 176A test vectors; 176B partitioning; 176D C2M |
 | **177** | **xBASE-R Inner FEC** (the general one) |
 | 178 (+178A) | xBASE-KR backplane; 178A COM |
 | 179 | xBASE-CR cable assembly (+179A–D) |
@@ -197,45 +197,36 @@ welch_3dj_01_230206; KeyMotions_3dj_240314.
 
 ---
 
-## 6. UNVERIFIED — do not write these
+## 6. Remaining unverified items
 
-1. **1.6TBASE-R PCS lane count.** Evidence points to 16 (a Clause 175 synchronization
-   state diagram refers to identifying 16 unique PCS lanes, and 176.8 defines 16:8 and
-   16:16 PMAs), but this is inference. 800G having 32 and 1.6T having 16 breaks the
-   obvious pattern, so it needs direct confirmation.
-2. **Number of interleaved FEC codewords at 1.6T.** Clause 175.6 reports delay at
-   "the start of the set of four interleaved FEC codewords", and messages/codewords
-   are labelled Ma–Md / Ca–Cd. But 1.6T also runs **two flows**, so "four" may be
-   per flow (eight total) rather than four total. Throughput reasoning argues for
-   eight. Unresolved — do not state a number.
-3. **400G AM insertion period.** Using 163,840 × 257-bit blocks. A P802.3bs draft
-   excerpt says 81,920 for 400GBASE-R; the Ethernet Alliance article and a
-   reproduction of Figure 119–8 both say 163,840 for 400G and 81,920 for 200G, and
-   163,840 = 8192 CW × 20 blocks, which closes. Treat as LIKELY-FIRM but verify
-   against published Clause 119 before printing.
-4. **1.6T alignment marker structure and period.** Not researched.
-5. **1.6T distribution granularity.** The build currently claims 1.6T distributes
-   "one 257-bit block" versus 66 bits at 400G. I have **not** confirmed this. What is
-   confirmed is **symbol multiplexing in the Clause 176 PMA**, which is a different
-   mechanism. This claim must be removed or corrected.
-6. **802.3dj approval status.** As of Feb 2026 it was in its **4th 802.3 Working Group
+The newly supplied clause text resolves earlier uncertainties: Clause 119 confirms
+the 400G marker period of 163,840 × 257-bit blocks; P802.3dj/D3.2 Clause 175
+specifies 16 PCS lanes, four interleaved FEC codewords and a 1.6T marker period
+of 655,360 × 257-bit blocks. The detailed mapping is in 175.2.4.6–175.2.4.9.
+
+1. **Legacy 1.6T distribution claim.** The old build claimed distribution of
+   "one 257-bit block" versus 66 bits at 400G. Clause 175.2.4.7–.9 instead
+   specifies 10-bit pre-FEC message distribution and 10-bit codeword-symbol
+   interleaving onto 16 PCS lanes. Clause 176 PMA symbol multiplexing is a
+   separate function below the PCS.
+2. **802.3dj approval status.** As of Feb 2026 it was in its **4th 802.3 Working Group
    recirculation ballot**; projected RevCom submittal was Mar 2026 and the PAR expires
    31 Dec 2026. I could **not** confirm whether it has been approved or published as of
    Sept 2026. Do not describe it as either ratified or unratified without checking.
-7. **Post-FEC target at the MAC for dj.** The 1e-13 BER figure is widely cited in
+3. **Post-FEC target at the MAC for dj.** The 1e-13 BER figure is widely cited in
    task-force material but I have not tied it to a specific objective or clause line.
-8. **800G PCS lane count (32).** Strong inference, not clause text.
 
 ---
 
 ## 7. Corrections required in the current build
 
-These are wrong in `EthernetStack.jsx` today and must be fixed before any content pass.
+Historical checklist for the legacy `EthernetStack.jsx`. The current modular build
+uses the September 2026 source corrections summarized in §6 and the audit report.
 
 | Location | Currently says | Should say |
 |---|---|---|
-| `pcs.face` / `params` 800G | "8 FEC lanes" | 32 PCS lanes (LIKELY); two flows; four codewords |
-| `pcs.face` / `params` 1.6T | "16 FEC lanes" | remove — unverified (§6.1) |
+| `pcs.face` / `params` 800G | "8 FEC lanes" | 32 PCS lanes (verified in Clause 172); two flows; four codewords |
+| `pcs.face` / `params` 1.6T | "16 FEC lanes" | use the precise term **16 PCS lanes**, now verified in Clause 175 |
 | `pcs.clause` 1.6T | "Clause 172, draft" | **Clause 175** |
 | `fec.clause` 1.6T | "Clause 177, 184" | 177 = general Inner FEC; **184 is 800GBASE-LR1-specific**; 1.6T RS-FEC lives in 175 |
 | `pma.clause` 800G | "Clause 176" | Clause 173 for 100G/lane (df); Clause 176 SM-PMA for 200G/lane (dj) |
@@ -245,8 +236,8 @@ These are wrong in `EthernetStack.jsx` today and must be fixed before any conten
 | `fec` params post-FEC | "≤ 1e-12" | express as **FLR < 1.7 × 10⁻¹²** for 400G; 3.4 × 10⁻¹² for 800G |
 | `fec-cw-mttfpa` | qualitative only | add the **≤ 10⁻¹⁶** decoder mis-detection figure |
 | `pcs-decode` | "inserts an error control block" | **EBLOCK_R**, sync header set to 11, **both** interleaved codewords marked, plus four following blocks with the stateless decoder |
-| `pcs-dist-gran` | 1.6T distributes 257-bit blocks | remove — unverified (§6.5) |
-| `pcs-am` params | "period: fixed, defined in Clause 119" | **163,840 × 257-bit blocks** (400G), 81,920 (200G), with §6.3 caveat |
+| `pcs-dist-gran` | 1.6T distributes 257-bit blocks | replace with the Clause 175 10-bit distribution and interleaving rules |
+| `pcs-am` params | "period: fixed, defined in Clause 119" | **163,840 × 257-bit blocks** (400G), 81,920 (200G), confirmed in published Clause 119 |
 
 Also worth adding, now that it is sourced: AM group size (eight 257-bit blocks),
 the PRBS9 pad, the fact that the AM group is unscrambled, and that AM room comes from
@@ -263,13 +254,13 @@ Listed so the gaps are explicit rather than silently filled from memory.
 - **PMA internals**: CDR, CTLE/DFE/FFE, gray coding, precoding specifics, skew
   generation and the published skew budgets.
 - **PMD optical**: power budgets, TDECQ / TECQ / SECQ definitions and values,
-  Clause numbers for the existing 400G PMDs (121–124 assumed, unconfirmed).
+  further PMD details. The supplied Clause 121–124 titles now confirm their membership.
 - **Multimode**: 400GBASE-SR8 / SR4.2, 800GBASE-VR8 / SR8 (802.3db).
 - **Copper**: 802.3ck CR4 / CR8, insertion loss limits, reach.
 - **MACsec**: 802.1AE SecTAG and ICV sizes, throughput impact.
 - **Time sync**: Clause 90 reference point and path data delay reporting
   (Clause 90.7 is referenced from 175.6 — a good entry point).
-- **Autoneg / training**: Clause 73 scope, 802.3ck link training, dj Annex 176A.
+- **Autoneg / training**: Clause 73 scope, 802.3ck link training, dj Annex 178B.
 - **Form factors**: QSFP-DD, OSFP, OSFP-XD, CMIS — MSA sources, not IEEE.
 - **LPO / LRO / CPO**: no standards basis; industry sources only, must be labelled.
 
@@ -344,10 +335,8 @@ These remain outlines and say so on the page.
 ### PMD clause map
 - **Clause 121** — 200GBASE-DR4. **FIRM** (two sources; Table 121-11 is cited elsewhere
   as the 200GBASE-DR4 optical return loss table).
-- **Clause 122** — 200GBASE-FR4/LR4/ER4 and 400GBASE-FR8/LR8/ER8. **LIKELY**, single
-  secondary source. A 2015 draft-era presentation refers to Table 123-7 for
-  400GBASE-FR8/LR8, but clause numbers moved before publication, so the
-  post-publication listing is preferred. Not stated as firm on the page.
+- **Clause 122** — 200GBASE-FR4/LR4/ER4 and 400GBASE-FR8/LR8/ER8. **FIRM** from
+  the title of the supplied IEEE 802.3-2022 Clause 122 excerpt.
 - **Clause 123** — 400GBASE-SR16. **FIRM** (two sources).
 - **Clause 124** — 400GBASE-DR4, extended by 802.3df to also cover 400GBASE-DR4-2,
   800GBASE-DR8 and 800GBASE-DR8-2. **FIRM** (802.3df table of contents).
@@ -398,7 +387,6 @@ time-sync reference point. Six top-level blocks remain marked outline.
 
 ### Explicitly still unverified
 Everything in §6 stands. Added in this pass:
-- Clause 122's exact PHY membership (see above).
 - Which amendment added 400GBASE-FR4 and LR4.
 - Skew and skew-variation budget values — referenced on several pages as
   "specified", deliberately never quoted.
@@ -471,7 +459,7 @@ Cumulative maximum skew for 200G/400GBASE-R:
 - Each AUI carries **1 × 10⁻⁵** of the error budget at 100G per lane. **FIRM** (from §1)
 - C2C versus C2M: C2M crosses a vendor boundary at a connector, so the budget is split
   with compliance points either side. dj C2M is **Annex 176D**. **FIRM**
-- Electrical link training is **Annex 176A** in dj, applies to CR, KR, C2C and C2M, and
+- Electrical link training and autonomous path startup are in **Annex 178B** in dj. It applies to specified electrical interfaces and
   can negotiate precoding. **FIRM**
 - Training state machines and frame formats: **not researched**, and the page says so.
 
@@ -479,9 +467,9 @@ Cumulative maximum skew for 200G/400GBASE-R:
 `mac-flow` (PAUSE/PFC), `rs-fault` (LF/RF), `pma-cdr`, `pmd-cr`, `pmd-sr`, the three
 Medium pages, retimer/LPO, form factors, and the time-sync reference point.
 
-### Unverified list unchanged
-Everything in §6 still stands, most importantly the 1.6T PCS lane count and codeword
-count, and the 802.3dj approval status.
+### Verification update
+The P802.3dj/D3.2 Clause 175 excerpt resolves the 1.6T PCS lane count and outer
+codeword count. See §6 for remaining open items.
 
 
 ---
@@ -548,6 +536,6 @@ facts.
 `medium-twinax`, `form-cpo`, `an-cl73`. Link training is written under AUI and its
 autoneg entry cross-references it.
 
-### Unverified list unchanged
-Everything in §6 stands. The two that most need draft text remain the **1.6T PCS lane
-count** and its **codeword count**, plus the **802.3dj approval status**.
+### Verification update
+The supplied P802.3dj/D3.2 text resolves the 1.6T PCS lane and outer codeword counts.
+The draft approval status remains outside the supplied excerpts.

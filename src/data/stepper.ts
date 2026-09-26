@@ -2,11 +2,11 @@
 import type { Rate, Dir, LaneGen, LanePhys, Stage } from "../types";
 
 /* Logical PCS lane count is fixed per rate (independent of the physical lane
-   generation). 1.6T is null — the sources behind these pages do not confirm it. */
-export const PCS_LANES: Record<Rate, number | null> = {
+   generation). P802.3dj/D3.2 Clause 175 specifies 16 lanes for 1.6T. */
+export const PCS_LANES: Record<Rate, number> = {
   "400G": 16,
   "800G": 32,
-  "1.6T": null,
+  "1.6T": 16,
 };
 
 /* Physical lanes depend on both rate and per-lane generation. Every rate has a
@@ -59,7 +59,7 @@ export const STAGES: Stage[] = [
     id: "am", block: "pcs", title: "Alignment markers inserted",
     shape: "marker",
     note: "Periodic marker groups are inserted before lane distribution. The common pattern helps the receiver find boundaries, and each lane's unique pattern identifies its logical position. The receiver later uses these markers to reorder lanes and compensate for skew.",
-    count: (r: Rate, _gen: LaneGen) => (PCS_LANES[r] ? PCS_LANES[r] + " lanes to identify" : "one marker per lane"),
+    count: (r: Rate, _gen: LaneGen) => PCS_LANES[r] + " lanes to identify",
   },
   {
     id: "fec", block: "fec", title: "Parity appended",
@@ -71,9 +71,9 @@ export const STAGES: Stage[] = [
     id: "stripe", block: "fec", title: "Striped across lanes",
     shape: "lanes",
     note: "The 400G stream interleaves two codewords in ten-bit units and distributes symbols across logical PCS lanes. The complete lane mapping determines how a channel error event reaches Reed-Solomon symbols and codewords. Bit and symbol multiplexing below the PCS produce different error distributions.",
-    count: (r: Rate, gen: LaneGen) => (gen === "200"
-      ? "symbol multiplexed in the PMA (Clause 176)"
-      : PCS_LANES[r] + " PCS lanes, bit multiplexed below"),
+    count: (r: Rate, gen: LaneGen) => PCS_LANES[r] + (gen === "200"
+      ? " PCS lanes, symbol multiplexed below"
+      : " PCS lanes, bit multiplexed below"),
   },
   {
     id: "serialise", block: "pma", title: "Mapped onto physical lanes",
@@ -110,7 +110,7 @@ export const RX_STAGES: Stage[] = [
     id: "rx-align", block: "pcs", title: "Lanes deskewed and reordered",
     shape: "lanes",
     note: "The receiver finds alignment markers, identifies each logical lane and delays earlier-arriving streams to align them with later ones. It can then restore the symbol order needed by the outer decoder. Marker lock and alignment are prerequisites, not proof that the data is error-free.",
-    count: (r: Rate, _gen: LaneGen) => PCS_LANES[r] ? PCS_LANES[r] + " PCS lanes realigned" : "logical lanes realigned; count unconfirmed here",
+    count: (r: Rate, _gen: LaneGen) => PCS_LANES[r] + " PCS lanes realigned",
   },
   {
     id: "rx-fec", block: "fec", title: "Errors corrected",

@@ -5,11 +5,11 @@ import type { DiagramSpec } from "../types";
 export const VISUALS: Record<string, DiagramSpec> = {
   /* ---------------------------------------------------------------- PCS --- */
   pcs: {
-    type: "lanes", n: { "400G": 16, "800G": 32, "1.6T": 8 }, mapping: true,
+    type: "lanes", n: { "400G": 16, "800G": 32, "1.6T": 16 }, mapping: true,
     title: "Round-robin distribution",
     caption: "Numbered units leave the coder in order and land on lanes in turn. Lane 0 takes unit 0, then unit n, then unit 2n.",
     captionByRate: {
-      "1.6T": "Drawn as the eight physical lanes of a 1.6TBASE-DR8. The 1.6T PCS lane count is not confirmed by the sources behind this page, so it is not shown.",
+      "1.6T": "Drawn as the 16 logical PCS lanes specified by P802.3dj/D3.2 Clause 175. A DR8 physical interface uses eight optical lanes.",
     },
   },
 
@@ -128,12 +128,12 @@ export const VISUALS: Record<string, DiagramSpec> = {
   },
 
   "pcs-dist": {
-    type: "lanes", n: { "400G": 16, "800G": 32, "1.6T": 8 }, mapping: true,
+    type: "lanes", n: { "400G": 16, "800G": 32, "1.6T": 16 }, mapping: true,
     title: "Distribution at this rate",
     caption: "At 400G: a 10-bit round robin into two messages, then one 10-bit symbol per lane, ascending.",
     captionByRate: {
       "800G": "800G runs two flows and four codewords, with 32:8 restricted bit-level multiplexing below the PCS.",
-      "1.6T": "Drawn as the eight physical lanes of a 1.6TBASE-DR8. Below the PCS, 200G-per-lane interfaces use the Clause 176 symbol-multiplexing PMA.",
+      "1.6T": "Drawn as the 16 PCS lanes specified by Clause 175. A Clause 176 symbol-multiplexing PMA can map them onto eight 200G-class lanes.",
     },
   },
 
@@ -141,7 +141,7 @@ export const VISUALS: Record<string, DiagramSpec> = {
     type: "fold", logical: { "400G": 16, "800G": 32, "1.6T": 16 }, physical: { "400G": 4, "800G": 8, "1.6T": 8 },
     title: "Logical lanes folded onto physical lanes",
     caption: "Specified PMA mappings adapt logical PCS lanes to physical interfaces. The drawn counts are reference examples, not a list of every standardized mapping.",
-    captionByRate: { "1.6T": "This 16:8 example represents sixteen electrical AUI lanes mapped toward eight optical lanes. Sixteen is not a confirmed 1.6T PCS lane count." },
+    captionByRate: { "1.6T": "This 16:8 example maps the 16 logical PCS lanes onto eight 200G-class interface lanes. The optical PMD arrangement is a separate choice." },
   },
 
   "pcs-lock": {
@@ -151,10 +151,10 @@ export const VISUALS: Record<string, DiagramSpec> = {
   },
 
   "pcs-lock-debug": {
-    type: "lanes", n: { "400G": 16, "800G": 32, "1.6T": 8 }, fail: [3],
+    type: "lanes", n: { "400G": 16, "800G": 32, "1.6T": 16 }, fail: [3],
     title: "One lane failing",
     caption: "A lane-specific failure prioritizes checks of its signal path and mapping. Lane-specific configuration can also cause this symptom; it does not prove a hardware fault.",
-    captionByRate: { "1.6T": "Eight rows illustrate a lane-specific failure, not a confirmed logical PCS count. Check the affected paths and mappings; the symptom does not prove a hardware fault." },
+    captionByRate: { "1.6T": "Sixteen rows represent the 1.6T logical PCS lanes. Check the affected paths and mappings; the symptom does not prove a hardware fault." },
   },
 
   "pcs-lock-buffer": {
@@ -164,10 +164,10 @@ export const VISUALS: Record<string, DiagramSpec> = {
   },
 
   "pcs-reorder": {
-    type: "lanes", n: { "400G": 16, "800G": 32, "1.6T": 8 }, shuffled: true,
+    type: "lanes", n: { "400G": 16, "800G": 32, "1.6T": 16 }, shuffled: true,
     title: "Arrival order against logical order",
     caption: "Physical lane order need not be preserved by the cable, because identity travelled inside the markers.",
-    captionByRate: { "1.6T": "Eight rows illustrate marker-based reordering only. The 1.6T logical PCS count remains unconfirmed in this source base." },
+    captionByRate: { "1.6T": "Sixteen rows represent the 1.6T logical PCS lanes and illustrate marker-based reordering." },
   },
 
   /* ---------------------------------------------------------------- FEC --- */
@@ -195,10 +195,10 @@ export const VISUALS: Record<string, DiagramSpec> = {
   },
 
   "fec-interleave": {
-    type: "lanes", n: { "400G": 16, "800G": 32, "1.6T": 8 }, mapping: true,
+    type: "lanes", n: { "400G": 16, "800G": 32, "1.6T": 16 }, mapping: true,
     title: "Codeword symbols across lanes",
     caption: "The 400G example interleaves two codewords in ten-bit units. Mapping can spread a short event among codewords or keep erroneous bits within fewer symbols. A persistent lane failure is not thereby correctable.",
-    captionByRate: { "1.6T": "These eight rows are a schematic distribution example, not a confirmed 1.6T PCS lane or codeword arrangement. Use the applicable mapping to determine how errors reach outer codewords." },
+    captionByRate: { "1.6T": "Sixteen rows represent the 1.6T PCS lanes. Clause 175 interleaves four codewords on a 10-bit basis; this drawing simplifies the exact mapping." },
   },
 
   "fec-il-sym": {
