@@ -59,6 +59,7 @@ describe("stage workspace", () => {
 
     rerender(<StageWorkspace run={focused} stage="fec" selected={{ stage: "physical-lanes", bufferId: "pmd-lanes", start: 2 * 96 + 70, count: 1 }} />);
     expect(screen.getAllByText("0").find((element) => element.tagName === "CODE")?.closest("button")?.dataset.linked).toBeUndefined();
-    expect(screen.getByText(/copied \(aggregate\)/)).toBeTruthy();
+    expect(screen.getByText(/Related values are outlined/)).toBeTruthy();
+    expect(screen.queryByText(/copied \(aggregate\)/)).toBeNull();
   });
 });

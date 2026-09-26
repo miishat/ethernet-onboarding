@@ -58,6 +58,30 @@ test("keeps padded MAC field cards in complete rows", async ({ page }) => {
   expect(Math.abs(pad!.y - fcs!.y)).toBeLessThan(2);
 });
 
+test("aligns a padded frame after selecting a shorter payload", async ({ page }) => {
+  await page.setViewportSize({ width: 1411, height: 900 });
+  await page.goto("/?view=inspector&inspectStage=mac&from=stack");
+  await page.locator("textarea").fill(Array.from({ length: 19 }, (_, index) => index.toString(16).padStart(2, "0")).join(""));
+  await page.getByRole("button", { name: "Apply frame" }).click();
+  await page.locator(".byte-view__bytes button").filter({ hasText: "Payload" }).click();
+  const editor = await page.locator(".frame-editor").boundingBox();
+  const output = await page.locator(".byte-view").boundingBox();
+  expect(Math.abs((editor!.y + editor!.height) - (output!.y + output!.height))).toBeLessThan(2);
+});
+
+test("keeps stage explanation on one line and explains a selection", async ({ page }) => {
+  await page.setViewportSize({ width: 1411, height: 900 });
+  await page.goto("/?view=inspector&inspectStage=mac&from=stack");
+  await page.getByRole("button", { name: "Apply frame" }).click();
+  await page.getByRole("button", { name: "Alignment markers" }).click();
+  const explanation = page.locator(".stage-workspace > .inspector-section-head > span");
+  const metrics = await explanation.evaluate((element) => ({ height: element.getBoundingClientRect().height, lineHeight: Number.parseFloat(getComputedStyle(element).lineHeight) }));
+  expect(metrics.height).toBeLessThan(metrics.lineHeight * 1.5);
+  await page.getByLabel("markers values").locator(".data-window__value").first().click();
+  await expect(page.locator(".trace-details")).toContainText(/related values/i);
+  await expect(page.locator(".trace-details")).not.toContainText(/Trace:|absolute index|copied \(exact\)/);
+});
+
 test("switches between grouped and indexed values across inspector stages", async ({ page }) => {
   await page.goto("/?view=inspector&inspectStage=mac&from=stack");
   await page.getByRole("button", { name: "Apply frame" }).click();
@@ -67,7 +91,7 @@ test("switches between grouped and indexed values across inspector stages", asyn
   await expect(page.getByText(/Block 0/)).toBeVisible();
   await page.getByRole("button", { name: /Block 0/ }).click();
   await page.getByLabel("encode66 values").locator(".data-window__value").first().click();
-  await expect(page.getByText(/Selected encode66/)).toBeVisible();
+  await expect(page.getByText(/Selected value 0 in encode66/)).toBeVisible();
   await page.getByRole("button", { name: "Indexed" }).click();
   await expect(page.getByText(/Bits 0–63/)).toBeVisible();
   await page.getByRole("button", { name: "Physical lanes" }).click();
