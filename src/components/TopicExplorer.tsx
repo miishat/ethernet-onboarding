@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Dir } from "../types";
 import { searchTopics, visibleTopics, type TopicEntry } from "../search/topicCatalog";
 
@@ -12,10 +12,9 @@ interface Props {
 export default function TopicExplorer({ catalog, dir, recent, onSelect }: Props) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [panelTop, setPanelTop] = useState(0);
   const trigger = useRef<HTMLButtonElement>(null);
   const input = useRef<HTMLInputElement>(null);
-  const panel = useRef<HTMLElement>(null);
+  const panel = useRef<HTMLDialogElement>(null);
   const results = useMemo(() => searchTopics(catalog, query, dir), [catalog, query, dir]);
   const blank = !query.trim();
   const groups = useMemo(() => {
@@ -36,24 +35,22 @@ export default function TopicExplorer({ catalog, dir, recent, onSelect }: Props)
   }, [catalog, dir, recent]);
 
   const close = () => {
+    panel.current?.close();
     setOpen(false);
     trigger.current?.focus();
   };
 
   useEffect(() => {
     if (!open) return;
-    const header = trigger.current?.closest("header");
-    const measure = () => setPanelTop(Math.max(0, (header || trigger.current)?.getBoundingClientRect().bottom || 0) + 8);
-    measure();
+    const dialog = panel.current;
+    if (!dialog) return;
+    dialog.showModal();
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     input.current?.focus();
-    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure);
-    if (header) observer?.observe(header);
-    window.addEventListener("resize", measure);
-    window.addEventListener("scroll", measure, true);
     return () => {
-      observer?.disconnect();
-      window.removeEventListener("resize", measure);
-      window.removeEventListener("scroll", measure, true);
+      dialog.close();
+      document.body.style.overflow = previousOverflow;
     };
   }, [open]);
 
@@ -64,6 +61,20 @@ export default function TopicExplorer({ catalog, dir, recent, onSelect }: Props)
         event.stopImmediatePropagation();
         setOpen(true);
         input.current?.focus();
+      } else if (open && event.key === "Tab") {
+        const controls = panel.current?.querySelectorAll<HTMLElement>(
+          'button:not(:disabled), input:not(:disabled), [tabindex="0"]'
+        );
+        if (!controls?.length) return;
+        const first = controls[0];
+        const last = controls[controls.length - 1];
+        const outside = !panel.current?.contains(document.activeElement);
+        if (outside || (event.shiftKey && document.activeElement === first) ||
+            (!event.shiftKey && document.activeElement === last)) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          (event.shiftKey ? last : first).focus();
+        }
       } else if (open && event.key === "Escape") {
         event.preventDefault();
         event.stopImmediatePropagation();
@@ -104,11 +115,19 @@ export default function TopicExplorer({ catalog, dir, recent, onSelect }: Props)
     <div>
       <div className="control-label">Discover</div>
       <button ref={trigger} className="btn" aria-expanded={open} aria-controls="topic-explorer"
+        aria-haspopup="dialog"
         aria-keyshortcuts="Control+k Meta+k" onClick={() => open ? close() : setOpen(true)}>
         Search Topics
       </button>
-      <section ref={panel} id="topic-explorer" className="topic-explorer" hidden={!open}
-        aria-labelledby="topic-explorer-heading" style={{ "--topic-panel-top": `${panelTop}px` } as CSSProperties}>
+      <dialog ref={panel} id="topic-explorer" className="topic-explorer"
+        aria-labelledby="topic-explorer-heading"
+        onCancel={(event) => { event.preventDefault(); close(); }}
+        onClick={(event) => {
+          if (event.target !== event.currentTarget) return;
+          const bounds = event.currentTarget.getBoundingClientRect();
+          if (event.clientX < bounds.left || event.clientX > bounds.right ||
+              event.clientY < bounds.top || event.clientY > bounds.bottom) close();
+        }}>
         <div className="topic-explorer__head">
           <h2 id="topic-explorer-heading">Search Topics</h2>
           <button className="btn" onClick={close}>Close search</button>
@@ -139,7 +158,7 @@ export default function TopicExplorer({ catalog, dir, recent, onSelect }: Props)
             </section>
           )) : renderEntries(results)}
         </div>
-      </section>
+      </dialog>
     </div>
   );
 }

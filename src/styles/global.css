@@ -355,24 +355,38 @@ svg g[role="button"]:focus-visible rect {
   border-color: var(--signal);
 }
 
-/* --- Topic discovery: a non-modal panel below the measured header --- */
+/* --- Topic discovery: centered modal with its own scrolling results --- */
 .topic-explorer {
   position: fixed;
-  top: var(--topic-panel-top);
-  right: max(24px, calc((100vw - var(--app-max)) / 2 + 24px));
-  z-index: 45;
-  width: min(620px, calc(100vw - 48px));
-  max-height: calc(100dvh - var(--topic-panel-top) - 20px);
-  display: flex;
+  inset: 0;
+  margin: auto;
+  width: min(640px, calc(100vw - 48px));
+  height: min(720px, calc(100dvh - 80px));
+  max-width: none;
+  max-height: calc(100dvh - 32px);
+  display: none;
   flex-direction: column;
   padding: 20px;
   border: 1px solid var(--rule);
   border-radius: 12px;
-  background: var(--ink2);
+  background: var(--ink);
   box-shadow: var(--shadow);
   color: var(--text);
 }
-.topic-explorer[hidden] { display: none; }
+.topic-explorer[open] { display: flex; }
+.topic-explorer::backdrop {
+  background: rgb(10 16 24 / 65%);
+  backdrop-filter: blur(4px);
+}
+.topic-explorer > :not(.topic-explorer__scroll) { flex-shrink: 0; }
+@media (max-width: 600px) {
+  .topic-explorer {
+    width: calc(100vw - 24px);
+    height: calc(100dvh - 24px);
+    max-height: calc(100dvh - 24px);
+    padding: 16px;
+  }
+}
 .topic-explorer__head {
   display: flex;
   align-items: center;
