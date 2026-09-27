@@ -178,12 +178,12 @@ test("figure captions span their panel and compact labels use straight leaders",
   assert.match(diagram, /x1=\{lblCx\} y1=\{y \+ bh \+ 2\} x2=\{lblCx\}/);
 });
 
-test("diagrams use a distinct cool accent and the prose scale stays compact", async () => {
+test("diagrams use a distinct sage accent and the prose scale stays compact", async () => {
   const palette = await source("src/theme/palette.ts");
   const diagram = await source("src/components/Diagram.tsx");
   const css = await source("src/styles/global.css");
 
-  assert.match(palette, /diagram: "#78a9d5"/);
+  assert.match(palette, /diagram: "#acc8ab"/);
   assert.match(diagram, /C\.diagramWash/);
   assert.match(css, /\.prose p\s*\{[^}]*font-size:\s*14px;/s);
 });

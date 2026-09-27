@@ -7,23 +7,24 @@
 
 :root,
 :root[data-theme="dark"] {
-  --ink: #0c141f;
-  --ink2: #111c28;
-  --ink3: #18242f;
-  --rule: #25384b;
-  --rule-soft: #1c2b3a;
-  --text: #dae4ed;
-  --dim: #8fa1b3;
-  --faint: #607586;
-  --signal: #f2b03d;
-  --signal-dim: #7d5c1f;
-  --signal-wash: #251d0e;
-  --signal-ink: #221704; /* text on an amber fill */
-  --good: #5fae8c;
-  --bad: #c9756b;
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.28);
-  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --glow: 0 0 0 1px rgba(242, 176, 61, 0.25), 0 6px 22px rgba(242, 176, 61, 0.12);
+  --ink: #191815;
+  --ink2: #24211e;
+  --ink3: #302c27;
+  --rule: #524a40;
+  --rule-soft: #3b362f;
+  --text: #eee9df;
+  --dim: #c2b8aa;
+  --faint: #a79c8d;
+  --signal: #e8ad76;
+  --signal-dim: #9b6e49;
+  --signal-wash: #463020;
+  --signal-ink: #2c1d12; /* text on a copper fill */
+  --diagram: #acc8ab;
+  --good: #8fc69f;
+  --bad: #e18c82;
+  --shadow: 0 1px 2px rgba(8, 6, 5, 0.42), 0 8px 24px rgba(8, 6, 5, 0.3);
+  --shadow-soft: 0 1px 2px rgba(8, 6, 5, 0.3);
+  --glow: 0 0 0 1px rgba(232, 173, 118, 0.25), 0 6px 22px rgba(232, 173, 118, 0.12);
   color-scheme: dark;
 }
 
@@ -40,6 +41,7 @@
   --signal-dim: #d6a24e;
   --signal-wash: #fbf0d6;
   --signal-ink: #fff7e8; /* light text on the dark-amber signal fill */
+  --diagram: #2c709e;
   --good: #2f8f6b;
   --bad: #c0503f;
   --shadow: 0 1px 2px rgba(30, 27, 18, 0.08), 0 10px 30px rgba(30, 27, 18, 0.1);
