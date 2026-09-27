@@ -113,11 +113,13 @@ export default function TopicExplorer({ catalog, dir, recent, onSelect }: Props)
 
   return (
     <div>
-      <div className="control-label">Discover</div>
-      <button ref={trigger} className="btn" aria-expanded={open} aria-controls="topic-explorer"
+      <button ref={trigger} className="icon-btn header__search" aria-label="Search topics" title="Search topics" aria-expanded={open} aria-controls="topic-explorer"
         aria-haspopup="dialog"
         aria-keyshortcuts="Control+k Meta+k" onClick={() => open ? close() : setOpen(true)}>
-        Search Topics
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+          <circle cx="10.8" cy="10.8" r="6.8" />
+          <path d="m16 16 4.5 4.5" />
+        </svg>
       </button>
       <dialog ref={panel} id="topic-explorer" className="topic-explorer"
         aria-labelledby="topic-explorer-heading"

@@ -10,6 +10,7 @@ describe("TopicExplorer", () => {
       catalog: buildTopicCatalog(), dir: "tx", recent: [], onSelect: () => {},
     }));
     expect(html).toContain("Search Topics");
+    expect(html).toContain('aria-label="Search topics"');
     expect(html).toContain('aria-expanded="false"');
     expect(html).toContain('aria-controls="topic-explorer"');
     expect(html).toMatch(/<dialog[^>]*id="topic-explorer"[^>]*aria-labelledby="topic-explorer-heading"/);

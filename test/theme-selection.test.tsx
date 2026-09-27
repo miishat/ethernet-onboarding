@@ -12,19 +12,31 @@ afterEach(() => {
 });
 
 describe("theme selection", () => {
-  it("offers light, original dark, and warm themes and saves the choice", async () => {
+  it("switches between light and dark with one click", async () => {
     localStorage.setItem("eos-theme", "dark");
     const user = userEvent.setup();
     render(<ThemeProvider><ThemeToggle /></ThemeProvider>);
 
-    const options = within(screen.getByRole("group", { name: "Theme" }));
-    expect(options.getAllByRole("button")).toHaveLength(3);
-    expect(options.getByRole("button", { name: "Dark" }).getAttribute("aria-pressed")).toBe("true");
+    await user.click(screen.getByRole("button", { name: "Switch to light theme" }));
+    expect(document.documentElement.getAttribute("data-theme")).toBe("light");
+    expect(localStorage.getItem("eos-theme")).toBe("light");
 
+    await user.click(screen.getByRole("button", { name: "Switch to dark theme" }));
+    expect(document.documentElement.getAttribute("data-theme")).toBe("dark");
+  });
+
+  it("offers all three themes in a compact menu and saves Warm", async () => {
+    localStorage.setItem("eos-theme", "dark");
+    const user = userEvent.setup();
+    render(<ThemeProvider><ThemeToggle /></ThemeProvider>);
+
+    await user.click(screen.getByRole("button", { name: "Choose theme" }));
+    const options = within(screen.getByRole("group", { name: "Theme choices" }));
+    expect(options.getAllByRole("button")).toHaveLength(3);
     await user.click(options.getByRole("button", { name: "Warm" }));
     expect(document.documentElement.getAttribute("data-theme")).toBe("warm");
     expect(localStorage.getItem("eos-theme")).toBe("warm");
-    expect(options.getByRole("button", { name: "Warm" }).getAttribute("aria-pressed")).toBe("true");
+    expect(screen.queryByRole("group", { name: "Theme choices" })).toBeNull();
   });
 
   it("restores the saved warm theme", () => {
@@ -32,6 +44,6 @@ describe("theme selection", () => {
     render(<ThemeProvider><ThemeToggle /></ThemeProvider>);
 
     expect(document.documentElement.getAttribute("data-theme")).toBe("warm");
-    expect(screen.getByRole("button", { name: "Warm" }).getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByRole("button", { name: "Switch to light theme" })).toBeTruthy();
   });
 });
