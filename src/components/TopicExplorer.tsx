@@ -113,6 +113,7 @@ export default function TopicExplorer({ catalog, dir, recent, onSelect }: Props)
 
   return (
     <div>
+      <div className="control-label">Search</div>
       <button ref={trigger} className="icon-btn header__search" aria-label="Search topics" title="Search topics" aria-expanded={open} aria-controls="topic-explorer"
         aria-haspopup="dialog"
         aria-keyshortcuts="Control+k Meta+k" onClick={() => open ? close() : setOpen(true)}>

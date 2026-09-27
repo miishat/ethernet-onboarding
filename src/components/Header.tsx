@@ -79,18 +79,22 @@ export default function Header({ rate, setRate, dir, setDir, gen, setGen, steppi
           />
         </div>
         <div>
+          <div className="control-label">Follow a frame</div>
           <button className="btn btn--ghost-signal" data-on={stepping} onClick={toggleStep}>
             {stepping ? "Close" : "Step Through"}
           </button>
         </div>
         <div>
+          <div className="control-label">Frame Inspector</div>
           <button className="btn btn--ghost-signal" onClick={openInspector}>Inspector <span className="header__beta">Beta</span></button>
         </div>
         <div>
+          <div className="control-label">Progress</div>
           <ProgressMeter value={read} total={total} />
         </div>
         <TopicExplorer catalog={catalog} dir={dir} recent={recent} onSelect={onSelectTopic} />
         <div>
+          <div className="control-label">Theme</div>
           <ThemeToggle />
         </div>
       </div>
