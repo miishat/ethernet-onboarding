@@ -120,8 +120,8 @@ test("side labels use title case and the opening copy distinguishes electrical f
 test("stack labels use concise, rate-specific FEC and Medium clauses", async () => {
   const stack = await source("src/data/stack.ts");
 
-  assert.match(stack, /id: "fec"[\s\S]*?"400G": "Clause 119", "800G": "Clause 172"/);
-  assert.match(stack, /id: "medium"[\s\S]*?"400G": "Clause 121-124", "800G": "Clause 124; 802\.3df", "1\.6T": "Clauses 180-183 \(draft\)"/);
+  assert.match(stack, /id: "fec"[\s\S]*?"400G": "Clause 119; 177 for applicable optics \(draft\)", "800G": "Clause 172; 177 for applicable optics \(draft\)"/);
+  assert.match(stack, /id: "medium"[\s\S]*?"400G": "Clause 121-124", "800G": "Clause 124; 802\.3df", "1\.6T": "Clauses 178-180, 182 \(draft\)"/);
 });
 
 test("stack cards use compact references while retaining their draft marker", async () => {

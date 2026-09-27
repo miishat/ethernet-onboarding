@@ -523,7 +523,7 @@ export const DATA: Record<string, StackNode> = {
         params: {
           "400G": [["Lock processes", "16, one per lane, independent"], ["Uses", "common elements, then unique elements"], ["Runs", "before FEC correction"], ["Tolerates", "some errored bits in the marker"]],
           "800G": [["Markers", "32"], ["Lock", "per lane, independent"]],
-          "1.6T": [["Detail", "not yet confirmed", { draft: true }]],
+          "1.6T": [["Lock processes", "16, one per PCS lane", { draft: true }], ["Maximum skew", "152 ns", { draft: true }], ["Rule", "Clause 175.2.5.1 uses Clause 119 alignment lock with stated exceptions", { draft: true }]],
         },
         sections: [
           {
@@ -556,13 +556,13 @@ export const DATA: Record<string, StackNode> = {
         summary: "Restore logical order and undo interleaving before decode.",
         intro:
           "The receiver uses the lane identities in the alignment markers to restore logical lane order. This allows the receive PCS to reconstruct the transmitted stream even when a supported physical mapping changes which input carries a logical lane. It does not mean that arbitrary fibre wiring is valid for every PMD.\n\nAfter marker acquisition, deskew and lane ordering, the receiver reverses the symbol distribution and interleaving. The reconstructed codewords can then be passed to the Reed-Solomon decoder. FEC needs the correct symbol order before it can determine and correct errors.",
-        params: { all: [["Input", "deskewed, identified lanes"], ["Output", "reassembled codewords"], ["Enables", "arbitrary physical lane order"], ["Order", "align, deskew, reorder, de-interleave, decode"]] },
+        params: { all: [["Input", "deskewed, identified lanes"], ["Output", "reassembled codewords"], ["Enables", "PCS service lanes to be received out of order"], ["Order", "align, deskew, reorder, de-interleave, decode"]] },
         sections: [
           {
             id: "pcs-reorder-fail", name: "Why failure here is loud",
             body:
               "An incorrect lane order places symbols in the wrong codeword positions. A persistent mapping error will generally cause widespread decode failures rather than a small increase in random errors.\n\nCheck lane identities and the configured mapping when marker lock is present but decoding fails heavily. The symptom alone is not conclusive: severe signal errors, transient alignment loss and other configuration problems can also produce many uncorrectable codewords.",
-            params: { all: [["Symptom", "codewords fail wholesale"], ["Not", "gradual degradation"], ["Diagnostic value", "rules itself in or out immediately"]] },
+            params: { all: [["Persistent wrong mapping", "often causes widespread decode failures"], ["Also check", "signal errors, alignment loss and configuration"], ["Diagnostic value", "a reason to inspect lane identities and mapping"]] },
           },
         ],
       },
@@ -610,8 +610,8 @@ export const DATA: Record<string, StackNode> = {
   /* ------------------------------------------------------------------ FEC */
   fec: {
     id: "fec", name: "RS-FEC", alias: "KP4; applicable optical paths add inner FEC", zone: "coding", written: true,
-    clause: { "400G": "Clause 119", "800G": "Clause 172", "1.6T": "Clause 175, plus Clause 177 Inner FEC (draft)" },
-    face: { "400G": "RS(544,514)", "800G": "RS(544,514)", "1.6T": "outer + inner" },
+    clause: { "400G": "Clause 119; 177 for applicable optics (draft)", "800G": "Clause 172; 177 for applicable optics (draft)", "1.6T": "Clause 175; 177 for applicable optics (draft)" },
+    face: { "400G": "RS(544,514)", "800G": "RS(544,514)", "1.6T": "RS(544,514)" },
     summary: "Adds parity so the receiver can correct errors before reconstructing frames.",
     intro:
       "Forward error correction (FEC) adds parity at the transmitter so the receiver can repair some channel errors without retransmission. It is a required part of the BASE-R PHY designs covered here. Their error budgets are specified with FEC present.\n\nThe outer code is [[RS(544,514)]], commonly called KP4. Each codeword has 514 message symbols and 30 parity symbols, with ten bits per symbol. The decoder is required to correct any combination of up to 15 erroneous symbols in a codeword. More errors exceed that guaranteed correction capacity.\n\nSome 200G-per-lane optical paths in the referenced P802.3dj architecture add an inner code around the optical segment. This [[concatenated FEC]] works with the outer Reed-Solomon code. The need and arrangement depend on the PHY and its operating mode, rather than on the aggregate MAC rate alone. Start with Codeword anatomy, then use the interleaving and decoding lessons to follow how errors consume correction capacity.",
@@ -752,7 +752,7 @@ export const DATA: Record<string, StackNode> = {
 
       {
         id: "fec-concat", name: "Concatenated FEC", alias: "inner and outer codes on applicable optical paths", dir: "both", written: true,
-        clause: { "400G": "not applicable", "800G": "not applicable at 100G/lane", "1.6T": "Clause 177 (draft)" },
+        clause: { "400G": "Clause 177 for applicable 200G/lane optics (draft)", "800G": "Clause 177 for applicable 200G/lane optics (draft)", "1.6T": "Clause 177 for applicable optics (draft)" },
         summary: "The P802.3dj inner-plus-outer arrangement.",
         intro:
           "An optical link can include an electrical AUI from the host to a module, an optical segment, and an electrical AUI at the receiving end. FEC architectures differ in which parts of this path each code protects. The task-force material uses three useful categories.\n\nType 1, end-to-end, has one code spanning the path. Type 2, concatenated, keeps that outer code and adds an inner code around the optical segment. Type 3, terminated or segmented, decodes and re-encodes at segment boundaries, allowing each segment to use its own correction.\n\nThe referenced 100G-per-lane BASE-R optical architecture uses end-to-end Reed-Solomon FEC. The Clause 177 inner-code arrangement in P802.3dj adds protection for applicable 200G-per-lane optical PHYs. Check the specific PMD and operating mode; 200G electrical lanes alone do not imply an inner optical code.",
@@ -968,7 +968,7 @@ export const DATA: Record<string, StackNode> = {
   /* ------------------------------------------------------------------ PMD */
   pmd: {
     id: "pmd", name: "PMD", alias: "Physical Medium Dependent", zone: "signal", written: true,
-    clause: { "400G": "Clause 121-124", "800G": "Clause 124; 802.3df", "1.6T": "Clauses 180-183 (draft)" },
+    clause: { "400G": "Clause 121-124", "800G": "Clause 124; 802.3df", "1.6T": "Clauses 178-180, 182 (draft)" },
     face: { "400G": "DR4, FR8, LR8", "800G": "DR8, DR4, FR4", "1.6T": "DR8, DR8-2" },
     summary: "Defines signaling and medium-specific requirements for the selected PHY.",
     intro:
@@ -1002,7 +1002,7 @@ export const DATA: Record<string, StackNode> = {
         summary: "Rate, media class, lane count, and a reach suffix.",
         intro:
           "A PHY name identifies its nominal rate and a particular medium-dependent link type. In 1.6TBASE-DR8-2, 1.6T is the MAC rate and BASE indicates baseband operation. DR8 identifies the parallel single-mode family with eight optical lanes; the -2 variant has a two-kilometre reach. These are names from the referenced P802.3dj material.\n\nFor this parallel PMD, eight optical lanes use eight fibre pairs, or sixteen strands. That does not establish the electrical lane count between the host and module; the AUI name describes that interface separately.\n\nUseful families include DR for the parallel single-mode examples here, FR/LR/ER for single-mode families with different reaches, SR/VR for multimode, CR for copper cable assemblies, and KR for backplane links. The letters provide a starting point, while the complete name and specification establish the actual reach and arrangement.",
-        params: { all: [["Rate prefix", "200G, 400G, 800G, 1.6T"], ["BASE", "baseband"], ["D", "parallel single-mode, one wavelength per fibre"], ["F / L / E", "single-mode at increasing reach"], ["S / V", "multimode, short and very short"], ["C", "copper cable assembly"], ["K", "backplane"], ["Trailing number", "lane count"], ["Trailing -2", "the 2 km variant"]] },
+        params: { all: [["Rate prefix", "200G, 400G, 800G, 1.6T"], ["BASE", "baseband"], ["D", "parallel single-mode, one wavelength per fibre"], ["F / L / E", "single-mode at increasing reach"], ["S / V", "multimode, short and very short"], ["C", "copper cable assembly"], ["K", "backplane"], ["Trailing number", "lane count"], ["Trailing -2 in these DR examples", "the 2 km variant"]] },
         sections: [
           {
             id: "pmd-naming-break", name: "Where the convention breaks",
@@ -1075,14 +1075,14 @@ export const DATA: Record<string, StackNode> = {
           "The DR PMDs discussed here carry each optical lane over its own fibre pair, with one wavelength per fibre. They do not need a WDM multiplexer to combine lanes onto one strand. The tradeoff is more fibre paths and a suitable multi-fibre connection.\n\nDR4 uses eight strands and DR8 uses sixteen. Confirm connector and polarity requirements as well as strand count. A module's electrical AUI may have a different number of lanes from its optical DR interface.\n\nThe referenced 1.6T optical objectives cover DR8 at 500 m and DR8-2 at two kilometres. They do not include a 1.6T WDM PMD. This statement describes the source set used here, rather than predicting all future 1.6T optical standards.",
         params: {
           "400G": [["Type", "400GBASE-DR4"], ["Lanes", "4"], ["Strands", "8"], ["2 km variant", "400GBASE-DR4-2"]],
-          "800G": [["Types", "800GBASE-DR8 (100G/lane), 800GBASE-DR4 (200G/lane)"], ["Strands", "16 for DR8, 8 for DR4"], ["2 km variants", "DR8-2, DR4-2"]],
+          "800G": [["Published types", "800GBASE-DR8, DR8-2 (100G/lane)"], ["Published DR8 strands", "16"], ["Draft types", "800GBASE-DR4, DR4-2 (200G/lane)", { draft: true }], ["Draft DR4 strands", "8", { draft: true }]],
           "1.6T": [["Types", "1.6TBASE-DR8, DR8-2", { draft: true }], ["Lanes", "8 at 200G each", { draft: true }], ["Strands", "16", { draft: true }]],
         },
       },
 
       {
         id: "pmd-fr", name: "Wavelength multiplexed: FR and LR", alias: "lanes as colours on one fibre pair", dir: "both", written: true,
-        clause: { "400G": "Clause 122", "800G": "Clause 183 (draft)", "1.6T": "none defined" },
+        clause: { "400G": "Clause 122", "800G": "Clauses 181, 183 (draft)", "1.6T": "none defined" },
         summary: "Several optical wavelengths sharing one fibre pair.",
         intro:
           "Wavelength-division multiplexing (WDM) carries several optical lanes at different wavelengths over the same fibre. A multiplexer combines them at the transmitter and a demultiplexer separates them at the receiver. The FR4 and LR4 examples use one fibre pair for four wavelengths.\n\nThis reduces strand count compared with a four-lane parallel interface, but adds wavelength-specific optical requirements. Reach depends on the complete PMD definition: FR, LR and ER identify families, and suffixes can distinguish variants such as FR4-500.\n\nThe referenced P802.3dj 1.6T optical objectives are parallel DR8 and DR8-2. A WDM option shown for another rate should not be assumed to exist at 1.6T.",
@@ -1121,7 +1121,7 @@ export const DATA: Record<string, StackNode> = {
   /* --------------------------------------------------------------- medium */
   medium: {
     id: "medium", name: "Medium", alias: "fibre, copper, backplane", zone: "signal", written: true,
-    clause: { "400G": "Clause 121-124", "800G": "Clause 124; 802.3df", "1.6T": "Clauses 180-183 (draft)" },
+    clause: { "400G": "Clause 121-124", "800G": "Clause 124; 802.3df", "1.6T": "Clauses 178-180, 182 (draft)" },
     face: { all: "SMF, MMF, twinax" },
     summary: "The fibre, cable or backplane channel that carries the signal.",
     intro:
