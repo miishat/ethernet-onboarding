@@ -130,6 +130,7 @@ export default function App() {
   });
 
   const isTop = path.length === 1;
+  const isHome = navigation.view === "stack" && path.length === 0;
   const panelKey = isFrame ? "step" : path.join("/") || "root";
 
   const walkthrough = (
@@ -238,7 +239,7 @@ export default function App() {
         />
       ) : isFrame ? walkthrough : stack}
 
-      <footer className={"footer" + (isFrame ? " footer--step" : "")}>
+      <footer className={"footer" + (isFrame ? " footer--step" : isHome ? " footer--home" : "")}>
         <div className="footer__inner">
           400G follows IEEE 802.3 Clause 119 and its PMD clauses; 800G follows 802.3df; 1.6T follows 802.3dj, still in draft at the
           time of writing, so anything marked draft may have moved.

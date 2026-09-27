@@ -1313,6 +1313,7 @@ svg g[role="button"]:focus-visible rect {
   margin: 0 auto;
   padding: 0 24px;
 }
+.footer--home .footer__inner { text-align: center; }
 .footer--step .footer__inner {
   max-width: 1200px;
   padding: 0 26px 0 clamp(26px, calc(50vw - 494px), 106px);
