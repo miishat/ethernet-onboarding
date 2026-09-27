@@ -249,7 +249,7 @@ svg g[role="button"]:focus-visible rect {
   gap: 14px;
   margin-left: auto;
   flex-wrap: nowrap;
-  align-items: center;
+  align-items: flex-end;
 }
 .control-label {
   font-size: 10.5px;
