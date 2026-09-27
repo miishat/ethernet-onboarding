@@ -4,7 +4,6 @@ import { PALETTES, ZONES_BY_THEME } from "./palette";
 
 interface ThemeCtx {
   theme: ThemeName;
-  toggle: () => void;
   set: (t: ThemeName) => void;
   C: Palette;
   zones: Record<string, Zone>;
@@ -16,7 +15,7 @@ const STORAGE_KEY = "eos-theme";
 function initialTheme(): ThemeName {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved === "light" || saved === "dark") return saved;
+    if (saved === "light" || saved === "dark" || saved === "warm") return saved;
   } catch {
     /* ignore */
   }
@@ -49,7 +48,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<ThemeCtx>(
     () => ({
       theme,
-      toggle: () => setTheme((t) => (t === "dark" ? "light" : "dark")),
       set: setTheme,
       C: PALETTES[theme],
       zones: ZONES_BY_THEME[theme],
@@ -72,6 +70,6 @@ export const useC = (): Palette => useThemeCtx().C;
 export const useZones = (): Record<string, Zone> => useThemeCtx().zones;
 /** Theme name plus controls. */
 export const useTheme = () => {
-  const { theme, toggle, set } = useThemeCtx();
-  return { theme, toggle, set };
+  const { theme, set } = useThemeCtx();
+  return { theme, set };
 };

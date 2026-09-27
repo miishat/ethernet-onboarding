@@ -7,6 +7,28 @@
 
 :root,
 :root[data-theme="dark"] {
+  --ink: #0c141f;
+  --ink2: #111c28;
+  --ink3: #18242f;
+  --rule: #25384b;
+  --rule-soft: #1c2b3a;
+  --text: #dae4ed;
+  --dim: #8fa1b3;
+  --faint: #607586;
+  --signal: #f2b03d;
+  --signal-dim: #7d5c1f;
+  --signal-wash: #251d0e;
+  --signal-ink: #221704;
+  --diagram: #78a9d5;
+  --good: #5fae8c;
+  --bad: #c9756b;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.28);
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --glow: 0 0 0 1px rgba(242, 176, 61, 0.25), 0 6px 22px rgba(242, 176, 61, 0.12);
+  color-scheme: dark;
+}
+
+:root[data-theme="warm"] {
   --ink: #191815;
   --ink2: #24211e;
   --ink3: #302c27;

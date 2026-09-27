@@ -2,7 +2,7 @@
 
 export type Rate = "400G" | "800G" | "1.6T";
 export type Dir = "tx" | "rx" | "both";
-export type ThemeName = "dark" | "light";
+export type ThemeName = "dark" | "light" | "warm";
 /** Per-lane signalling generation: 100 = 100G/lane (53.125 GBd), 200 = 200G/lane (106.25 GBd). */
 export type LaneGen = "100" | "200";
 
