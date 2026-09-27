@@ -5,7 +5,7 @@ import { useTheme } from "../theme/ThemeContext";
 const choices: { label: string; value: ThemeName }[] = [
   { label: "Light", value: "light" },
   { label: "Dark", value: "dark" },
-  { label: "Warm", value: "warm" },
+  { label: "Warm Dark", value: "warm" },
 ];
 
 export default function ThemeToggle() {

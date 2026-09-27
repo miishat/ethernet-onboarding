@@ -33,7 +33,7 @@ describe("theme selection", () => {
     await user.click(screen.getByRole("button", { name: "Choose theme" }));
     const options = within(screen.getByRole("group", { name: "Theme choices" }));
     expect(options.getAllByRole("button")).toHaveLength(3);
-    await user.click(options.getByRole("button", { name: "Warm" }));
+    await user.click(options.getByRole("button", { name: "Warm Dark" }));
     expect(document.documentElement.getAttribute("data-theme")).toBe("warm");
     expect(localStorage.getItem("eos-theme")).toBe("warm");
     expect(screen.queryByRole("group", { name: "Theme choices" })).toBeNull();
