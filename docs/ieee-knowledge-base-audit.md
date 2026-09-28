@@ -1,10 +1,10 @@
 # IEEE knowledge base audit
 
-Audit date: 2026-09-23; source-file updates: 2026-09-26 and 2026-09-28. The
+Audit date: 2026-09-23; source-file updates: 2026-09-26 and 2026-09-28 (two passes). The
 first pass checked the 54 PDFs pulled from `main` against the lesson content in
 `src/data/stack.ts`, the frame stepper, and `research-brief.md`. The
 2026-09-28 pass re-checked the claims that were blocked on missing sources
-against the 13 PDFs added that day (81 PDFs in total).
+against the 15 PDFs added that day (83 PDFs in total).
 PDF page numbers below are the printed IEEE page numbers, not viewer indices.
 
 ## Corrections made
@@ -45,7 +45,7 @@ establish the amendment's current approval or publication status.
 
 ## Source-file update (2026-09-28)
 
-Added 13 PDFs, named by reading each excerpt's contents, not the page range in
+Added 15 PDFs in two batches, named by reading each excerpt's contents, not the page range in
 its original filename. The six complete clauses were checked to run through
 their PICS Management tables. For change-only excerpts, the last editing
 instruction was checked to be carried out on the page.
@@ -54,8 +54,10 @@ instruction was checked to be carried out on the page.
 |---|---|---|
 | `IEEE-802.3-2022-Clause-118.pdf` | 4823–4834 | Complete: 200GMII/400GMII Extender, 200GXS/400GXS |
 | `IEEE-802.3db-2022-Clause-167.pdf` | 40–71 | Complete base clause ("Insert Clause 167"): 100G/200G/400G SR and VR |
+| `IEEE-802.3df-2024-Clause-124-amendment.pdf` | 93–119 | Changes adding 400GBASE-DR4-2, 800GBASE-DR8 and 800GBASE-DR8-2 to Clause 124 |
 | `IEEE-802.3df-2024-Clause-162-amendment.pdf` | 120–133 | Changes adding 800GBASE-CR8 to Clause 162 |
 | `IEEE-802.3df-2024-Clause-163-amendment.pdf` | 134–141 | Changes adding 800GBASE-KR8 to Clause 163 |
+| `IEEE-P802.3dj-D3.2-2026-Annex-73A-amendment.pdf` | 726–727 | Changes to Table 73A–1 and new 73A.1a (Message code 2) |
 | `IEEE-P802.3dj-D3.2-2026-Clause-45-amendment.pdf` | 76–141 | Clause 45 MDIO register changes, ending at 45.2.7.13b |
 | `IEEE-P802.3dj-D3.2-2026-Clause-73-amendment.pdf` | 146–163 | Clause 73 changes through the PICS |
 | `IEEE-P802.3dj-D3.2-2026-Clause-90-amendment.pdf` | 164 | One change: adds the 800GMII and 1.6TMII to the TSSI list in 90.1 |
@@ -80,10 +82,10 @@ in this pass.
 | SR4/VR4 use 53.125 GBd PAM4; SR reaches 100 m and VR 50 m on OM4/OM5; on OM3, SR reaches 60 m and VR 30 m. | 802.3db-2022 Clause 167 gives **53.125 GBd** (p. 43). Table 167–6 (p. 49) gives SR 0.5–100 m on OM4/OM5 and 0.5–60 m on OM3; VR 0.5–50 m on OM4/OM5 and 0.5–30 m on OM3. | Confirmed. |
 | EMB at 850 nm: OM3 2000, OM4/OM5 4700 MHz·km. | Clause 167 fibre characteristics (p. 52). | Confirmed. |
 | 800GBASE-SR8/VR8 are Clause 167 via 802.3df-2024; 400GBASE-SR8 is Clause 138 with nominal 50G lanes. | The 802.3df-2024 change to Clause 167 adds **800GBASE-VR8 and SR8** to its title. Clause 138 names 400GBASE-SR8 at **26.5625 GBd** (p. 5367). | Confirmed. |
-| 802.3df-2024 800G types include DR8, DR8-2, SR8, VR8, CR8 and KR8. | 802.3df-2024 Clause 169 (p. 163) routes KR8→163, CR8→162, VR8/SR8→167, and **DR8/DR8-2→Clause 124**. | Confirmed as names and clause routing. The DR8 PMD values are not in the KB (see below). |
+| 802.3df-2024 800G types include DR8, DR8-2, SR8, VR8, CR8 and KR8. | 802.3df-2024 Clause 169 (p. 163) routes KR8→163, CR8→162, VR8/SR8→167, and **DR8/DR8-2→Clause 124**. | Confirmed. The 802.3df-2024 Clause 124 changes carry the DR8/DR8-2 PMD text. |
 | Longer-reach 800G types: LR4, LR1, ER1-20, ER1; 2 km FR4. | Clause 183 names 800GBASE-FR4 and LR4 (p. 565). Clauses 184/185 define LR1, with a reach of "at least 10 km" (p. 621). Clauses 186/187 define ER1-20 and ER1. | Confirmed. The app lists names only; it makes no LR1/ER1 reach claims to check. |
-| Clause 124 was extended to 400GBASE-DR4-2. | No PDF in the KB contains "400GBASE-DR4-2". | **Unverified.** Needs the 802.3df-2024 Clause 124 amendment. |
-| P802.3dj extends autonegotiation with Message code 2 Next Pages carrying extended technology and FEC abilities. | The P802.3dj Clause 73 changes spread technology abilities over the Base Page and a **Message code 2 Next Page**. That page must be the first Next Page sent (p. 147–148). Priority resolution includes the Extended Technology Ability Field (p. 156). Clause 45.2.7.13b (p. 141) maps the 32-bit field to registers 7.54/7.55. Bit assignments are in Table 73A–1a. | Technology part confirmed. **FEC part unverified**: needs Annex 73A. |
+| Clause 124 was extended to 400GBASE-DR4-2. | The 802.3df-2024 changes retitle Clause 124 to **400GBASE-DR4, 400GBASE-DR4-2, 800GBASE-DR8 and 800GBASE-DR8-2** (p. 93). | Confirmed. |
+| P802.3dj extends autonegotiation with Message code 2 Next Pages carrying extended technology and FEC abilities. | The P802.3dj Clause 73 changes spread technology abilities over the Base Page and a **Message code 2 Next Page**. That page must be the first Next Page sent (p. 147–148). Priority resolution includes the Extended Technology Ability Field (p. 156). Clause 45.2.7.13b (p. 141) maps the 32-bit field to registers 7.54/7.55. P802.3dj 73A.1a (p. 726) names Message code 2 the **Extended FEC and Technology Ability Message**: EA0:EA25 technology bits map to D16:D41, EH0:EH1 CR host class bits to D42:D43, and EF0:EF3 extended FEC bits to D44:D47. | Confirmed. |
 | Clause 90.7 reports maximum and minimum path data delay. | IEEE 802.3-2022 90.7 (p. 3677) defines the transmit/receive path data delay registers. P802.3dj adds the 1.6TMII to the TSSI list (90.1, p. 164). | Confirmed. |
 | 200/400G SR4/VR4 may use the Clause 118 extender. | Table 167–2 (p. 41) lists the 200GMII/400GMII Extender (Clause 118) as optional. | Confirmed. The app does not cite Clause 118; it is supporting context. |
 
@@ -91,13 +93,12 @@ in this pass.
 
 Priority describes the current app's dependence on the text, not a request to
 collect every clause in IEEE 802.3. The 2026-09-28 additions resolved the
-earlier entries for Clauses 118, 167 (base), 170 and 178, Clauses 184–187, and
-the 45/73/90/162/163 amendments.
+earlier entries for Clauses 118, 167 (base), 170 and 178, Clauses 184–187, the
+45/73/90/162/163 amendments, the 802.3df-2024 Clause 124 amendment and the
+P802.3dj Annex 73A changes.
 
 | Priority | Missing source | Why it matters |
 |---|---|---|
-| Medium | **IEEE 802.3df-2024 Clause 124 amendment** | The app lists 400GBASE-DR4-2, 800GBASE-DR8 and 800GBASE-DR8-2 as Clause 124 extensions. Clause 169 confirms the DR8 routing, but no KB file mentions 400GBASE-DR4-2 and none has the DR8 PMD values. |
-| Medium | **Annex 73A** (IEEE 802.3-2022 base plus P802.3dj/D3.2 changes) | Table 73A–1a defines the Message code 2 Extended Technology Ability Field. It is needed to confirm the app's "technology/FEC abilities" wording. |
 | Low | **P802.3dj/D3.2 pp. 142–145, 165–222 and 229–260** | These pages sit between the D3.2 excerpts: after Clause 45 (ends p. 141), after the Clause 90 change (p. 164) and after Clause 170 (ends p. 228). Their contents were not examined. Check the draft's contents list for changes to clauses the app cites, such as 116–120 or 169. Clause 171, which 170.1.2 cites for the 1.6TMII Extender, probably falls in 229–260. The app does not cite Clause 171. |
 | External to 802.3 | **IEEE 802.1Q, 802.1AE and applicable form-factor/MSA sources** | PFC, MACsec and module claims cannot be verified from the IEEE 802.3 PDFs. Keep those explicitly outside the 802.3 source coverage. |
 
@@ -109,6 +110,9 @@ the 45/73/90/162/163 amendments.
   Clause 167 amendments.
 - Read the P802.3dj Clause 170 amendment with `IEEE-802.3df-2024-Clause-170.pdf`,
   and the 802.3df Clause 162/163 amendments with the 802.3ck-2022 base clauses.
+- Read the P802.3dj Annex 73A changes with the IEEE 802.3-2022 base Annex 73A,
+  which is not in the KB; the app's Message code 2 claim relies only on the new
+  73A.1a text.
 - The P802.3dj Clause 90 excerpt covers only the 90.1 change. It does not show
   that the draft makes no other Clause 90 changes.
 - The 802.3dj D3.2 files are draft excerpts. Keep version labels with findings
