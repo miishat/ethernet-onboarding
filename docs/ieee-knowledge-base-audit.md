@@ -95,10 +95,15 @@ Priority describes the current app's dependence on the text, not a request to
 collect every clause in IEEE 802.3. The 2026-09-28 additions resolved the
 earlier entries for Clauses 118, 167 (base), 170 and 178, Clauses 184–187, the
 45/73/90/162/163 amendments, the 802.3df-2024 Clause 124 amendment and the
-P802.3dj Annex 73A changes.
+P802.3dj Annex 73A changes. The IEEE Std 802.3-2022 sources below are still
+needed to verify the complete 400GBASE-DR4 transmit calculation; the presence
+of Clauses 81, 117, 119, 120 and 124 does not close those gaps.
 
 | Priority | Missing source | Why it matters |
 |---|---|---|
+| High | **IEEE Std 802.3-2022 Clause 49, especially 49.2.6** | Verify the self-synchronous scrambler recurrence, bit direction and predecessor-state convention used by the 400G TX inspector. |
+| High | **IEEE Std 802.3-2022 Clause 82, including the 64B/66B control tables and control-character rules** | Verify Start, Terminate, Idle and mixed control/data encoding, plus which control inputs may be removed for alignment-marker rate matching. |
+| High | **IEEE Std 802.3-2022 Annex 119A, including its 400G transmit example tables** | Check the complete PCS/FEC stream against a published example with defined initial state, input/output orientation and expected values. |
 | Low | **P802.3dj/D3.2 pp. 142–145, 165–222 and 229–260** | These pages sit between the D3.2 excerpts: after Clause 45 (ends p. 141), after the Clause 90 change (p. 164) and after Clause 170 (ends p. 228). Their contents were not examined. Check the draft's contents list for changes to clauses the app cites, such as 116–120 or 169. Clause 171, which 170.1.2 cites for the 1.6TMII Extender, probably falls in 229–260. The app does not cite Clause 171. |
 | External to 802.3 | **IEEE 802.1Q, 802.1AE and applicable form-factor/MSA sources** | PFC, MACsec and module claims cannot be verified from the IEEE 802.3 PDFs. Keep those explicitly outside the 802.3 source coverage. |
 
