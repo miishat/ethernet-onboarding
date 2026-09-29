@@ -141,7 +141,8 @@ export default function Diagram({ spec, rate, nested, constrain }: DiagramProps)
           g.push(<text key={"rx" + i} x={px + 3} y={y - 19} fill={C.faint} fontSize="10" fontFamily={C.mono}>{acc}</text>);
         acc += f.w;
       });
-      g.push(<text key="rend" x={X0 + SPAN} y={y - 19} textAnchor="end" fill={C.dim} fontSize="10.5" fontFamily={C.mono}>{total + " bits"}</text>);
+      g.push(<text key="runit" x={X0 + SPAN} y={14} textAnchor="end" fill={C.faint} fontSize="10" fontFamily={C.mono}>bits</text>);
+      g.push(<text key="rend" x={X0 + SPAN + 3} y={y - 19} fill={C.dim} fontSize="10.5" fontFamily={C.mono}>{total}</text>);
     }
 
     /* Below-label packer: labels that do not fit inside their field are placed on
@@ -255,7 +256,7 @@ export default function Diagram({ spec, rate, nested, constrain }: DiagramProps)
       H = y + bh + 34;
     }
     if (spec.scale)
-      g.push(<text key="sc" x={X0 + SPAN} y={y - 6} textAnchor="end" fill={C.faint} fontSize="10" fontFamily={C.mono}>
+      g.push(<text key="sc" x={X0 + SPAN} y={20} textAnchor="end" fill={C.faint} fontSize="10" fontFamily={C.mono}>
         {"1 cell = " + spec.scale + " symbols"}</text>);
   }
 

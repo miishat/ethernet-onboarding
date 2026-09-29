@@ -12,7 +12,7 @@ PDF page numbers below are the printed IEEE page numbers, not viewer indices.
 | Finding | Evidence | Change |
 |---|---|---|
 | 1.6T PCS lane and codeword counts were called unconfirmed. | P802.3dj/D3.2 Clause 175.1.4 (p. 290) specifies **16 PCS lanes at 106.25 Gb/s**. Clause 175.2.4.7–.9 (p. 301) specifies **four RS(544,514) codewords**, interleaved on a 10-bit basis across those lanes. | Updated PCS lesson, stepper, and research brief. Kept the draft badge. |
-| 800G PCS lane count was presented as an inference. | P802.3dj/D3.2 Clause 172.1.4 (p. 261) explicitly gives **32 PCS lanes at 26.5625 Gb/s**. | Removed the inference badge. |
+| 800G PCS lane count was presented as an inference. | Published IEEE 802.3df-2024 Clause 172.1.3 (p. 196) explicitly gives **32 PCS lanes at 26.5625 Gb/s**. | Removed the inference badge. |
 | The 1.6T alignment marker interval was called unknown. | P802.3dj/D3.2 Clause 175.2.4.6.2 (p. 298) specifies **655,360 × 257-bit blocks**, equivalent to 32,768 codewords, across both flows; each flow has 327,680 blocks. | Updated the marker lesson. |
 | The RS clause map listed Clause 118 for 800G and Clause 174 for 1.6T. | IEEE 802.3-2022 Clause 117 is the 200/400G RS. P802.3dj/D3.2 Clause 172.1.3 and Clause 175.1.4.1 point to **Clause 170** for the 800GMII and 1.6TMII. Clause 174 is an introduction to 1.6T networks. | Corrected RS labels to 117 and 170. For 400G fault signaling, Clause 117.3 invokes the Clause 81 state diagram. |
 | The research brief called Annex 176A electrical link training. | P802.3dj/D3.2 Annex 176A (p. 772) is **SM-PMA test vectors**. Annex 178B (p. 874) defines ILT, RTS and autonomous path startup. | Corrected the brief. The app already points to Annex 178B. |
