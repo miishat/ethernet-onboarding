@@ -1,10 +1,12 @@
 # IEEE knowledge base audit
 
-Audit date: 2026-09-23; source-file updates: 2026-09-26 and 2026-09-28 (two passes). The
-first pass checked the 54 PDFs pulled from `main` against the lesson content in
-`src/data/stack.ts`, the frame stepper, and `research-brief.md`. The
-2026-09-28 pass re-checked the claims that were blocked on missing sources
-against the 15 PDFs added that day (83 PDFs in total).
+Audit date: 2026-09-23; source-file updates: 2026-09-26, 2026-09-28, and
+2026-09-30 (three passes). The first pass checked the 54 PDFs pulled from
+`main` against the lesson content in `src/data/stack.ts`, the frame stepper,
+and `research-brief.md`. The 2026-09-28 pass re-checked the claims that were
+blocked on missing sources against the 15 PDFs added that day (83 PDFs in
+total). The 2026-09-30 pass closed the three remaining High-priority gaps
+with 3 more PDFs (86 PDFs in total).
 PDF page numbers below are the printed IEEE page numbers, not viewer indices.
 
 ## Corrections made
@@ -89,21 +91,40 @@ in this pass.
 | Clause 90.7 reports maximum and minimum path data delay. | IEEE 802.3-2022 90.7 (p. 3677) defines the transmit/receive path data delay registers. P802.3dj adds the 1.6TMII to the TSSI list (90.1, p. 164). | Confirmed. |
 | 200/400G SR4/VR4 may use the Clause 118 extender. | Table 167–2 (p. 41) lists the 200GMII/400GMII Extender (Clause 118) as optional. | Confirmed. The app does not cite Clause 118; it is supporting context. |
 
+## Source-file update (2026-09-30)
+
+Added 3 PDFs, named by reading each excerpt's contents rather than the printed
+page range in its original filename. All three are complete units (a full
+clause running through its PICS table, or a full annex).
+
+| File | Printed pages | Contents |
+|---|---|---|
+| `IEEE-802.3-2022-Clause-49.pdf` | 2288–2323 | Complete: 10GBASE-R/10GBASE-W PCS, WIS, and PMA, through the PICS |
+| `IEEE-802.3-2022-Clause-82.pdf` | 3436–3481 | Complete: 40GBASE-R/100GBASE-R PCS (64B/66B, alignment markers, LPI), through the PICS |
+| `IEEE-802.3-2022-Annex-119A.pdf` | 6785–6790 | Complete: 200GBASE-R and 400GBASE-R PCS FEC codeword worked example |
+
+These close the three High-priority gaps recorded on 2026-09-28.
+
+## Verification against the new sources (2026-09-30)
+
+| App claim | Evidence | Result |
+|---|---|---|
+| The Clause 119 self-synchronous scrambler (`x^58 + x^39 + 1`, applied to all 257 bits after transcoding, bypassing the sync header/alignment marker) follows an established convention. (`src/data/stack.ts:250,357-372`) | Clause 49.2.6 (p. 2299–2300) defines the original self-synchronous scrambler with the same polynomial, no required seed, and sync-header bypass. Clause 82.2.5 (p. 3447) states its scrambler "is identical to the scrambler used in Clause 49, see 49.2.6 for the definition." | Confirmed. Clause 49 is the base convention that Clause 82 explicitly inherits and that the Clause 119 family follows. |
+| 64B/66B sync header, block-type field, Start/Terminate placement, and idle deletion for alignment-marker room. (`src/data/stack.ts:276,289,426,457`) | Clause 82.2.3.3–82.2.3.10 (p. 3442–3446): sync header 01=data/10=control; Start valid only on the first octet, Terminate valid on any octet; idle insertion/deletion occurs in groups of 8; 82.2.4 (p. 3446–3447) removes "Idle control characters or sequence ordered sets" to make room for alignment markers. | Confirmed. One nuance beyond the app's text: sequence ordered sets, not only Idles, may also be removed for alignment-marker room; not a contradiction, just an incomplete-by-omission detail. |
+| `research-brief.md:102` — Annex 172A's example codewords reuse the Annex 119A payload and seeds. | Annex 119A (p. 6785–6790) gives a complete, self-consistent worked example: constant-Idle input, explicit pre-scramble seed `S<0:57> = 24E6959D0FA5DBD`, PRBS9 pad seed `P<0:8> = 0x100`, `tx_am_sf<2:0> = {0,0,0}`, and the resulting `tx_scrambled_am` and RS(544,514) codeword tables for 200GBASE-R and 400GBASE-R. Hex symbols are transmitted MSB-first, top row to bottom row, left to right. | Annex 119A itself is confirmed as a genuine seeded example, supporting that the 172A reuse claim is plausible. Annex 172A is not in the KB, so the reuse claim itself is still unverified. |
+
 ## Clauses and annexes to add
 
 Priority describes the current app's dependence on the text, not a request to
 collect every clause in IEEE 802.3. The 2026-09-28 additions resolved the
 earlier entries for Clauses 118, 167 (base), 170 and 178, Clauses 184–187, the
 45/73/90/162/163 amendments, the 802.3df-2024 Clause 124 amendment and the
-P802.3dj Annex 73A changes. The IEEE Std 802.3-2022 sources below are still
-needed to verify the complete 400GBASE-DR4 transmit calculation; the presence
-of Clauses 81, 117, 119, 120 and 124 does not close those gaps.
+P802.3dj Annex 73A changes. The 2026-09-30 additions resolved the three
+High-priority entries for Clause 49, Clause 82 and Annex 119A (see the
+verification table above). No High-priority gaps remain open.
 
 | Priority | Missing source | Why it matters |
 |---|---|---|
-| High | **IEEE Std 802.3-2022 Clause 49, especially 49.2.6** | Verify the self-synchronous scrambler recurrence, bit direction and predecessor-state convention used by the 400G TX inspector. |
-| High | **IEEE Std 802.3-2022 Clause 82, including the 64B/66B control tables and control-character rules** | Verify Start, Terminate, Idle and mixed control/data encoding, plus which control inputs may be removed for alignment-marker rate matching. |
-| High | **IEEE Std 802.3-2022 Annex 119A, including its 400G transmit example tables** | Check the complete PCS/FEC stream against a published example with defined initial state, input/output orientation and expected values. |
 | Low | **P802.3dj/D3.2 pp. 142–145, 165–222 and 229–260** | These pages sit between the D3.2 excerpts: after Clause 45 (ends p. 141), after the Clause 90 change (p. 164) and after Clause 170 (ends p. 228). Their contents were not examined. Check the draft's contents list for changes to clauses the app cites, such as 116–120 or 169. Clause 171, which 170.1.2 cites for the 1.6TMII Extender, probably falls in 229–260. The app does not cite Clause 171. |
 | External to 802.3 | **IEEE 802.1Q, 802.1AE and applicable form-factor/MSA sources** | PFC, MACsec and module claims cannot be verified from the IEEE 802.3 PDFs. Keep those explicitly outside the 802.3 source coverage. |
 
@@ -122,6 +143,10 @@ of Clauses 81, 117, 119, 120 and 124 does not close those gaps.
   that the draft makes no other Clause 90 changes.
 - The 802.3dj D3.2 files are draft excerpts. Keep version labels with findings
   because later revisions could change requirements.
+- Read `IEEE-802.3-2022-Clause-82.pdf` with `IEEE-802.3-2022-Clause-49.pdf`:
+  Clause 82.2.5 defines its scrambler only by reference to 49.2.6. Annex 172A
+  (800G FEC codeword examples) is not in the KB; read `IEEE-802.3-2022-Annex-119A.pdf`
+  as the nearest published worked example for the same PCS/FEC chain.
 - These passes checked the central numerical claims and clause routing listed
   above. They are not a line-by-line conformance review of every optical table,
   quiz or diagram.
