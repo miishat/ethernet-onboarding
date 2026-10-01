@@ -19,14 +19,7 @@ function initialTheme(): ThemeName {
   } catch {
     /* ignore */
   }
-  try {
-    if (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches) {
-      return "light";
-    }
-  } catch {
-    /* ignore */
-  }
-  return "dark";
+  return "light";
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {

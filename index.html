@@ -13,16 +13,10 @@
       (function () {
         try {
           var saved = localStorage.getItem("eos-theme");
-          var t =
-            saved === "light" || saved === "dark"
-              ? saved
-              : window.matchMedia &&
-                  window.matchMedia("(prefers-color-scheme: light)").matches
-                ? "light"
-                : "dark";
+          var t = saved === "dark" || saved === "warm" ? saved : "light";
           document.documentElement.setAttribute("data-theme", t);
         } catch (e) {
-          document.documentElement.setAttribute("data-theme", "dark");
+          document.documentElement.setAttribute("data-theme", "light");
         }
       })();
     </script>
