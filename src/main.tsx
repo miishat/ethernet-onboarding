@@ -9,7 +9,19 @@ import "./styles/global.css";
 import { ThemeProvider } from "./theme/ThemeContext";
 import App from "./App";
 
-const AnnotationLayer = import.meta.env.DEV ? React.lazy(() => import("./dev/AnnotationLayer")) : null;
+function reviewToolsEnabled(): boolean {
+  if (import.meta.env.DEV) return true;
+  try {
+    const flag = new URLSearchParams(window.location.search).get("review");
+    if (flag === "off") localStorage.removeItem("eos-review");
+    else if (flag !== null) localStorage.setItem("eos-review", "1");
+    return localStorage.getItem("eos-review") === "1";
+  } catch {
+    return false;
+  }
+}
+
+const AnnotationLayer = reviewToolsEnabled() ? React.lazy(() => import("./dev/AnnotationLayer")) : null;
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
