@@ -156,6 +156,11 @@ svg g[role="button"]:focus-visible rect {
   flex-direction: column;
 }
 
+/* Framed (e.g. Confluence): size to content, drop page chrome. Avoid vh here:
+   viewport-relative heights feed back into the parent's auto-resize. */
+.embedded .app { min-height: 0; }
+.embedded .footer { display: none; }
+
 .header {
   position: sticky;
   top: 0;

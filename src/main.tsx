@@ -8,6 +8,9 @@ import "@fontsource/jetbrains-mono/500.css";
 import "./styles/global.css";
 import { ThemeProvider } from "./theme/ThemeContext";
 import App from "./App";
+import { initEmbed } from "./embed";
+
+initEmbed();
 
 function reviewToolsEnabled(): boolean {
   if (import.meta.env.DEV) return true;
